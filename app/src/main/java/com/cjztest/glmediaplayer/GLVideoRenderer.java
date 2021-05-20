@@ -63,7 +63,7 @@ public class GLVideoRenderer implements GLSurfaceView.Renderer
     private boolean updateSurface;
     private int screenWidth, screenHeight;
 
-    public GLVideoRenderer(Context context, String videoPath) {
+    public GLVideoRenderer(Context context) {
         this.context = context;
         synchronized (this) {
             updateSurface = false;
@@ -106,18 +106,22 @@ public class GLVideoRenderer implements GLSurfaceView.Renderer
                 "varying vec2 vTexCoord;\n" +
                 "uniform samplerExternalOES sTexture;\n" +
                 "void main() {\n" +
-                "    //gl_FragColor=texture2D(sTexture, vTexCoord);\n" +
                 "\n" +
-                "        vec3 centralColor = texture2D(sTexture, vTexCoord).rgb;\n" +
-                "        gl_FragColor = vec4(0.299*centralColor.r+0.587*centralColor.g+0.114*centralColor.b);\n" +
+                "        vec3 color = texture2D(sTexture, vTexCoord).rgb;\n" +
+                "        if (vTexCoord[0] < 0.5f) {\n" +
+                "             gl_FragColor = vec4(0.33*color.r+0.33*color.g+0.33*color.b);\n" +
+                "         } else {\n" +
+                "             gl_FragColor=texture2D(sTexture, vTexCoord);\n" +
+                "         }\n" +
                 "\n" +
                 "}";
+        //加载shader脚本 <<<
         programId = GLES20.glCreateProgram();
         GLES20.glAttachShader(programId, loadShader(GLES20.GL_VERTEX_SHADER, vertexShader));
         GLES20.glAttachShader(programId, loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShader));
-
         GLES20.glLinkProgram(programId);
         GLES20.glUseProgram(programId);
+        //加载shader脚本 >>>
 
         aPositionLocation = GLES20.glGetAttribLocation(programId, "aPosition");
 
@@ -152,7 +156,7 @@ public class GLVideoRenderer implements GLSurfaceView.Renderer
     private void initMediaPlayer() {
         mediaPlayer = new MediaPlayer();
         try {
-            AssetFileDescriptor afd = context.getAssets().openFd("big_buck_bunny.mp4");
+            AssetFileDescriptor afd = context.getAssets().openFd("cross.mp4");
             mediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
 //            String path = "http://192.168.1.254:8192";
 //            mediaPlayer.setDataSource(path);
