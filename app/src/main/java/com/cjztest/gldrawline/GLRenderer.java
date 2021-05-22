@@ -112,9 +112,14 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
         initShader();
         mGLine = new GLLine();
-        mGLine.addPoint(-1, -1, -1, 0xFFFFFFFF);
-        mGLine.addPoint(0f, 1, 0, 0xFFFF00FF);
-        mGLine.addPoint(1f, -1, -1, 0xFFFF00FF);
+//        mGLine.addPoint(-1, -1, -1, 0xFFFFFFFF);
+//        mGLine.addPoint(0f, 1, 0, 0xFFFF00FF);
+//        mGLine.addPoint(1f, -1, -1, 0xFFFF00FF);
+        mGLine.addPoint(-1, -1, 0f, 0xFFFFFFFF);
+        mGLine.addPoint(-1, 1, 0f, 0xFFFFFFFF);
+        mGLine.addPoint(1, 1, 0f, 0xFFFFFFFF);
+        mGLine.addPoint(1, -1, 0f, 0xFFFFFFFF);
+        mGLine.addPoint(-1, -1, 0f, 0xFFFFFFFF);
     }
 
     @Override

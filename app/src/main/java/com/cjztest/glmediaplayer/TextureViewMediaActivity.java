@@ -1,6 +1,7 @@
 package com.cjztest.glmediaplayer;
 
 import android.app.Activity;
+import android.content.pm.ActivityInfo;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Environment;
@@ -11,11 +12,12 @@ public class TextureViewMediaActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //强制横屏：
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         super.onCreate(savedInstanceState);
         glView = new GLSurfaceView(this);
         glView.setEGLContextClientVersion(2);
-        GLVideoRenderer glVideoRenderer = new GLVideoRenderer(this);//创建renderer
-        glView.setRenderer(glVideoRenderer);//设置renderer
+        glView.setRenderer(new GLVideoRendererDouYinEffect1(this));//设置renderer
 
         setContentView(glView);
 
