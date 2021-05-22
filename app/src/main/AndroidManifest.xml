@@ -10,6 +10,20 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Learnopengl">
         <activity android:name="com.cjztest.glmediaplayer.TextureViewMediaActivity">
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+        </activity>
+        <activity android:name="com.book.Sample5_2.Sample5_2_Activity">
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+        </activity>
+        <activity android:name="com.cjztest.gldrawline.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
