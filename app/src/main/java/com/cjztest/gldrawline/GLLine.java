@@ -24,7 +24,9 @@ public class GLLine {
     /**正在写入第几个颜色float**/
     private int mColorBufferPos = 0;
     /**初始化时的顶点数目**/
-    private int mInitVertexCount = 1 * 16;
+    private int mInitVertexCount = 12;
+    /**初始化时的颜色单元数目**/
+    private int mInitColorCount = 16;
 
     public void addPoint(float x, float y, int colorARGB) {
         addPoint(x, y, 0, colorARGB);
@@ -41,7 +43,7 @@ public class GLLine {
         }
         //按初始化大小初始化RGBA字节数组和RGBA数组
         if (mColorBuf == null) {
-            mColorByteBuffer = ByteBuffer.allocateDirect(mInitVertexCount * 4);
+            mColorByteBuffer = ByteBuffer.allocateDirect(mInitColorCount * 4);
             mColorByteBuffer.order(ByteOrder.nativeOrder());
             mColorBuf = mColorByteBuffer.asFloatBuffer();
             mColorBuf.position(0);
@@ -65,28 +67,30 @@ public class GLLine {
 //        Log.i("GLLineColor", String.format("r:%f,g:%f,b:%f,a:%f", red, green, blue, alpha));
 
         //如果写入的颜色数超过初始值，将顶点数和颜色数组容量翻倍
-        if (mColorBufferPos * 4 >= mInitVertexCount) {
+        if (mPointBufferPos >= mInitVertexCount) {//todo bug，扩容之后有些点信息错了
             Log.i("GLLines", "扩容点数到:" + mInitVertexCount);
-            mInitVertexCount *= 2;
+            mInitVertexCount += 12;
+            mInitColorCount += 16;
 
-            ByteBuffer qbb = ByteBuffer.allocateDirect(mInitVertexCount * 4);    //顶点数 * sizeof(float) ;
+            ByteBuffer qbb = ByteBuffer.allocateDirect(mInitVertexCount * 4);    //顶点数 * sizeof(float) ; 加4个点
             qbb.order(ByteOrder.nativeOrder());
-            System.arraycopy(mPointByteBuffer.array(), 0, qbb.array(), 0, (mPointBufferPos) * 4);   //顶点数 * sizeof(float)
+            System.arraycopy(mPointByteBuffer.array(), 0, qbb.array(), 0, (mPointBufferPos + 1) * 4);   //顶点数 * sizeof(float)
             mPointByteBuffer = qbb;
             mPointBuf = mPointByteBuffer.asFloatBuffer();
+            mPointBuf.position(0);
 
-            ByteBuffer qbb2 = ByteBuffer.allocateDirect(mInitVertexCount * 4);    //顶点数 * sizeof(float) ;
+            ByteBuffer qbb2 = ByteBuffer.allocateDirect(mInitColorCount * 4);    //顶点数 * sizeof(float) ;
             qbb2.order(ByteOrder.nativeOrder());
-            System.arraycopy(mColorByteBuffer.array(), 0, qbb2.array(), 0, (mColorBufferPos) * 4);  //sizeof(R,G,B,Alpha) * sizeof(float)
+            System.arraycopy(mColorByteBuffer.array(), 0, qbb2.array(), 0, (mColorBufferPos + 1) * 4);  //sizeof(R,G,B,Alpha) * sizeof(float)
             mColorByteBuffer = qbb2;
             mColorBuf = mColorByteBuffer.asFloatBuffer();
+            mColorBuf.position(0);
 
         }
     }
 
     public void drawTo(int positionPointer, int colorPointer) { //GLES30中已经有主线程创建的EGL context，直接用就好
         if (mPointBuf != null && mColorBuf != null) {
-            Log.i("cjztest", "GLLine.drawTo");
             mPointBuf.position(0);
             mColorBuf.position(0);
             GLES30.glLineWidth(15f);
@@ -112,7 +116,7 @@ public class GLLine {
                     );
             GLES30.glEnableVertexAttribArray(positionPointer); //启用顶点属性
             GLES30.glEnableVertexAttribArray(colorPointer);  //启用颜色属性
-            GLES30.glDrawArrays(GLES30.GL_LINE_STRIP, 0, mPointBufferPos / 3); //添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+            GLES30.glDrawArrays(GLES30.GL_LINE_STRIP, 0, mPointBufferPos / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
         }
     }
 }

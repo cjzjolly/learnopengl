@@ -101,7 +101,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         //获取程序中顶点位置属性引用"指针"
         maPositionPointer = GLES30.glGetAttribLocation(mProgram, "aPosition");
         //获取程序中顶点颜色属性引用"指针"
-        maColorPointer= GLES30.glGetAttribLocation(mProgram, "aColor");
+        maColorPointer = GLES30.glGetAttribLocation(mProgram, "aColor");
         //获取程序中总变换矩阵引用"指针"
         muMVPMatrixPointer = GLES30.glGetUniformLocation(mProgram, "uMVPMatrix");
     }
@@ -115,11 +115,26 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 //        mGLine.addPoint(-1, -1, -1, 0xFFFFFFFF);
 //        mGLine.addPoint(0f, 1, 0, 0xFFFF00FF);
 //        mGLine.addPoint(1f, -1, -1, 0xFFFF00FF);
-        mGLine.addPoint(-1, -1, 0f, 0xFFFFFFFF);
-        mGLine.addPoint(-1, 1, 0f, 0xFFFFFFFF);
-        mGLine.addPoint(1, 1, 0f, 0xFFFFFFFF);
-        mGLine.addPoint(1, -1, 0f, 0xFFFFFFFF);
-        mGLine.addPoint(-1, -1, 0f, 0xFFFFFFFF);
+        //前面
+        mGLine.addPoint(-1, -1, 1f, 0xFFFFFFFF);
+        mGLine.addPoint(-1, 1, 1f, 0xFFFFFFFF);
+        mGLine.addPoint(1, 1, 1f, 0xFFFFFFFF);
+        mGLine.addPoint(1, -1, 1f, 0xFFFFFFFF);
+        mGLine.addPoint(-1, -1, 1f, 0xFFFFFF00);
+        //后面
+        mGLine.addPoint(-1, -1, -1f, 0xFFFF00FF);
+        mGLine.addPoint(-1, 1, -1f, 0xFFFFFFFF);
+        mGLine.addPoint(1, 1, -1f, 0xFFFFFFFF);
+        mGLine.addPoint(1, -1, -1f, 0xFFFFFFFF);
+        mGLine.addPoint(-1, -1, -1f, 0xFFFFFF00);
+        //侧面
+        mGLine.addPoint(1, -1, -1f, 0xFFFFFF00);
+        mGLine.addPoint(1, -1, 1f, 0xFFFFFF00);
+        mGLine.addPoint(1, 1, 1f, 0xFFFFFF00);
+        mGLine.addPoint(1, 1, -1f, 0xFFFFFF00);
+        mGLine.addPoint(-1, 1, -1f, 0xFFFFFF00);
+        mGLine.addPoint(-1, 1, 1f, 0xFFFFFF00);
+
     }
 
     @Override
@@ -145,7 +160,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         //设置沿Z轴正向位移1
 //        Matrix.translateM(mObjectMatrix,0,0,0,0f);
         //设置绕y轴旋转yAngle度(每渲染一次都做一次的动画)
-        Matrix.rotateM(mObjectMatrix,0,1,0,1f,0); //不断累加1度
+        Matrix.rotateM(mObjectMatrix,0,1,1f,1f,1f); //不断累加1度
         //设置绕x轴旋转xAngle度
 //        Matrix.rotateM(mObjectMatrix,0,1,1,0,0);
         //将最终变换矩阵传入渲染管线
@@ -154,6 +169,5 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);         //将投影矩阵乘以上一步的结果矩阵得到最终变换矩阵
         GLES30.glUniformMatrix4fv(muMVPMatrixPointer, 1, false, mMVPMatrix, 0);         //给shader脚本的位置指针送上位置矩阵
         mGLine.drawTo(maPositionPointer, maColorPointer);
-        Log.i("cjztest", "drawing line");
     }
 }
