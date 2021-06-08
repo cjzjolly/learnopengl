@@ -24,6 +24,20 @@
 <!--            </intent-filter>-->
         </activity>
         <activity android:name="com.cjztest.gldrawline.MainActivity">
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+        </activity>
+        <activity android:name="com.androidEffect.snowFlow.MainActivity">
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+        </activity>
+        <activity android:name="com.cjztest.glShaderEffect.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
