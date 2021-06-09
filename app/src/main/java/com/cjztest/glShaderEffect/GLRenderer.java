@@ -25,15 +25,14 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     private int mVTexCoordPointer;
     private int mObjectVertColorArrayPointer;
     private int muMVPMatrixPointer;
-    private int mGLFrameCountPointer;
+    private int mFrameCountPointer;
     private int mResoulutionPointer;
     private GLLine mGLine;
     /**GL渲染模式选择，指针**/
     private int mGLFunChoicePointer;
-    private GLLine mGLine2;
-    private GLImage mGLImageDarkWindow;
-    private GLImage mGLImage2;
-    private int mTest = 0; //cjztest
+    private int mFrameCount = 0;
+    private int mWidth = 0;
+    private int mHeight = 0;
 
     public interface onDrawListener {
         void drawTo(int programID, int positionPointer, int vTexCoordPointer, int colorPointer, float[] cameraMatrix, float[] projMatrix, int muMVPMatrixPointer, int glFunChoicePointer);
@@ -123,8 +122,8 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         muMVPMatrixPointer = GLES30.glGetUniformLocation(mProgram, "uMVPMatrix");
         //渲染方式选择，0为线条，1为纹理，2为纹理特效，以后还会有光点等等
         mGLFunChoicePointer = GLES30.glGetUniformLocation(mProgram, "funChoice");
-        //时间戳指针
-        mGLFrameCountPointer = GLES30.glGetUniformLocation(mProgram, "frame");
+        //渲染帧计数指针
+        mFrameCountPointer = GLES30.glGetUniformLocation(mProgram, "frame");
         //设置分辨率指针，告诉gl脚本现在的分辨率
         mResoulutionPointer = GLES30.glGetUniformLocation(mProgram, "resolution");
     }
@@ -157,26 +156,33 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) { //todo vivizhou:整个画面大小我是按1500*3248这个大小来的哈
-        GLES30.glViewport(0, 0, width, height);
         Log.d(TAG, "onSurfaceChanged: " + width + " " + height);
-        GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_COLOR_BUFFER_BIT);
-        this.mRatio = (float) height / width;
+        if (width != mWidth || height != mHeight) { //宽高没有变化过就不用再次执行以下代码，避免onResume之后卡顿
+            mWidth = width;
+            mHeight = height;
+            GLES30.glViewport(0, 0, width, height);
+            GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_COLOR_BUFFER_BIT);
+            this.mRatio = (float) height / width;
 //        this.mRatio = (float) 3248 / 1500;
-        Matrix.frustumM(mProjMatrix, 0, -1, 1, -mRatio, mRatio , 1, 50); //视锥体设定
-        Matrix.setLookAtM(mCameraMatrix, 0, 0, 0, 1, 0f, 0f, 0f, 0f, 1f, 0.0f); //eyez设定眼球和平面的距离，设定眼球面向方向、看向哪个坐标、眼球上方向（上下方向用于确定倒看还是顺看一个东西）
-        //指定使用某套着色器程序
-        GLES30.glUseProgram(mProgram);
-        if (mOndrawListener != null) {
-            mOndrawListener.onSurfaceChanged(width, height, mContext);
+            Matrix.frustumM(mProjMatrix, 0, -1, 1, -mRatio, mRatio , 1, 50); //视锥体设定
+            Matrix.setLookAtM(mCameraMatrix, 0, 0, 0, 1, 0f, 0f, 0f, 0f, 1f, 0.0f); //eyez设定眼球和平面的距离，设定眼球面向方向、看向哪个坐标、眼球上方向（上下方向用于确定倒看还是顺看一个东西）
+            //指定使用某套着色器程序
+            GLES30.glUseProgram(mProgram);
+            if (mOndrawListener != null) {
+                mOndrawListener.onSurfaceChanged(width, height, mContext);
+            }
+            //设置分辨率
+            GLES30.glUniform2fv(mResoulutionPointer, 1, new float[] {width, height}, 0);
         }
-        //设置分辨率
-        GLES30.glUniform2fv(mResoulutionPointer, 1, new float[] {width, height}, 0);
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
         GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_COLOR_BUFFER_BIT); //清理屏幕
-        GLES30.glUniform1f(mGLFrameCountPointer, (float) (mTest++ / 100f));
+        if (mFrameCount < 0) {
+            mFrameCount = 0;
+        }
+        GLES30.glUniform1f(mFrameCountPointer, (float) (mFrameCount++));
         drawObject();
 //        Matrix.rotateM(mProjMatrix, 0, 2f, 0, 0, 1f); //cjztest 按照Z轴旋转
     }

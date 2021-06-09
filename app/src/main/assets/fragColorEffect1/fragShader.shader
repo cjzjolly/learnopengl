@@ -9,11 +9,11 @@ in vec2 fragVTexCoord;//接收vertShader处理后的纹理内坐标给片元程�
 out vec4 fragColor;//输出到的片元颜色\n
 
 //通过三角函数+帧数实现数值循环
-#define CENTER(w, h)     vec2((cos(frame * w) + 1.) * 0.5, (sin(frame * h) + 1.)*0.5)
-#define F_TIME(a, b)     a * fract(frame * b)
+#define CENTER(w, h)     vec2((cos(frame / 150.0 * w) + 1.) * 0.5, (sin(frame / 150.0 * h) + 1.)*0.5)
+#define F_TIME(a, b)     a * fract(frame / 150.0 * b)
 #define F_TIME_RE(a, b)    a - F_TIME(a, b)
-#define C_TIME(a, b)        (cos(frame * a) + 1.) * b
-#define S_TIME(a, b)        (sin(frame * a) + 1.) * b
+#define C_TIME(a, b)        (cos(frame / 150.0 * a) + 1.) * b
+#define S_TIME(a, b)        (sin(frame / 150.0 * a) + 1.) * b
 
 //https://www.shadertoy.com/view/Wd23DG 漂亮的粒子效果
 vec4 sum(vec4 a, vec4 b){
