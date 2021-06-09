@@ -48,6 +48,7 @@ public class GLFragEffect extends GLLine {
         mTexCoorBuffer.put(texCoor);//向缓冲区中放入顶点纹理数据
         mTexCoorBuffer.position(0);//设置缓冲区起始位置
         startBindTexture();
+        rotate(180, 0, 0, 1);
     }
 
     private void initVertxAndAlpha(int alpha) {
@@ -84,7 +85,7 @@ public class GLFragEffect extends GLLine {
         locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
         if (mPointBuf != null && mColorBuf != null) {
             GLES30.glEnable(GL10.GL_LIGHTING);
-            GLES30.glUniform1i(glFunChoicePointer, 2);
+            GLES30.glUniform1i(glFunChoicePointer, 3);
             mPointBuf.position(0);
             mColorBuf.position(0);
 //            GLES30.glUniform1i(GLES30.glGetUniformLocation(programID, "sTexture"), 0); //获取纹理属性的指针
