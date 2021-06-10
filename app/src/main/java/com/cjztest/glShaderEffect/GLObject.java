@@ -120,5 +120,5 @@ public abstract class GLObject {
         return result;
     }
 
-    public abstract void drawTo(int programID, int positionPointer, int vTexCoordPointer, int colorPointer, float[] cameraMatrix, float[] projMatrix, int muMVPMatrixPointer, int glFunChoicePointer); //安卓的GLES30类中已经有主线程创建的EGL context，直接用就好GLES30绘图就好。
+    public abstract void drawTo(int baseProgramID, int positionPointer, int vTexCoordPointer, int colorPointer, float[] cameraMatrix, float[] projMatrix, int muMVPMatrixPointer, int glFunChoicePointer); //安卓的GLES30类中已经有主线程创建的EGL context，直接用就好GLES30绘图就好。
 }

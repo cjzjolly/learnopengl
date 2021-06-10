@@ -90,6 +90,7 @@ public class GLCircle extends GLObject {
 
     @Override
     public void drawTo(int programID, int positionPointer, int vTexCoordPointer, int colorPointer, float[] cameraMatrix, float[] projMatrix, int muMVPMatrixPointer, int glFunChoicePointer) {
+        GLES30.glUseProgram(programID);
         //step 0:确认要怎样变换，也就是确定变换关系（平移、旋转、缩放）矩阵
         locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
         if (mPointBuf != null && mColorBuf != null) {

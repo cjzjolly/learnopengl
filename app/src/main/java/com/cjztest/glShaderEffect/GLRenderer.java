@@ -9,6 +9,10 @@ import android.util.Log;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import static com.cjztest.glShaderEffect.ShaderUtil.checkGlError;
+import static com.cjztest.glShaderEffect.ShaderUtil.destroyShader;
+import static com.cjztest.glShaderEffect.ShaderUtil.loadShader;
+
 /**
  * Created by jiezhuchen
  */
@@ -20,7 +24,9 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 
     private static float[] mProjMatrix = new float[16];
     private static float[] mCameraMatrix = new float[16];
-    private int mProgram;
+    private int mBaseProgram;
+    private int mBaseVertexShaderPointer;
+    private int mBaseFragShaderPointer;
     private int mObjectPositionPointer;
     private int mVTexCoordPointer;
     private int mObjectVertColorArrayPointer;
@@ -38,13 +44,14 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         void drawTo(int programID, int positionPointer, int vTexCoordPointer, int colorPointer, float[] cameraMatrix, float[] projMatrix, int muMVPMatrixPointer, int glFunChoicePointer);
         void onSurfaceChanged(int windowWidth, int windowHeight, Context context);
     }
-    private onDrawListener mOndrawListener;
+    private onDrawListener mOndrawListener; //绘制回调
 
     public GLRenderer(Context context) {
         mContext = context;
     }
 
     public void destroy() {
+        destroyShader(mBaseProgram, mBaseVertexShaderPointer, mBaseFragShaderPointer);
         mContext = null;
     }
 
@@ -52,80 +59,52 @@ public class GLRenderer implements GLSurfaceView.Renderer {
         this.mOndrawListener = ondrawListener;
     }
 
-    //检查每一步操作是否有错误的方法
-    public static void checkGlError(String op) {
-        int error;
-        while ((error = GLES30.glGetError()) != GLES30.GL_NO_ERROR) {
-            Log.e("ES30_ERROR", op + ": glError " + error);
-            throw new RuntimeException(op + ": glError " + error);
-        }
-    }
-
-    private int loadShader(int type, String shaderCode) {
-        int shader = GLES30.glCreateShader(type);
-        if (shader != 0) { //若创建shader脚本的"指针"成功
-            GLES30.glShaderSource(shader, shaderCode);
-            GLES30.glCompileShader(shader);
-            //存放编译成功shader数量的数组
-            int[] compiled = new int[1];
-            //获取Shader的编译情况
-            GLES30.glGetShaderiv(shader, GLES30.GL_COMPILE_STATUS, compiled, 0);
-            if (compiled[0] == 0) {//若编译失败则显示错误日志并删除此shader
-                Log.e("ES30_ERROR", "Could not compile shader " + type + ":");
-                Log.e("ES30_ERROR", GLES30.glGetShaderInfoLog(shader));
-                GLES30.glDeleteShader(shader);
-                shader = 0;
-            }
-        }
-        return shader;
-    }
-
     //初始化着色器的initShader方法
     public void initShader() {
-        String fragShaderScript = ShaderUtil.loadFromAssetsFile("fragColorEffect1/fragShader.shader", mContext.getResources());
+        String fragShaderScript = ShaderUtil.loadFromAssetsFile("fragColorEffect1/fragShaderBase.shader", mContext.getResources());
         String vertexShaderScript = ShaderUtil.loadFromAssetsFile("fragColorEffect1/vertShader.shader", mContext.getResources());
         //基于顶点着色器与片元着色器创建程序 step_0：编译脚本
-        int fragShaderPointer = loadShader(GLES30.GL_FRAGMENT_SHADER, fragShaderScript);
-        int vertexShaderPointer = loadShader(GLES30.GL_VERTEX_SHADER, vertexShaderScript);
-        mProgram = GLES30.glCreateProgram();
+        mBaseFragShaderPointer = loadShader(GLES30.GL_FRAGMENT_SHADER, fragShaderScript);
+        mBaseVertexShaderPointer = loadShader(GLES30.GL_VERTEX_SHADER, vertexShaderScript);
+        mBaseProgram = GLES30.glCreateProgram();
         //若程序创建成功则向程序中加入顶点着色器与片元着色器
-        if (mProgram != 0) { //step 1: 创建program后附加编译后的脚本
+        if (mBaseProgram != 0) { //step 1: 创建program后附加编译后的脚本
             //>>>>>>>>>>>>
             //向程序中加入顶点着色器
-            GLES30.glAttachShader(mProgram, fragShaderPointer);
+            GLES30.glAttachShader(mBaseProgram, mBaseFragShaderPointer);
             checkGlError("glAttachShader");
             //向程序中加入片元着色器
-            GLES30.glAttachShader(mProgram, vertexShaderPointer);
+            GLES30.glAttachShader(mBaseProgram, mBaseVertexShaderPointer);
             checkGlError("glAttachShader");
             //链接程序
-            GLES30.glLinkProgram(mProgram);
+            GLES30.glLinkProgram(mBaseProgram);
             //<<<<<<<<<<<<
             //存放链接成功program数量的数组
             int[] linkStatus = new int[1];
             //获取program的链接情况
-            GLES30.glGetProgramiv(mProgram, GLES30.GL_LINK_STATUS, linkStatus, 0);
+            GLES30.glGetProgramiv(mBaseProgram, GLES30.GL_LINK_STATUS, linkStatus, 0);
             //若链接失败则报错并删除程序
             if (linkStatus[0] != GLES30.GL_TRUE) { //step 2: 检查是否链接并附加成功，不成功要清理
                 Log.e("ES30_ERROR", "Could not link program: ");
-                Log.e("ES30_ERROR", GLES30.glGetProgramInfoLog(mProgram));
-                GLES30.glDeleteProgram(mProgram);
-                mProgram = 0;
+                Log.e("ES30_ERROR", GLES30.glGetProgramInfoLog(mBaseProgram));
+                GLES30.glDeleteProgram(mBaseProgram);
+                mBaseProgram = 0;
             }
         }
         //获取程序中顶点位置属性引用"指针"
-        mObjectPositionPointer = GLES30.glGetAttribLocation(mProgram, "objectPosition");
+        mObjectPositionPointer = GLES30.glGetAttribLocation(mBaseProgram, "objectPosition");
         //纹理采样坐标
-        mVTexCoordPointer = GLES30.glGetAttribLocation(mProgram, "vTexCoord");
+        mVTexCoordPointer = GLES30.glGetAttribLocation(mBaseProgram, "vTexCoord");
         //获取程序中顶点颜色属性引用"指针"
-        mObjectVertColorArrayPointer = GLES30.glGetAttribLocation(mProgram, "objectColor");
+        mObjectVertColorArrayPointer = GLES30.glGetAttribLocation(mBaseProgram, "objectColor");
         //获取程序中总变换矩阵引用"指针"
-        muMVPMatrixPointer = GLES30.glGetUniformLocation(mProgram, "uMVPMatrix");
+        muMVPMatrixPointer = GLES30.glGetUniformLocation(mBaseProgram, "uMVPMatrix");
         //渲染方式选择，0为线条，1为纹理，2为纹理特效，以后还会有光点等等
-        mGLFunChoicePointer = GLES30.glGetUniformLocation(mProgram, "funChoice");
+        mGLFunChoicePointer = GLES30.glGetUniformLocation(mBaseProgram, "funChoice");
         //渲染帧计数指针
-        mFrameCountPointer = GLES30.glGetUniformLocation(mProgram, "frame");
+        mFrameCountPointer = GLES30.glGetUniformLocation(mBaseProgram, "frame");
         //设置分辨率指针，告诉gl脚本现在的分辨率
-        mResoulutionPointer = GLES30.glGetUniformLocation(mProgram, "resolution");
+        mResoulutionPointer = GLES30.glGetUniformLocation(mBaseProgram, "resolution");
     }
 
     /**整个场景的平移**/
@@ -155,7 +134,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     }
 
     @Override
-    public void onSurfaceChanged(GL10 gl, int width, int height) { //todo vivizhou:整个画面大小我是按1500*3248这个大小来的哈
+    public void onSurfaceChanged(GL10 gl, int width, int height) {
         Log.d(TAG, "onSurfaceChanged: " + width + " " + height);
         if (width != mWidth || height != mHeight) { //宽高没有变化过就不用再次执行以下代码，避免onResume之后卡顿
             mWidth = width;
@@ -163,11 +142,10 @@ public class GLRenderer implements GLSurfaceView.Renderer {
             GLES30.glViewport(0, 0, width, height);
             GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_COLOR_BUFFER_BIT);
             this.mRatio = (float) height / width;
-//        this.mRatio = (float) 3248 / 1500;
             Matrix.frustumM(mProjMatrix, 0, -1, 1, -mRatio, mRatio , 1, 50); //视锥体设定
             Matrix.setLookAtM(mCameraMatrix, 0, 0, 0, 1, 0f, 0f, 0f, 0f, 1f, 0.0f); //eyez设定眼球和平面的距离，设定眼球面向方向、看向哪个坐标、眼球上方向（上下方向用于确定倒看还是顺看一个东西）
-            //指定使用某套着色器程序
-            GLES30.glUseProgram(mProgram);
+            //指定使用某套着色器程序, 默认使用常用渲染程序
+            GLES30.glUseProgram(mBaseProgram);
             if (mOndrawListener != null) {
                 mOndrawListener.onSurfaceChanged(width, height, mContext);
             }
@@ -189,7 +167,13 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 
     private void drawObject() {
         if (mOndrawListener != null) {
-            mOndrawListener.drawTo(mProgram, mObjectPositionPointer, mVTexCoordPointer, mObjectVertColorArrayPointer, mCameraMatrix, mProjMatrix, muMVPMatrixPointer, mGLFunChoicePointer);
+            mOndrawListener.drawTo(mBaseProgram, mObjectPositionPointer, mVTexCoordPointer, mObjectVertColorArrayPointer, mCameraMatrix, mProjMatrix, muMVPMatrixPointer, mGLFunChoicePointer);
         }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        destroy(); //清理数据，销毁glprogram
     }
 }
