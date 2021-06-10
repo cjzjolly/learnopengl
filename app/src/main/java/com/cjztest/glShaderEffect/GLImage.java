@@ -102,9 +102,10 @@ public class GLImage extends GLLine {
         if (mIsDestroyed) {
             return;
         }
+        GLES30.glUseProgram(programID);
         locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
         if (mPointBuf != null && mColorBuf != null) {
-            GLES30.glUniform1i(glFunChoicePointer, 1);
+            GLES30.glUniform1i(glFunChoicePointer, 1); //选择纹理方式渲染
             mPointBuf.position(0);
             mColorBuf.position(0);
             GLES30.glUniform1i(GLES30.glGetUniformLocation(programID, "sTexture"), 0); //获取纹理属性的指针

@@ -116,6 +116,7 @@ public class GLLine extends GLObject {
     @Override
     public void drawTo(int programID, int positionPointer, int vTexCoordPointer, int colorPointer, float[] cameraMatrix, float[] projMatrix, int muMVPMatrixPointer, int glFunChoicePointer) { //安卓的GLES30类中已经有主线程创建的EGL context，直接用就好
         //step 0:确认要怎样变换，也就是确定变换关系（平移、旋转、缩放）矩阵
+        GLES30.glUseProgram(programID);
         locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
         if (mPointBuf != null && mColorBuf != null) {
             GLES30.glUniform1i(glFunChoicePointer, 0); //选择线条渲染方式
