@@ -10,13 +10,11 @@ import java.nio.FloatBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.microedition.khronos.opengles.GL10;
-
 import static com.cjztest.glShaderEffect.ShaderUtil.checkGlError;
 import static com.cjztest.glShaderEffect.ShaderUtil.destroyShader;
 import static com.cjztest.glShaderEffect.ShaderUtil.loadShader;
 
-public class GLFragEffectLightPot extends GLLine {
+public class GLFragEffectSea extends GLLine {
     private final float mX;
     private final float mY;
     private final float mZ;
@@ -40,7 +38,7 @@ public class GLFragEffectLightPot extends GLLine {
     private int mResoulutionPointer;
     private int mFrameCount = 0;
 
-    public GLFragEffectLightPot(float x, float y, float z, float w, float h, Context context) {
+    public GLFragEffectSea(float x, float y, float z, float w, float h, Context context) {
         this.mX = x;
         this.mY = y;
         this.mZ = z;
@@ -92,7 +90,7 @@ public class GLFragEffectLightPot extends GLLine {
 
     private void startBindTexture() {
         //特殊纹理，需要专门加载其他程序:
-        String fragShaderScript = ShaderUtil.loadFromAssetsFile("fragColorEffect1/fragShaderLightPot.shader", mContext.getResources());
+        String fragShaderScript = ShaderUtil.loadFromAssetsFile("fragColorEffect1/fragShaderSea.shader", mContext.getResources());
         String vertexShaderScript = ShaderUtil.loadFromAssetsFile("fragColorEffect1/vertShader.shader", mContext.getResources());
         //基于顶点着色器与片元着色器创建程序 step_0：编译脚本
         mSeaFragShaderPointer = loadShader(GLES30.GL_FRAGMENT_SHADER, fragShaderScript);
