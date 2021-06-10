@@ -15,8 +15,8 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
         mHeight = windowHeight;
         this.mRatio = (float) windowHeight / windowWidth;
         this.mContext = context;
-        mRenderSea = new GLFragEffectSea(-1f, -mRatio, 0f, 2, mRatio * 2, context);
-        mRenderLight = new GLFragEffectLightPot(-1f, -mRatio, 0f, 2, mRatio * 2, context);
+        mRenderSea = new GLFragEffectSea(-1f, -mRatio, 0f, 2, mRatio * 2, windowWidth, windowHeight, context);
+        mRenderLight = new GLFragEffectLightPot(-1f, -mRatio, 0f, 2, mRatio * 2, windowWidth, windowHeight, context);
     }
 
     /**按图层顺序渲染**/

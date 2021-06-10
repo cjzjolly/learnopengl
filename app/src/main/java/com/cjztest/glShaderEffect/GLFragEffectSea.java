@@ -20,6 +20,8 @@ public class GLFragEffectSea extends GLLine {
     private final float mZ;
     private final float mWidth;
     private final float mHeight;
+    private final float mWindowW;
+    private final float mWindowH;
     private  Context mContext;
 
     FloatBuffer mTexCoorBuffer;//顶点纹理坐标数据缓冲
@@ -38,12 +40,14 @@ public class GLFragEffectSea extends GLLine {
     private int mResoulutionPointer;
     private int mFrameCount = 0;
 
-    public GLFragEffectSea(float x, float y, float z, float w, float h, Context context) {
+    public GLFragEffectSea(float x, float y, float z, float w, float h, int windowW, int windowH, Context context) {
         this.mX = x;
         this.mY = y;
         this.mZ = z;
         this.mWidth = w;
         this.mHeight = h;
+        this.mWindowW = windowW;
+        this.mWindowH = windowH;
         this.mContext = context;
         initVertxAndAlpha(0xFF);
         float texCoor[] = new float[]   //纹理内采样坐标,类似于canvas坐标
@@ -142,7 +146,7 @@ public class GLFragEffectSea extends GLLine {
         //特殊shader效果，写在shader脚本上，所以不能用基本program，要更换为对应效果的Program
         GLES30.glUseProgram(mSeaProgram);
         //设置图像分辨率
-        GLES30.glUniform2fv(mResoulutionPointer, 1, new float[] {mWidth, mHeight}, 0);
+        GLES30.glUniform2fv(mResoulutionPointer, 1, new float[] {mWindowW, mWindowH}, 0);
         locationTrans(cameraMatrix, projMatrix, this.muMVPMatrixPointer);
         if (mPointBuf != null && mColorBuf != null) {
             if (mFrameCount < 0) {
