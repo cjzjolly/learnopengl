@@ -28,7 +28,8 @@ public class GLImage extends GLLine {
     /**
      * @param textureResolutionScale 纹理采样率设置，有些分辨率太大的纹理会影响渲染效率，可以在这里设置<1f的值缩小图片分辨率，优化性能
      **/
-    public GLImage(float x, float y, float z, float w, float h, Bitmap bitmap, float textureResolutionScale) {
+    public GLImage(int baseProgramPointer,float x, float y, float z, float w, float h, Bitmap bitmap, float textureResolutionScale) {
+        super(baseProgramPointer);
         this.mX = x;
         this.mY = y;
         this.mZ = z;
@@ -98,26 +99,26 @@ public class GLImage extends GLLine {
     }
 
     @Override
-    public void drawTo(int programID, int positionPointer, int vTexCoordPointer, int colorPointer, float[] cameraMatrix, float[] projMatrix, int muMVPMatrixPointer, int glFunChoicePointer) {
+    public void drawTo(float[] cameraMatrix, float[] projMatrix) {
         if (mIsDestroyed) {
             return;
         }
-        GLES30.glUseProgram(programID);
+        GLES30.glUseProgram(mBaseProgram);
         locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
         if (mPointBuf != null && mColorBuf != null) {
-            GLES30.glUniform1i(glFunChoicePointer, 1); //选择纹理方式渲染
+            GLES30.glUniform1i(mGLFunChoicePointer, 1); //选择纹理方式渲染
             mPointBuf.position(0);
             mColorBuf.position(0);
-            GLES30.glUniform1i(GLES30.glGetUniformLocation(programID, "sTexture"), 0); //获取纹理属性的指针
+            GLES30.glUniform1i(GLES30.glGetUniformLocation(mBaseProgram, "sTexture"), 0); //获取纹理属性的指针
             //将顶点位置数据送入渲染管线
-            GLES30.glVertexAttribPointer(positionPointer, 3, GLES30.GL_FLOAT, false, 0, mPointBuf); //三维向量，size为2
+            GLES30.glVertexAttribPointer(mObjectPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mPointBuf); //三维向量，size为2
             //将顶点颜色数据送入渲染管线
-            GLES30.glVertexAttribPointer(colorPointer, 4, GLES30.GL_FLOAT, false, 0, mColorBuf);
+            GLES30.glVertexAttribPointer(mObjectVertColorArrayPointer, 4, GLES30.GL_FLOAT, false, 0, mColorBuf);
             //将顶点纹理坐标数据传送进渲染管线
-            GLES30.glVertexAttribPointer(vTexCoordPointer, 2, GLES30.GL_FLOAT, false, 0, mTexCoorBuffer);  //二维向量，size为2
-            GLES30.glEnableVertexAttribArray(positionPointer); //启用顶点属性
-            GLES30.glEnableVertexAttribArray(colorPointer);  //启用颜色属性
-            GLES30.glEnableVertexAttribArray(vTexCoordPointer);  //启用纹理采样定位坐标
+            GLES30.glVertexAttribPointer(mVTexCoordPointer, 2, GLES30.GL_FLOAT, false, 0, mTexCoorBuffer);  //二维向量，size为2
+            GLES30.glEnableVertexAttribArray(mObjectPositionPointer); //启用顶点属性
+            GLES30.glEnableVertexAttribArray(mObjectVertColorArrayPointer);  //启用颜色属性
+            GLES30.glEnableVertexAttribArray(mVTexCoordPointer);  //启用纹理采样定位坐标
             //设置面向位置，因为是2d应用，所以不渲染背面，节约资源，参考https://www.jianshu.com/p/ee04165f2a02 >>>
 //            GLES30.glEnable(GLES30.GL_CULL_FACE);
 //            GLES30.glCullFace(GLES30.GL_FRONT);
@@ -125,9 +126,9 @@ public class GLImage extends GLLine {
             GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenTextureId);
             GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, mPointBufferPos / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
-            GLES30.glDisableVertexAttribArray(positionPointer);
-            GLES30.glDisableVertexAttribArray(colorPointer);
-            GLES30.glDisableVertexAttribArray(vTexCoordPointer);
+            GLES30.glDisableVertexAttribArray(mObjectPositionPointer);
+            GLES30.glDisableVertexAttribArray(mObjectVertColorArrayPointer);
+            GLES30.glDisableVertexAttribArray(mVTexCoordPointer);
         }
 //        super.drawTo(programID, positionPointer, colorPointer, cameraMatrix, projMatrix, muMVPMatrixPointer, glFunChoicePointer);
     }

@@ -40,7 +40,8 @@ public class GLFragEffectSea extends GLLine {
     private int mResoulutionPointer;
     private int mFrameCount = 0;
 
-    public GLFragEffectSea(float x, float y, float z, float w, float h, int windowW, int windowH, Context context) {
+    public GLFragEffectSea(int baseProgramPointer, float x, float y, float z, float w, float h, int windowW, int windowH, Context context) {
+        super(baseProgramPointer);
         this.mX = x;
         this.mY = y;
         this.mZ = z;
@@ -139,7 +140,7 @@ public class GLFragEffectSea extends GLLine {
     }
 
     @Override
-    public void drawTo(int baseProgramID, int positionPointer, int vTexCoordPointer, int colorPointer, float[] cameraMatrix, float[] projMatrix, int muMVPMatrixPointer, int glFunChoicePointer) {
+    public void drawTo(float[] cameraMatrix, float[] projMatrix) {
         if (mIsDestroyed) {
             return;
         }

@@ -25,8 +25,6 @@ public class GLFragEffectFlower extends GLLine {
     private  Context mContext;
 
     FloatBuffer mTexCoorBuffer;//顶点纹理坐标数据缓冲
-    private static Map<Integer, Integer> mMapIndexToTextureID = new HashMap<>(); //(纹理id，纹理数)
-    private int mGenTextureId = 0;
     private boolean mIsDestroyed = false;
     private int mAlpha;
     private int mFlowerFragShaderPointer;
@@ -40,7 +38,8 @@ public class GLFragEffectFlower extends GLLine {
     private int mResoulutionPointer;
     private int mFrameCount = 0;
 
-    public GLFragEffectFlower(float x, float y, float z, float w, float h, int windowW, int windowH, Context context) {
+    public GLFragEffectFlower(int baseProgramPointer, float x, float y, float z, float w, float h, int windowW, int windowH, Context context) {
+        super(baseProgramPointer);
         this.mX = x;
         this.mY = y;
         this.mZ = z;
@@ -139,7 +138,7 @@ public class GLFragEffectFlower extends GLLine {
     }
 
     @Override
-    public void drawTo(int baseProgramID, int positionPointer, int vTexCoordPointer, int colorPointer, float[] cameraMatrix, float[] projMatrix, int muMVPMatrixPointer, int glFunChoicePointer) {
+    public void drawTo(float[] cameraMatrix, float[] projMatrix) {
         if (mIsDestroyed) {
             return;
         }

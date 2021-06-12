@@ -42,7 +42,8 @@ public class GLFragEffectLightPot extends GLLine {
     private int mResoulutionPointer;
     private int mFrameCount = 0;
 
-    public GLFragEffectLightPot(float x, float y, float z, float w, float h, int windowW, int windowH, Context context) {
+    public GLFragEffectLightPot(int baseProgramPointer,float x, float y, float z, float w, float h, int windowW, int windowH, Context context) {
+        super(baseProgramPointer);
         this.mX = x;
         this.mY = y;
         this.mZ = z;
@@ -141,7 +142,7 @@ public class GLFragEffectLightPot extends GLLine {
     }
 
     @Override
-    public void drawTo(int baseProgramID, int positionPointer, int vTexCoordPointer, int colorPointer, float[] cameraMatrix, float[] projMatrix, int muMVPMatrixPointer, int glFunChoicePointer) {
+    public void drawTo(float[] cameraMatrix, float[] projMatrix) {
         if (mIsDestroyed) {
             return;
         }

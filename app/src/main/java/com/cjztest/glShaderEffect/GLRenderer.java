@@ -41,8 +41,8 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     private int mHeight = 0;
 
     public interface onDrawListener {
-        void drawTo(int programID, int positionPointer, int vTexCoordPointer, int colorPointer, float[] cameraMatrix, float[] projMatrix, int muMVPMatrixPointer, int glFunChoicePointer);
-        void onSurfaceChanged(int windowWidth, int windowHeight, Context context);
+        void drawTo(float[] cameraMatrix, float[] projMatrix);
+        void onSurfaceChanged(int glBaseProgramPointer, int windowWidth, int windowHeight, Context context);
     }
     private onDrawListener mOndrawListener; //绘制回调
 
@@ -147,7 +147,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
             //指定使用某套着色器程序, 默认使用常用渲染程序
             GLES30.glUseProgram(mBaseProgram);
             if (mOndrawListener != null) {
-                mOndrawListener.onSurfaceChanged(width, height, mContext);
+                mOndrawListener.onSurfaceChanged(mBaseProgram, width, height, mContext);
             }
             //设置分辨率
             GLES30.glUniform2fv(mResoulutionPointer, 1, new float[] {width, height}, 0);
@@ -167,7 +167,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 
     private void drawObject() {
         if (mOndrawListener != null) {
-            mOndrawListener.drawTo(mBaseProgram, mObjectPositionPointer, mVTexCoordPointer, mObjectVertColorArrayPointer, mCameraMatrix, mProjMatrix, muMVPMatrixPointer, mGLFunChoicePointer);
+            mOndrawListener.drawTo(mCameraMatrix, mProjMatrix);
         }
     }
 

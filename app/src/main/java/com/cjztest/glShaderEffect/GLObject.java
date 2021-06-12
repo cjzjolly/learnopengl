@@ -7,10 +7,31 @@ import androidx.annotation.NonNull;
 
 public abstract class GLObject {
     private final float[] mObjectMatrix = new float[16];    //具体物体的3D变换矩阵，包括旋转、平移、缩放
-    float[] mMVPMatrix = new float[16];//创建用来存放最终变换矩阵的数组
+    protected int mBaseProgram;
+    protected float[] mMVPMatrix = new float[16];//创建用来存放最终变换矩阵的数组
     private int mRotatedDegree = 0;
+    protected int mObjectPositionPointer;
+    protected int mVTexCoordPointer;
+    protected int mObjectVertColorArrayPointer;
+    protected int muMVPMatrixPointer;
+    protected int mGLFunChoicePointer;
 
     public GLObject() {
+
+    }
+
+    public GLObject(int programPointer) {
+        this.mBaseProgram = programPointer;
+        //获取程序中顶点位置属性引用"指针"
+        mObjectPositionPointer = GLES30.glGetAttribLocation(mBaseProgram, "objectPosition");
+        //纹理采样坐标
+        mVTexCoordPointer = GLES30.glGetAttribLocation(mBaseProgram, "vTexCoord");
+        //获取程序中顶点颜色属性引用"指针"
+        mObjectVertColorArrayPointer = GLES30.glGetAttribLocation(mBaseProgram, "objectColor");
+        //获取程序中总变换矩阵引用"指针"
+        muMVPMatrixPointer = GLES30.glGetUniformLocation(mBaseProgram, "uMVPMatrix");
+        //渲染方式选择，0为线条，1为纹理，2为纹理特效，以后还会有光点等等
+        mGLFunChoicePointer = GLES30.glGetUniformLocation(mBaseProgram, "funChoice");
         resetObjectMatrix();
     }
 
@@ -120,5 +141,5 @@ public abstract class GLObject {
         return result;
     }
 
-    public abstract void drawTo(int baseProgramID, int positionPointer, int vTexCoordPointer, int colorPointer, float[] cameraMatrix, float[] projMatrix, int muMVPMatrixPointer, int glFunChoicePointer); //安卓的GLES30类中已经有主线程创建的EGL context，直接用就好GLES30绘图就好。
+    public abstract void drawTo(float[] cameraMatrix, float[] projMatrix); //安卓的GLES30类中已经有主线程创建的EGL context，直接用就好GLES30绘图就好。
 }

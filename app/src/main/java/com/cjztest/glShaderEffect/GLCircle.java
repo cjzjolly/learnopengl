@@ -14,8 +14,8 @@ public class GLCircle extends GLObject {
     FloatBuffer mColorBuf;//顶点着色数据缓冲
     int vCount = 0;
 
-    public GLCircle(float r, int centerColorARGB, int roundColorARGB) {
-        super();
+    public GLCircle(int baseProgramPointer, float r, int centerColorARGB, int roundColorARGB) {
+        super(baseProgramPointer);
         mR = r;
         mCenterColor = centerColorARGB;
         mRoundColor = roundColorARGB;
@@ -89,25 +89,25 @@ public class GLCircle extends GLObject {
     }
 
     @Override
-    public void drawTo(int programID, int positionPointer, int vTexCoordPointer, int colorPointer, float[] cameraMatrix, float[] projMatrix, int muMVPMatrixPointer, int glFunChoicePointer) {
-        GLES30.glUseProgram(programID);
+    public void drawTo(float[] cameraMatrix, float[] projMatrix) {
+        GLES30.glUseProgram(mBaseProgram);
         //step 0:确认要怎样变换，也就是确定变换关系（平移、旋转、缩放）矩阵
         locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
         if (mPointBuf != null && mColorBuf != null) {
-            GLES30.glUniform1i(glFunChoicePointer, 0); //选择线条渲染方式
+            GLES30.glUniform1i(mGLFunChoicePointer, 0); //选择线条渲染方式
             //step 1:传入物体坐标和颜色，由gl根据上面的变换关系放到目标位置，并赋予颜色
             mPointBuf.position(0);
             mColorBuf.position(0);
             GLES30.glLineWidth(3f);
             //将顶点位置数据送入渲染管线
-            GLES30.glVertexAttribPointer(positionPointer, 3, GLES30.GL_FLOAT, false, 0, mPointBuf);
+            GLES30.glVertexAttribPointer(mObjectPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mPointBuf);
             //将顶点颜色数据送入渲染管线
-            GLES30.glVertexAttribPointer(colorPointer, 4, GLES30.GL_FLOAT, false, 0, mColorBuf);
-            GLES30.glEnableVertexAttribArray(positionPointer); //启用顶点属性
-            GLES30.glEnableVertexAttribArray(colorPointer);  //启用颜色属性
+            GLES30.glVertexAttribPointer(mObjectVertColorArrayPointer, 4, GLES30.GL_FLOAT, false, 0, mColorBuf);
+            GLES30.glEnableVertexAttribArray(mObjectPositionPointer); //启用顶点属性
+            GLES30.glEnableVertexAttribArray(mObjectVertColorArrayPointer);  //启用颜色属性
             GLES30.glDrawArrays(GLES30.GL_TRIANGLE_FAN, 0, vCount);
-            GLES30.glDisableVertexAttribArray(positionPointer);
-            GLES30.glDisableVertexAttribArray(colorPointer);
+            GLES30.glDisableVertexAttribArray(mObjectPositionPointer);
+            GLES30.glDisableVertexAttribArray(mObjectVertColorArrayPointer);
         }
     }
 }

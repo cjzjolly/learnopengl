@@ -21,10 +21,8 @@ public class GLVideo extends GLObject {
         this.mWindowH = windowH;
     }
 
-
-
     @Override
-    public void drawTo(int baseProgramID, int positionPointer, int vTexCoordPointer, int colorPointer, float[] cameraMatrix, float[] projMatrix, int muMVPMatrixPointer, int glFunChoicePointer) {
+    public void drawTo(float[] cameraMatrix, float[] projMatrix) {
 
     }
 }
