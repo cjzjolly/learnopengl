@@ -27,11 +27,17 @@ class MySurfaceView extends GLSurfaceView
     private float mPreviousX;//上次的触控位置X坐标
     float ratio;
 
+    /**是否每次渲染到frameBuffer前都清理**/
+    private boolean mFrameBufferClean = false;
+    private boolean mFrameBufferCleanOnce = false;
+
+
     static final int GEN_TEX_WIDTH=1024;
     static final int GEN_TEX_HEIGHT=1024;
 
     int SCREEN_WIDTH;
     int SCREEN_HEIGHT;
+
     public MySurfaceView(Context context) {
         super(context);
         this.setEGLContextClientVersion(3); //设置使用OPENGL ES3.0
@@ -67,9 +73,9 @@ class MySurfaceView extends GLSurfaceView
         //加载茶壶绘制对象
         LoadedObjectVertexNormalTexture lovo;
 
-        int frameBufferId;//帧缓冲id
+        int mFrameBufferId;//帧缓冲id
         int renderDepthBufferId;//渲染深度缓冲id
-        int textureId;//最后生成的纹理id
+        int mTextureId;//最后生成的纹理id
         int textureIdGHXP;//国画小品的纹理id
         TextureRect tr;//矩形绘制对象
 
@@ -77,9 +83,9 @@ class MySurfaceView extends GLSurfaceView
         {
             int tia[]=new int[1];//用于存放产生的帧缓冲id的数组
             GLES30.glGenFramebuffers(1, tia, 0);//产生一个帧缓冲id
-            frameBufferId=tia[0];//将帧缓冲id记录到成员变量中
+            mFrameBufferId =tia[0];//将帧缓冲id记录到成员变量中
             //绑定帧缓冲id
-            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, frameBufferId);
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBufferId);
 
             GLES30.glGenRenderbuffers(1, tia, 0);//产生一个渲染缓冲id
             renderDepthBufferId=tia[0];//将渲染缓冲id记录到成员变量中
@@ -96,8 +102,8 @@ class MySurfaceView extends GLSurfaceView
                             tempIds,   //纹理id的数组
                             0           //偏移量
                     );
-            textureId=tempIds[0];//将纹理id记录到成员变量
-            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D,textureId);//绑定纹理id
+            mTextureId =tempIds[0];//将纹理id记录到成员变量
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mTextureId);//绑定纹理id
             GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D,//设置MIN采样方式
                     GLES30.GL_TEXTURE_MIN_FILTER,GLES30.GL_LINEAR);
             GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D,//设置MAG采样方式
@@ -123,7 +129,7 @@ class MySurfaceView extends GLSurfaceView
                             GLES30.GL_FRAMEBUFFER,
                             GLES30.GL_COLOR_ATTACHMENT0,	//颜色缓冲附件
                             GLES30.GL_TEXTURE_2D,
-                            textureId, 						//纹理id
+                            mTextureId, 						//纹理id
                             0								//层次
                     );
             GLES30.glFramebufferRenderbuffer	//设置自定义帧缓冲的深度缓冲附件
@@ -135,14 +141,21 @@ class MySurfaceView extends GLSurfaceView
                     );
         }
 
+
         public void generateTextImage()//通过绘制产生纹理
         {
             //设置视窗大小及位置
             GLES30.glViewport(0, 0, GEN_TEX_WIDTH, GEN_TEX_HEIGHT);
             //绑定帧缓冲id
-            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, frameBufferId);
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBufferId);
             //清除深度缓冲与颜色缓冲
-            GLES30.glClear( GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_COLOR_BUFFER_BIT);
+            if (!mFrameBufferClean && !mFrameBufferCleanOnce) { //实现渲染画面叠加
+                GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_COLOR_BUFFER_BIT);
+                mFrameBufferCleanOnce = true;
+            }
+            if (mFrameBufferClean) {
+                GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_COLOR_BUFFER_BIT);
+            }
             //设置透视投影
             MatrixState.setProjectFrustum(-ratio, ratio, -1, 1, 2, 100);
             //调用此方法产生摄像机9参数位置矩阵
@@ -172,16 +185,19 @@ class MySurfaceView extends GLSurfaceView
             //调用此方法产生摄像机9参数位置矩阵
             MatrixState.setCamera(0,0,3,0f,0f,0f,0f,1.0f,0.0f);
             MatrixState.pushMatrix();
-            tr.drawSelf(textureId);//绘制纹理矩形
+            MatrixState.rotate(30, 0, 1, 0);
+            tr.drawSelf(mTextureId);//绘制纹理矩形
             MatrixState.popMatrix();
         }
 
+        @Override
         public void onDrawFrame(GL10 gl)
         {
             generateTextImage();//通过绘制产生矩形纹理
             drawShadowTexture();//绘制矩形纹理
         }
 
+        @Override
         public void onSurfaceChanged(GL10 gl, int width, int height)
         {
             SCREEN_WIDTH=width;
@@ -192,6 +208,7 @@ class MySurfaceView extends GLSurfaceView
             tr=new TextureRect(MySurfaceView.this,ratio);//创建矩形绘制对象
         }
 
+        @Override
         public void onSurfaceCreated(GL10 gl, EGLConfig config)
         {
             //设置屏幕背景色RGBA
