@@ -18,6 +18,7 @@ import android.graphics.BitmapFactory;
 import com.example.learnopengl.R;
 
 @SuppressLint("NewApi")
+//可用于渲染到GPU内部创建的纹理
 class MySurfaceView extends GLSurfaceView
 {
     private final float TOUCH_SCALE_FACTOR = 180.0f/320;//角度缩放比例
