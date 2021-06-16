@@ -12,9 +12,12 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
     private float mRatio;
     private GLObject mRenderLight;
     private GLFragEffectSea mRenderSea;
+    private GLFragEffectCircle mFragCircle;
     private GLCircle mCircle;
     private GLLine mLine;
     private GLImage mImage;
+    private GLFragEffectWave mWave;
+    private GLFrameBufferEffect1 mBef1;
     private int mBaseProgramPointer;
 
     public void initEffectLayer(int glBaseProgramPointer, int windowWidth, int windowHeight, Context context) {
@@ -26,20 +29,27 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
         mRenderSea = new GLFragEffectSea(mBaseProgramPointer,-1f, -mRatio, 0f, 2, mRatio * 2, windowWidth, windowHeight, context);
         mRenderLight = new GLFragEffectLightPot(mBaseProgramPointer, -1f, -mRatio, 0f, 2, mRatio * 2, windowWidth, windowHeight, context);
         mCircle = new GLCircle(mBaseProgramPointer, 1f, 0xFFFF0000, 0xFF0000FF);
+        mFragCircle = new GLFragEffectCircle(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
         mLine = new GLLine(mBaseProgramPointer);
         mLine.addPoint(-1, -1, 0xFFFF0000);
         mLine.addPoint(1, 1, 0xFF0000FF);
         mImage = new GLImage(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, BitmapFactory.decodeResource(context.getResources(), R.drawable.test_pic), 1f);
+        mWave = new GLFragEffectWave(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
+        mBef1 = new GLFrameBufferEffect1(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
     }
 
     /**按图层顺序渲染**/
     @Override
     public void drawTo(float[] cameraMatrix, float[] projMatrix) {
 //        mRenderSea.drawTo(cameraMatrix, projMatrix);
-        mImage.drawTo(cameraMatrix, projMatrix);
-        mCircle.drawTo(cameraMatrix, projMatrix);
+//        mImage.drawTo(cameraMatrix, projMatrix);
+//        mCircle.drawTo(cameraMatrix, projMatrix);
+//        mBef1.drawTo(cameraMatrix, projMatrix);
         mRenderLight.drawTo(cameraMatrix, projMatrix);
-        mLine.drawTo(cameraMatrix, projMatrix);
+
+//        mLine.drawTo(cameraMatrix, projMatrix);
+//        mFragCircle.drawTo(cameraMatrix, projMatrix);
+//        mWave.drawTo(cameraMatrix, projMatrix);
     }
 
     @Override

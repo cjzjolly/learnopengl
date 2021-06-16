@@ -87,9 +87,9 @@ class MySurfaceView extends GLSurfaceView
             mFrameBufferId =tia[0];//将帧缓冲id记录到成员变量中
             //绑定帧缓冲id
             GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBufferId);
-
-            GLES30.glGenRenderbuffers(1, tia, 0);//产生一个渲染缓冲id
-            renderDepthBufferId=tia[0];//将渲染缓冲id记录到成员变量中
+            int renderBufferPointerArray[] = new int[1];
+            GLES30.glGenRenderbuffers(1, renderBufferPointerArray, 0);//产生一个渲染缓冲id
+            renderDepthBufferId=renderBufferPointerArray[0];//将渲染缓冲id记录到成员变量中
             //绑定指定id的渲染缓冲
             GLES30.glBindRenderbuffer(GLES30.GL_RENDERBUFFER, renderDepthBufferId);
             //为渲染缓冲初始化存储
