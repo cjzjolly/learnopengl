@@ -186,7 +186,6 @@ class MySurfaceView extends GLSurfaceView
             //调用此方法产生摄像机9参数位置矩阵
             MatrixState.setCamera(0,0,3,0f,0f,0f,0f,1.0f,0.0f);
             MatrixState.pushMatrix();
-            MatrixState.rotate(30, 0, 1, 0);
             tr.drawSelf(mTextureId);//绘制纹理矩形
             MatrixState.popMatrix();
         }
