@@ -1,7 +1,9 @@
 package com.cjztest.glShaderEffect;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.opengl.GLES30;
+import android.opengl.GLUtils;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
@@ -40,7 +42,7 @@ public class GLFragEffectTwirlImgEffect extends GLLine {
     private int mResoulutionPointer;
     private int mFrameCount = 0;
 
-    public GLFragEffectTwirlImgEffect(int baseProgramPointer, float x, float y, float z, float w, float h, int windowW, int windowH, Context context) {
+    public GLFragEffectTwirlImgEffect(int baseProgramPointer, float x, float y, float z, float w, float h, int windowW, int windowH, Context context, Bitmap bitmap) {
         super(baseProgramPointer);
         this.mX = x;
         this.mY = y;
@@ -67,7 +69,7 @@ public class GLFragEffectTwirlImgEffect extends GLLine {
         mTexCoorBuffer = cbb.asFloatBuffer();//转换为Float型缓冲
         mTexCoorBuffer.put(texCoor);//向缓冲区中放入顶点纹理数据
         mTexCoorBuffer.position(0);//设置缓冲区起始位置
-        startBindTexture();
+        startBindTexture(bitmap);
         rotate(180, 0, 0, 1);
     }
 
@@ -93,7 +95,7 @@ public class GLFragEffectTwirlImgEffect extends GLLine {
         }
     }
 
-    private void startBindTexture() {
+    private void startBindTexture(Bitmap bitmap) {
         //特殊纹理，需要专门加载其他程序:
         String fragShaderScript = ShaderUtil.loadFromAssetsFile("fragColorEffect1/fragShaderTwirl.shader", mContext.getResources());
         String vertexShaderScript = ShaderUtil.loadFromAssetsFile("fragColorEffect1/vertShader.shader", mContext.getResources());
@@ -137,6 +139,21 @@ public class GLFragEffectTwirlImgEffect extends GLLine {
         mFrameCountPointer = GLES30.glGetUniformLocation(mSeaProgram, "frame");
         //设置分辨率指针，告诉gl脚本现在的分辨率
         mResoulutionPointer = GLES30.glGetUniformLocation(mSeaProgram, "resolution");
+
+        while(mMapIndexToTextureID.get(mGenTextureId) != null) {//顺序找到空缺的id
+            mGenTextureId++;
+        }
+        GLES30.glGenTextures(1, new int[] {mGenTextureId}, 0); //只要值不重复即可
+        //绑定处理
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenTextureId);
+        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_NEAREST);
+        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
+        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
+        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
+        //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mBmpW, mBmpW, 0, GL_RGBA, GL_UNSIGNED_BYTE, 4);
+        GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, bitmap, 0);
+        bitmap.recycle(); //图片已送入显存，所以可以从内存中释放了
+        mMapIndexToTextureID.put(mGenTextureId, 1); //使用该id作为纹理索引指针
     }
 
     @Override
@@ -166,8 +183,8 @@ public class GLFragEffectTwirlImgEffect extends GLLine {
             GLES30.glEnableVertexAttribArray(mObjectPositionPointer); //启用顶点属性
             GLES30.glEnableVertexAttribArray(mObjectVertColorArrayPointer);  //启用颜色属性
             GLES30.glEnableVertexAttribArray(mVTexCoordPointer);  //启用纹理采样定位坐标
-//            GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
-//            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenTextureId);
+            GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenTextureId);
             GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, mPointBufferPos / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
             GLES30.glDisableVertexAttribArray(mObjectPositionPointer);
             GLES30.glDisableVertexAttribArray(mObjectVertColorArrayPointer);
