@@ -16,6 +16,7 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
     private GLCircle mCircle;
     private GLLine mLine;
     private GLImage mImage;
+    private GLFragEffectTwirlImgEffect mTw;
     private GLFragEffectWave mWave;
     private GLFrameBufferEffect1 mBef1;
     private int mBaseProgramPointer;
@@ -34,6 +35,7 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
         mLine.addPoint(-1, -1, 0xFFFF0000);
         mLine.addPoint(1, 1, 0xFF0000FF);
         mImage = new GLImage(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, BitmapFactory.decodeResource(context.getResources(), R.drawable.test_pic), 1f);
+        mTw = new GLFragEffectTwirlImgEffect(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context, BitmapFactory.decodeResource(context.getResources(), R.drawable.test_pic));
         mWave = new GLFragEffectWave(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
         mBef1 = new GLFrameBufferEffect1(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
     }
@@ -46,6 +48,7 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
 //        mCircle.drawTo(cameraMatrix, projMatrix);
 //        mBef1.drawTo(cameraMatrix, projMatrix);
         mRenderLight.drawTo(cameraMatrix, projMatrix);
+//        mTw.drawTo(cameraMatrix, projMatrix);
 
 //        mLine.drawTo(cameraMatrix, projMatrix);
 //        mFragCircle.drawTo(cameraMatrix, projMatrix);

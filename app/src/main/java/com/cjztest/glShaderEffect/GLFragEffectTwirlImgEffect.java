@@ -173,7 +173,7 @@ public class GLFragEffectTwirlImgEffect extends GLLine {
             GLES30.glUniform1f(mFrameCountPointer, (float) (mFrameCount++));
             mPointBuf.position(0);
             mColorBuf.position(0);
-//            GLES30.glUniform1i(GLES30.glGetUniformLocation(programID, "sTexture"), 0); //获取纹理属性的指针
+            GLES30.glUniform1i(GLES30.glGetUniformLocation(mSeaProgram, "sTexture"), 0); //获取纹理属性的指针
             //将顶点位置数据送入渲染管线
             GLES30.glVertexAttribPointer(mObjectPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mPointBuf); //三维向量，size为2
             //将顶点颜色数据送入渲染管线
@@ -198,6 +198,8 @@ public class GLFragEffectTwirlImgEffect extends GLLine {
         if (!mIsDestroyed) {
             //去除特殊shader程序
             destroyShader(mSeaProgram, mSeaVertexShaderPointer, mSeaFragShaderPointer);
+            GLES30.glDeleteTextures(1, new int[] {mGenTextureId}, 0); //销毁纹理,gen和delete要成对出现
+            mMapIndexToTextureID.put(mGenTextureId, null); //让该id可以复用
             mContext = null;
         }
         mIsDestroyed = true;
