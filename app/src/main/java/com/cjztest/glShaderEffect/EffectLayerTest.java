@@ -2,6 +2,7 @@ package com.cjztest.glShaderEffect;
 
 import android.content.Context;
 import android.graphics.BitmapFactory;
+import android.view.MotionEvent;
 
 import com.example.learnopengl.R;
 
@@ -17,6 +18,7 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
     private GLLine mLine;
     private GLImage mImage;
     private GLFragEffectTwirlImgEffect mTw;
+    private GLFrameBufferEffectDrawCircle mFBEDC;
     private GLFragEffectWave mWave;
     private GLFrameBufferEffect1 mBef1;
     private int mBaseProgramPointer;
@@ -36,6 +38,7 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
         mLine.addPoint(1, 1, 0xFF0000FF);
         mImage = new GLImage(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, BitmapFactory.decodeResource(context.getResources(), R.drawable.test_pic), 1f);
         mTw = new GLFragEffectTwirlImgEffect(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context, BitmapFactory.decodeResource(context.getResources(), R.drawable.test_pic));
+        mFBEDC = new GLFrameBufferEffectDrawCircle(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context, BitmapFactory.decodeResource(context.getResources(), R.drawable.test_pic_second));
         mWave = new GLFragEffectWave(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
         mBef1 = new GLFrameBufferEffect1(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
     }
@@ -47,7 +50,7 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
 //        mImage.drawTo(cameraMatrix, projMatrix);
 //        mCircle.drawTo(cameraMatrix, projMatrix);
 //        mBef1.drawTo(cameraMatrix, projMatrix);
-        mRenderLight.drawTo(cameraMatrix, projMatrix);
+        mFBEDC.drawTo(cameraMatrix, projMatrix);
 //        mTw.drawTo(cameraMatrix, projMatrix);
 
 //        mLine.drawTo(cameraMatrix, projMatrix);
@@ -58,5 +61,10 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
     @Override
     public void onSurfaceChanged(int glBaseProgramPointer, int windowWidth, int windowHeight, Context context) {
         initEffectLayer(glBaseProgramPointer, windowWidth, windowHeight, context);
+    }
+
+    @Override
+    public void onTouch(MotionEvent event) {
+        mFBEDC.onTouch(event);
     }
 }

@@ -89,7 +89,7 @@ public class GLLine {
         }
     }
 
-    public void drawTo(int positionPointer, int colorPointer) { //GLES30中已经有主线程创建的EGL context，直接用就好
+    public void drawTo(int positionPointer, int colorPointer) { //安卓的GLES30类中已经有主线程创建的EGL context，直接用就好
         if (mPointBuf != null && mColorBuf != null) {
             mPointBuf.position(0);
             mColorBuf.position(0);

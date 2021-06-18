@@ -3,6 +3,7 @@ package com.cjztest.glShaderEffect;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 
 public class PanelView extends GLSurfaceView {
 
@@ -27,5 +28,11 @@ public class PanelView extends GLSurfaceView {
 
     public GLRenderer getRender() {
         return mRender;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        mRender.onTouch(event);
+        return true;
     }
 }

@@ -60,8 +60,8 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     //初始化着色器的initShader方法
     public void initShader() {
         String vertexShaderScript = "#version 300 es\n" +
-                "uniform mat4 uMVPMatrix; //总变换矩阵\n" +
-                "in vec3 aPosition;  //顶点位置\n" +
+                "uniform mat4 uMVPMatrix; //总变换矩阵（场景的缩放、旋转、平移）\n" +
+                "in vec3 aPosition;  //物体顶点位置\n" +
                 "in vec4 aColor;    //顶点颜色\n" +
                 "out vec4 aaColor;  //用于传递给片元着色器的变量\n" +
                 "void main()\n" +

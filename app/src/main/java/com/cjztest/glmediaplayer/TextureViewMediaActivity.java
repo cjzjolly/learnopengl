@@ -17,7 +17,7 @@ public class TextureViewMediaActivity extends Activity {
         super.onCreate(savedInstanceState);
         glView = new GLSurfaceView(this);
         glView.setEGLContextClientVersion(2);
-        glView.setRenderer(new GLVideoRendererDouYinEffect1(this));//设置renderer
+        glView.setRenderer(new GLVideoRendererFadeInFadeOut(this));//设置renderer
 
         setContentView(glView);
 

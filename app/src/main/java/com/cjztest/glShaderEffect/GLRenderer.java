@@ -5,6 +5,7 @@ import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
+import android.view.MotionEvent;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -43,6 +44,7 @@ public class GLRenderer implements GLSurfaceView.Renderer {
     public interface onDrawListener {
         void drawTo(float[] cameraMatrix, float[] projMatrix);
         void onSurfaceChanged(int glBaseProgramPointer, int windowWidth, int windowHeight, Context context);
+        void onTouch(MotionEvent event);
     }
     private onDrawListener mOndrawListener; //绘制回调
 
@@ -57,6 +59,12 @@ public class GLRenderer implements GLSurfaceView.Renderer {
 
     public void setOndrawListener(onDrawListener ondrawListener) {
         this.mOndrawListener = ondrawListener;
+    }
+
+    public void onTouch(MotionEvent event) {
+        if (mOndrawListener != null) {
+            mOndrawListener.onTouch(event);
+        }
     }
 
     //初始化着色器的initShader方法
