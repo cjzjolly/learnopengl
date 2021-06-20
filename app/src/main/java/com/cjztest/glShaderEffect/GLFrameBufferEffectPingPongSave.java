@@ -190,8 +190,6 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
         //生成framebuffer
         mFrameBufferPointerArray = new int[frameBufferCount];
         GLES30.glGenFramebuffers(mFrameBufferPointerArray.length, mFrameBufferPointerArray, 0);
-            //绑定帧缓冲:
-        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBufferPointerArray[0]);
 
         //生成渲染缓冲buffer
         mRenderBufferPointerArray = new int[frameBufferCount];
@@ -203,7 +201,7 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
 
         //遍历framebuffer并初始化
         for (int i = 0; i < frameBufferCount; i++) {
-            //遍历两个framebuffer分别初始化
+            //绑定帧缓冲，遍历两个framebuffer分别初始化
             GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBufferPointerArray[i]);
             //绑定缓冲pointer
             GLES30.glBindRenderbuffer(GLES30.GL_RENDERBUFFER, mRenderBufferPointerArray[i]);
