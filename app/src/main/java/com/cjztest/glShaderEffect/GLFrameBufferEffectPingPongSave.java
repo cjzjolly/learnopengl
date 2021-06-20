@@ -62,6 +62,17 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
     private int[] mFrameBufferTexturePointerArray;
     private int[] mRenderBufferPointerArray;
 
+    /**PS工具选择**/
+    public enum PSFunciton {
+        NONE,
+        PS_TWIRL_CW, //旋转形变
+        PS_TWIRL_CCW, //旋转形变
+        PS_BE_BIGGER, //膨胀形变
+        PS_BE_SMALLER, //膨胀形变
+        PS_SQUASH, //挤压形变
+    }
+    private PSFunciton mCurrentPSFuntion = PSFunciton.NONE;
+
 
     public GLFrameBufferEffectPingPongSave(int baseProgramPointer, float x, float y, float z, float w, float h, int windowW, int windowH, Context context, Bitmap bitmap) {
         super(baseProgramPointer);
@@ -316,14 +327,34 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
                     case MotionEvent.ACTION_DOWN:
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, 2); //选择各种绘制处理函数
+                        //触摸移动事件，根据用户选择的效果告诉片元shader用哪种采样方式
+                        switch (mCurrentPSFuntion) {
+                            case PS_TWIRL_CW:
+                                GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, 2); //选择各种绘制处理函数
+                                break;
+                            case PS_TWIRL_CCW:
+                                GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, 3); //选择各种绘制处理函数
+                                break;
+                            case PS_BE_BIGGER:
+                                GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, 4); //选择各种绘制处理函数
+                                break;
+                            case PS_BE_SMALLER:
+                                GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, 5); //选择各种绘制处理函数
+                                break;
+                            case PS_SQUASH:
+                                GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, 6); //选择各种绘制处理函数
+                                break;
+                            case NONE:
+                                break;
+                        }
                         break;
                     case MotionEvent.ACTION_UP:
                         GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, -1); //什么都不绘制，保留痕迹
                         break;
                 }
+                //传入触摸坐标
                 GLES30.glUniform2fv(mGLFrameTargetXYPointer, 1, new float[]{mEventX, mEventY}, 0);
-                GLES30.glUniform1f(mGLFrameEffectRPointer, 0.1f); //设置作用半径
+                GLES30.glUniform1f(mGLFrameEffectRPointer, 0.2f); //设置作用半径
             }
         }
         //绑会系统默认framebuffer，否则会显示不出东西
@@ -421,5 +452,13 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
 
     public int getAlpha() {
         return mAlpha;
+    }
+
+    public void setPSFunciton(PSFunciton psFunciton) {
+        this.mCurrentPSFuntion = psFunciton;
+    }
+
+    public PSFunciton getPSFunciton() {
+        return mCurrentPSFuntion;
     }
 }
