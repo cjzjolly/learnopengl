@@ -28,7 +28,7 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
     private Context mContext;
 
     FloatBuffer mTexCoorBuffer;//顶点纹理坐标数据缓冲
-//    private int mGenTextureId = 0;
+//    private int mGenImageTextureId = 0;
     private boolean mIsDestroyed = false;
     private int mAlpha;
     private int mWaveFragShaderPointer;
@@ -41,14 +41,8 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
     private int mFrameCountPointer;
     private int mResoulutionPointer;
     private int mFrameCount = 0;
-    private int mFrameBufferPointer;
-    private int mFrameBufferPointer2;
-    private int mRenderDepthBufferPointer;
-    private int mRenderDepthBufferPointer2;
     private int mFrameBufferWidth;
     private int mFrameBufferHeight;
-    private int mFrameBufferTexturePointer;
-    private int mFrameBufferTexturePointer2;
     private int mGLFrameEffectRPointer;
     private int mGLFrameTargetXYPointer;
 
@@ -58,12 +52,15 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
     private boolean mFrameBufferCleanOnce = false;
 
     private static Map<Integer, Integer> mMapIndexToTextureID = new HashMap<>(); //(纹理id，纹理数)
-    private int mGenTextureId = 0;
+    private int mGenImageTextureId = 0;
     private int mGLFrameBufferProgramFunChoicePointer;
     private int mGLFrameObjectPositionPointer;
     private float mEventX;
     private float mEventY;
     private int mCurrentAction;
+    private int[] mFrameBufferPointerArray;
+    private int[] mFrameBufferTexturePointerArray;
+    private int[] mRenderBufferPointerArray;
 
 
     public GLFrameBufferEffectPingPongSave(int baseProgramPointer, float x, float y, float z, float w, float h, int windowW, int windowH, Context context, Bitmap bitmap) {
@@ -79,16 +76,6 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
         this.mFrameBufferHeight = windowH;
         this.mContext = context;
         initVertxAndAlpha(0xFF);
-//        float texCoor[] = new float[]   //纹理内采样坐标,类似于canvas坐标 //这东西有问题，导致两个framebuffer的画面互相取纹理时互为颠倒
-//                {
-//                        0, 1,
-//                        0, 0,
-//                        1, 0,
-//
-//                        1, 0,
-//                        1, 1,
-//                        0, 1,
-//                };
         float texCoor[] = new float[]   //纹理内采样坐标,类似于canvas坐标 //这东西有问题，导致两个framebuffer的画面互相取纹理时互为颠倒
                 {
                         1f, 0f,
@@ -103,20 +90,12 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
         mTexCoorBuffer.put(texCoor);//向缓冲区中放入顶点纹理数据
         mTexCoorBuffer.position(0);//设置缓冲区起始位置
         startBindTexture(bitmap);
-        createFrameBuffer();
-        createFrameBuffer2();
-//        rotate(180, 0, 0, 1);
+        createDoubleFrameBuffer();
     }
 
     private void initVertxAndAlpha(int alpha) {
         this.mAlpha = alpha;
         int colorJustForAlpha = (0x00FFFFFF | (alpha << 24));
-//        addPoint(mX, mY, mZ, colorJustForAlpha);
-//        addPoint(mX, mY + mHeight, mZ, colorJustForAlpha);
-//        addPoint(mX + mWidth, mY + mHeight, mZ, colorJustForAlpha);
-//        addPoint(mX + mWidth, mY + mHeight, mZ, colorJustForAlpha);
-//        addPoint(mX + mWidth, mY, mZ, colorJustForAlpha);
-//        addPoint(mX, mY, mZ, colorJustForAlpha);
         addPoint(mX + mWidth, mY, mZ, colorJustForAlpha);
         addPoint(mX, mY, mZ, colorJustForAlpha);
         addPoint(mX + mWidth, mY + mHeight, mZ, colorJustForAlpha);
@@ -185,12 +164,12 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
         //设置分辨率指针，告诉gl脚本现在的分辨率
         mResoulutionPointer = GLES30.glGetUniformLocation(mFrameBufferDrawProgram, "resolution");
         //送纹理进显存
-        while(mMapIndexToTextureID.get(mGenTextureId) != null) {//顺序找到空缺的id
-            mGenTextureId++;
+        while(mMapIndexToTextureID.get(mGenImageTextureId) != null) {//顺序找到空缺的id
+            mGenImageTextureId++;
         }
-        GLES30.glGenTextures(1, new int[] {mGenTextureId}, 0); //只要值不重复即可
+        GLES30.glGenTextures(1, new int[] {mGenImageTextureId}, 0); //只要值不重复即可
         //绑定处理
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenTextureId);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenImageTextureId);
         GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_NEAREST);
         GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
         GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
@@ -198,150 +177,78 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
         //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mBmpW, mBmpW, 0, GL_RGBA, GL_UNSIGNED_BYTE, 4);
         GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, bitmap, 0);
         bitmap.recycle(); //图片已送入显存，所以可以从内存中释放了
-        mMapIndexToTextureID.put(mGenTextureId, 1); //使用该id作为纹理索引指针
+        mMapIndexToTextureID.put(mGenImageTextureId, 1); //使用该id作为纹理索引指针
     }
 
 
     /**
-     * 创建一个framebuffer作为每次渲染结果的叠加专用纹理
+     * 创建2个framebuffer作为每次渲染结果的叠加专用纹理
      **/
-    private void createFrameBuffer() {
-        int bufferPointerArray[] = new int[1];
-        GLES30.glGenFramebuffers(1, bufferPointerArray, 0);
-        //取出已赋值的frameBuffer指针
-        mFrameBufferPointer = bufferPointerArray[0];
-        //绑定帧缓冲:
-        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBufferPointer);
+    private void createDoubleFrameBuffer() {
+        int frameBufferCount = 2;
 
-        //渲染缓冲buffer
-        int renderBufferPointerArray[] = new int[1];
-        GLES30.glGenRenderbuffers(1, renderBufferPointerArray, 0);
-        mRenderDepthBufferPointer = renderBufferPointerArray[0];
-        //绑定缓冲pointer
-        GLES30.glBindRenderbuffer(GLES30.GL_RENDERBUFFER, mRenderDepthBufferPointer);
-        //为渲染缓冲初始化存储，分配显存
-        GLES30.glRenderbufferStorage(GLES30.GL_RENDERBUFFER,
-                GLES30.GL_DEPTH_COMPONENT16, mFrameBufferWidth, mFrameBufferHeight); //设置framebuffer的长宽
+        //生成framebuffer
+        mFrameBufferPointerArray = new int[frameBufferCount];
+        GLES30.glGenFramebuffers(mFrameBufferPointerArray.length, mFrameBufferPointerArray, 0);
+            //绑定帧缓冲:
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBufferPointerArray[0]);
 
-        //
-        int texturePointerArray[] = new int[1];
-        GLES30.glGenTextures(1, texturePointerArray, 0);
-        mFrameBufferTexturePointer = texturePointerArray[0];
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointer); //绑定纹理Pointer
+        //生成渲染缓冲buffer
+        mRenderBufferPointerArray = new int[frameBufferCount];
+        GLES30.glGenRenderbuffers(mRenderBufferPointerArray.length, mRenderBufferPointerArray, 0);
 
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D,//设置MIN采样方式
-                GLES30.GL_TEXTURE_MIN_FILTER,GLES30.GL_LINEAR);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D,//设置MAG采样方式
-                GLES30.GL_TEXTURE_MAG_FILTER,GLES30.GL_LINEAR);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D,//设置S轴拉伸方式
-                GLES30.GL_TEXTURE_WRAP_S,GLES30.GL_CLAMP_TO_EDGE);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D,//设置T轴拉伸方式
-                GLES30.GL_TEXTURE_WRAP_T,GLES30.GL_CLAMP_TO_EDGE);
-        GLES30.glTexImage2D//设置颜色附件纹理图的格式
-                (
-                        GLES30.GL_TEXTURE_2D,
-                        0,						//层次
-                        GLES30.GL_RGBA, 		//内部格式
-                        mFrameBufferWidth,			//宽度
-                        mFrameBufferHeight,			//高度
-                        0,						//边界宽度
-                        GLES30.GL_RGBA,			//格式
-                        GLES30.GL_UNSIGNED_BYTE,//每个像素数据格式
-                        null
-                );
-        GLES30.glFramebufferTexture2D		//设置自定义帧缓冲的颜色缓冲附件
-                (
-                        GLES30.GL_FRAMEBUFFER,
-                        GLES30.GL_COLOR_ATTACHMENT0,	//颜色缓冲附件
-                        GLES30.GL_TEXTURE_2D,
-                        mFrameBufferTexturePointer, 						//纹理id
-                        0								//层次
-                );
-        GLES30.glFramebufferRenderbuffer	//设置自定义帧缓冲的深度缓冲附件
-                (
-                        GLES30.GL_FRAMEBUFFER,
-                        GLES30.GL_DEPTH_ATTACHMENT,		//深度缓冲附件
-                        GLES30.GL_RENDERBUFFER,			//渲染缓冲
-                        mRenderDepthBufferPointer				//渲染深度缓冲id
-                );
-        //绑会系统默认framebuffer，否则会显示不出东西
+        //生成framebuffer纹理pointer
+        mFrameBufferTexturePointerArray = new int[frameBufferCount];
+        GLES30.glGenTextures(mFrameBufferTexturePointerArray.length, mFrameBufferTexturePointerArray, 0);
+
+        //遍历framebuffer并初始化
+        for (int i = 0; i < frameBufferCount; i++) {
+            //绑定缓冲pointer
+            GLES30.glBindRenderbuffer(GLES30.GL_RENDERBUFFER, mRenderBufferPointerArray[i]);
+            //为渲染缓冲初始化存储，分配显存
+            GLES30.glRenderbufferStorage(GLES30.GL_RENDERBUFFER,
+                    GLES30.GL_DEPTH_COMPONENT16, mFrameBufferWidth, mFrameBufferHeight); //设置framebuffer的长宽
+
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointerArray[i]); //绑定纹理Pointer
+
+            GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D,//设置MIN采样方式
+                    GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR);
+            GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D,//设置MAG采样方式
+                    GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
+            GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D,//设置S轴拉伸方式
+                    GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
+            GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D,//设置T轴拉伸方式
+                    GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
+            GLES30.glTexImage2D//设置颜色附件纹理图的格式
+                    (
+                            GLES30.GL_TEXTURE_2D,
+                            0,                        //层次
+                            GLES30.GL_RGBA,        //内部格式
+                            mFrameBufferWidth,            //宽度
+                            mFrameBufferHeight,            //高度
+                            0,                        //边界宽度
+                            GLES30.GL_RGBA,            //格式
+                            GLES30.GL_UNSIGNED_BYTE,//每个像素数据格式
+                            null
+                    );
+            GLES30.glFramebufferTexture2D        //设置自定义帧缓冲的颜色缓冲附件
+                    (
+                            GLES30.GL_FRAMEBUFFER,
+                            GLES30.GL_COLOR_ATTACHMENT0,    //颜色缓冲附件
+                            GLES30.GL_TEXTURE_2D,
+                            mFrameBufferTexturePointerArray[i],                        //纹理id
+                            0                                //层次
+                    );
+            GLES30.glFramebufferRenderbuffer    //设置自定义帧缓冲的深度缓冲附件
+                    (
+                            GLES30.GL_FRAMEBUFFER,
+                            GLES30.GL_DEPTH_ATTACHMENT,        //深度缓冲附件
+                            GLES30.GL_RENDERBUFFER,            //渲染缓冲
+                            mRenderBufferPointerArray[i]                //渲染深度缓冲id
+                    );
+        }
+        //绑回系统默认framebuffer，否则会显示不出东西
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);//绑定帧缓冲id
-    }
-
-    /**
-     * 创建一个framebuffer作为每次渲染结果的叠加专用纹理
-     **/
-    private void createFrameBuffer2() {
-        int bufferPointerArray[] = new int[1];
-        GLES30.glGenFramebuffers(1, bufferPointerArray, 0);
-        //取出已赋值的frameBuffer指针
-        mFrameBufferPointer2 = bufferPointerArray[0];
-        //绑定帧缓冲:
-        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBufferPointer2);
-
-        //渲染缓冲buffer
-        int renderBufferPointerArray[] = new int[1];
-        GLES30.glGenRenderbuffers(1, renderBufferPointerArray, 0);
-        mRenderDepthBufferPointer2 = renderBufferPointerArray[0];
-        //绑定缓冲pointer
-        GLES30.glBindRenderbuffer(GLES30.GL_RENDERBUFFER, mRenderDepthBufferPointer2);
-        //为渲染缓冲初始化存储，分配显存
-        GLES30.glRenderbufferStorage(GLES30.GL_RENDERBUFFER,
-                GLES30.GL_DEPTH_COMPONENT16, mFrameBufferWidth, mFrameBufferHeight); //设置framebuffer的长宽
-
-        //
-        int texturePointerArray[] = new int[1];
-        GLES30.glGenTextures(1, texturePointerArray, 0);
-        mFrameBufferTexturePointer2 = texturePointerArray[0];
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointer2); //绑定纹理Pointer
-
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D,//设置MIN采样方式
-                GLES30.GL_TEXTURE_MIN_FILTER,GLES30.GL_LINEAR);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D,//设置MAG采样方式
-                GLES30.GL_TEXTURE_MAG_FILTER,GLES30.GL_LINEAR);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D,//设置S轴拉伸方式
-                GLES30.GL_TEXTURE_WRAP_S,GLES30.GL_CLAMP_TO_EDGE);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D,//设置T轴拉伸方式
-                GLES30.GL_TEXTURE_WRAP_T,GLES30.GL_CLAMP_TO_EDGE);
-        GLES30.glTexImage2D//设置颜色附件纹理图的格式
-                (
-                        GLES30.GL_TEXTURE_2D,
-                        0,						//层次
-                        GLES30.GL_RGBA, 		//内部格式
-                        mFrameBufferWidth,			//宽度
-                        mFrameBufferHeight,			//高度
-                        0,						//边界宽度
-                        GLES30.GL_RGBA,			//格式
-                        GLES30.GL_UNSIGNED_BYTE,//每个像素数据格式
-                        null
-                );
-        GLES30.glFramebufferTexture2D		//设置自定义帧缓冲的颜色缓冲附件
-                (
-                        GLES30.GL_FRAMEBUFFER,
-                        GLES30.GL_COLOR_ATTACHMENT0,	//颜色缓冲附件
-                        GLES30.GL_TEXTURE_2D,
-                        mFrameBufferTexturePointer2, 						//纹理id
-                        0								//层次
-                );
-        GLES30.glFramebufferRenderbuffer	//设置自定义帧缓冲的深度缓冲附件
-                (
-                        GLES30.GL_FRAMEBUFFER,
-                        GLES30.GL_DEPTH_ATTACHMENT,		//深度缓冲附件
-                        GLES30.GL_RENDERBUFFER,			//渲染缓冲
-                        mRenderDepthBufferPointer2				//渲染深度缓冲id
-                );
-        //绑会系统默认framebuffer，否则会显示不出东西
-        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);//绑定帧缓冲id
-    }
-
-
-    private void destroyFrameBuffer() {
-        GLES30.glDeleteTextures(1, new int[] {mFrameBufferTexturePointer}, 0);
-        GLES30.glDeleteTextures(1, new int[] {mFrameBufferTexturePointer2}, 0);
-        GLES30.glDeleteRenderbuffers(1, new int[] {mRenderDepthBufferPointer}, 0);
-        GLES30.glDeleteRenderbuffers(1, new int[] {mRenderDepthBufferPointer2}, 0);
-        GLES30.glDeleteFramebuffers(1, new int[] {mFrameBufferPointer}, 0);
-        GLES30.glDeleteFramebuffers(1, new int[] {mFrameBufferPointer2}, 0);
     }
 
     /**绘制画面到framebuffer**/
@@ -354,9 +261,9 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
         GLES30.glViewport(0, 0, mFrameBufferWidth, mFrameBufferHeight);
         //绑定帧缓冲id
         if (mFrameCount % 2 == 0) {
-            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBufferPointer);
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBufferPointerArray[0]);
         } else {
-            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBufferPointer2);
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBufferPointerArray[1]);
         }
         //清除深度缓冲与颜色缓冲
         if (!mFrameBufferClean && !mFrameBufferCleanOnce) { //实现渲染画面叠加
@@ -389,14 +296,15 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
             GLES30.glEnableVertexAttribArray(mGLFrameObjectVertColorArrayPointer);  //启用颜色属性
             GLES30.glEnableVertexAttribArray(mGLFrameVTexCoordPointer);  //启用纹理采样定位坐标
             GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+            //交替切换framebuffer，互为绑定对方为纹理
             if (mFrameCount == 0) {
                 GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, 0); //选择各种绘制处理函数
-                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenTextureId);
+                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenImageTextureId);
             } else {
                 if (mFrameCount % 2 == 1) {
-                    GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointer);
+                    GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointerArray[0]);
                 } else {
-                    GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointer2);
+                    GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointerArray[1]);
                 }
             }
             GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, mPointBufferPos / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
@@ -417,7 +325,7 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
                 GLES30.glUniform2fv(mGLFrameTargetXYPointer, 1, new float[]{mEventX, mEventY}, 0);
                 GLES30.glUniform1f(mGLFrameEffectRPointer, 0.1f); //设置作用半径
             }
-            GLES30.glUniform1f(mFrameCountPointer, (float) (mFrameCount++));
+            GLES30.glUniform1i(mFrameCountPointer, mFrameCount++);
         }
         //绑会系统默认framebuffer，否则会显示不出东西
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);//绑定帧缓冲id
@@ -472,10 +380,11 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
 //            GLES30.glCullFace(GLES30.GL_FRONT);
             //<<<
             GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+            //切换纹理到当前正在绘制的framebuffer
             if (mFrameCount % 2 == 1) {
-                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointer);
+                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointerArray[0]);
             } else {
-                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointer2);
+                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointerArray[1]);
             }
             GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, mPointBufferPos / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
             GLES30.glDisableVertexAttribArray(mObjectPositionPointer);
@@ -485,13 +394,19 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
 //        super.drawTo(programID, positionPointer, colorPointer, cameraMatrix, projMatrix, muMVPMatrixPointer, glFunChoicePointer);
     }
 
+    /**销毁framebuffer**/
+    private void destroyFrameBuffer() {
+        GLES30.glDeleteTextures(mFrameBufferTexturePointerArray.length, mFrameBufferTexturePointerArray, 0);
+        GLES30.glDeleteRenderbuffers(mRenderBufferPointerArray.length, mRenderBufferPointerArray, 0);
+        GLES30.glDeleteFramebuffers(mFrameBufferPointerArray.length, mFrameBufferPointerArray, 0);
+    }
 
     public void destroy() {
         if (!mIsDestroyed) {
             destroyFrameBuffer();
             //去除特殊shader程序
             destroyShader(mFrameBufferDrawProgram, mWaveVertexShaderPointer, mWaveFragShaderPointer);
-            GLES30.glDeleteTextures(1, new int[] {mGenTextureId}, 0); //销毁纹理,gen和delete要成对出现
+            GLES30.glDeleteTextures(1, new int[] {mGenImageTextureId}, 0); //销毁纹理,gen和delete要成对出现
             mContext = null;
         }
         mIsDestroyed = true;

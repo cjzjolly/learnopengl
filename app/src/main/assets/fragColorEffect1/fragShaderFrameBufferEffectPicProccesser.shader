@@ -2,6 +2,7 @@
 precision highp float;
 uniform sampler2D sTexture;//纹理输入
 uniform int funChoice; //功能代码块选择
+uniform int frame;
 uniform float effectR; //作用半径
 uniform vec2 targetXY; //作用位置，使用纹理分辨率坐标
 uniform vec2 resolution;//纹理分辨率
