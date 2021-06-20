@@ -203,6 +203,8 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
 
         //遍历framebuffer并初始化
         for (int i = 0; i < frameBufferCount; i++) {
+            //遍历两个framebuffer分别初始化
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBufferPointerArray[i]);
             //绑定缓冲pointer
             GLES30.glBindRenderbuffer(GLES30.GL_RENDERBUFFER, mRenderBufferPointerArray[i]);
             //为渲染缓冲初始化存储，分配显存
@@ -316,7 +318,7 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
                     case MotionEvent.ACTION_DOWN:
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, 3); //选择各种绘制处理函数
+                        GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, 2); //选择各种绘制处理函数
                         break;
                     case MotionEvent.ACTION_UP:
                         GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, -1); //什么都不绘制，保留痕迹
@@ -325,7 +327,6 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
                 GLES30.glUniform2fv(mGLFrameTargetXYPointer, 1, new float[]{mEventX, mEventY}, 0);
                 GLES30.glUniform1f(mGLFrameEffectRPointer, 0.1f); //设置作用半径
             }
-            GLES30.glUniform1i(mFrameCountPointer, mFrameCount++);
         }
         //绑会系统默认framebuffer，否则会显示不出东西
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);//绑定帧缓冲id
@@ -392,6 +393,8 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
             GLES30.glDisableVertexAttribArray(mGLFrameVTexCoordPointer);
         }
 //        super.drawTo(programID, positionPointer, colorPointer, cameraMatrix, projMatrix, muMVPMatrixPointer, glFunChoicePointer);
+        GLES30.glUniform1i(mFrameCountPointer, mFrameCount++);
+
     }
 
     /**销毁framebuffer**/

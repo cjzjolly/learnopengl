@@ -1,7 +1,7 @@
 #version 300 es
 precision highp float;
 uniform sampler2D sTexture;//纹理输入
-uniform float frame;//第几帧
+uniform int frame;//第几帧
 uniform int funChoice; //功能代码块选择
 uniform float effectR; //作用半径
 uniform vec2 targetXY; //作用位置，使用纹理分辨率坐标
@@ -54,12 +54,10 @@ void main() {
             }
             break;
         case 2: //旋转形变， //todo 可是这里每次拿的都是纹理原样进行处理，如何才能做到将效果一直叠加呢
-            vec2 newST = twirl(texCoord, targetXYToOne, 0.15, 3.0);
-//            if (distance(targetXYToOne, texCoord) < effectR) {
-                color = texture(sTexture, newST);//采样纹理中对应坐标颜色，进行纹理渲染
-                color.a = color.a * fragObjectColor.a;//利用顶点透明度信息控制纹理透明度
-                fragColor = color;
-//            }
+            vec2 newST = twirl(texCoord, targetXYToOne, 0.15, 0.05);
+            color = texture(sTexture, newST);//采样纹理中对应坐标颜色，进行纹理渲染
+            color.a = color.a * fragObjectColor.a;//利用顶点透明度信息控制纹理透明度
+            fragColor = color;
             break;
         case 3: //膨胀:
             newST = inflate(texCoord, targetXYToOne, 0.15, 0.02);
