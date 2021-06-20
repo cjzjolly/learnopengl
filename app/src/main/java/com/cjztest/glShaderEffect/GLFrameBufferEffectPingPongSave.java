@@ -411,7 +411,7 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
             //<<<
             GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
             //切换纹理到当前正在绘制的framebuffer
-            if (mFrameCount % 2 == 1) {
+            if (mFrameCount % 2 == 1) { //todo 如果刷新实时性要求不高，可以只显示一个framebuffer，不然容易因为两者之间存在的微小差异产生震动感
                 GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointerArray[0]);
             } else {
                 GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointerArray[1]);
