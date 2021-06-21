@@ -3,10 +3,10 @@
 # value of 3.4.0 or lower.
 
 cmake_minimum_required(VERSION 3.4.1)
-project(zbar LANGUAGES C VERSION 2.0.2)
+#project(zbar LANGUAGES C VERSION 2.0.2)
+project(opengl_decoder)
 
-
-SET(zbar_sdk_dir ${CMAKE_SOURCE_DIR}/src/main/cpp/opengl_decoder)
+#SET(zbar_sdk_dir ${CMAKE_SOURCE_DIR}/src/main/cpp/opengl_decoder)
 message(AUTHOR_WARNING ${CMAKE_CURRENT_SOURCE_DIR})
 message(AUTHOR_WARNING ${opengl_decoder})
 
@@ -35,19 +35,24 @@ add_library( # Sets the name of the library.
 # you want to add. CMake verifies that the library exists before
 # completing its build.
 
-find_library( # Sets the name of the path variable.
-              log-lib
+find_library(log-lib log)
+find_library(android-lib android)
+find_library(EGL-lib EGL)
+find_library(GLESv2-lib GLESv2)
+find_library(OpenSLES-lib OpenSLES)
+find_library(dl-lib dl)
+find_library(z-lib z)
 
-              # Specifies the name of the NDK library that
-              # you want CMake to locate.
-              log )
-
-find_library( # Sets the name of the path variable.
-              android-lib
-
-              # Specifies the name of the NDK library that
-              # you want CMake to locate.
-              android )
+target_link_libraries(
+        opengl_decoder
+        ${log-lib}
+                ${android-lib}
+                ${EGL-lib}
+                ${GLESv2-lib}
+                ${OpenSLES-lib}
+                ${dl-lib}
+                ${z-lib}
+)
 
 
 #add_library(zbar_sdk SHARED IMPORTED )

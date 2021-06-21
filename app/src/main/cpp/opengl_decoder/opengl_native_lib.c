@@ -27,7 +27,7 @@ char *jstringToChar(JNIEnv *env, jstring jstr) {
     jclass clsstring = (*env)->FindClass(env, "java/lang/String");
     jstring strencode = (*env)->NewStringUTF(env, "GB2312");
     jmethodID mid = (*env)->GetMethodID(env, clsstring, "getBytes", "(Ljava/lang/String;)[B");
-    jbyteArray barr = (jbyteArray)(*env)->CallObjectMethod(env, jstr, mid, strencode);
+    jbyteArray barr = (jbyteArray) (*env)->CallObjectMethod(env, jstr, mid, strencode);
     jsize alen = (*env)->GetArrayLength(env, barr);
     jbyte *ba = (*env)->GetByteArrayElements(env, barr, JNI_FALSE);
     if (alen > 0) {
@@ -40,40 +40,38 @@ char *jstringToChar(JNIEnv *env, jstring jstr) {
 }
 
 ///*传入surface进行直接绘制的例子，传入颜色涂满整个surface */
-//JNIEXPORT void JNICALL Java_com_cjz_testSurfaceWithNativeGL_GLUtil_drawToSurface(
-//        JNIEnv * env, jobject activity, jobject surface, jint color)
-//{
-//ANativeWindow_Buffer nwBuffer;
-//
-//LOGI("ANativeWindow_fromSurface ");
-//ANativeWindow * mANativeWindow = ANativeWindow_fromSurface(env, surface);
-//
-//if (mANativeWindow == NULL) {
-//LOGE("ANativeWindow_fromSurface error");
-//return;
-//}
-//
-//LOGI("ANativeWindow_lock ");
-//if (0 != ANativeWindow_lock(mANativeWindow, &nwBuffer, 0)) {
-//LOGE("ANativeWindow_lock error");
-//return;
-//}
-//
-//LOGI("ANativeWindow_lock nwBuffer->format ");
-//if (nwBuffer.format == WINDOW_FORMAT_RGB_565) {
-//int y, x;
-//LOGI("nwBuffer->format == WINDOW_FORMAT_RGB_565");
-//memset(nwBuffer.bits, color << 8, sizeof(__uint16_t) * nwBuffer.height * nwBuffer.width);
-//} else if (nwBuffer.format == WINDOW_FORMAT_RGBA_8888) {
-//LOGI("nwBuffer->format == WINDOW_FORMAT_RGBA_8888 ");
-//memset(nwBuffer.bits, color, sizeof(__uint32_t) * nwBuffer.height * nwBuffer.width);
-//}
-//LOGI("ANativeWindow_unlockAndPost ");
-//if(0 !=ANativeWindow_unlockAndPost(mANativeWindow)){
-//LOGE("ANativeWindow_unlockAndPost error");
-//return;
-//}
-//
-//ANativeWindow_release(mANativeWindow);
-//LOGI("ANativeWindow_release ");
-//}
+JNIEXPORT void JNICALL Java_com_opengldecoder_jnibridge_JniBridge_drawToSurface(JNIEnv *env, jobject activity, jobject surface, jint color) {
+    ANativeWindow_Buffer nwBuffer;
+
+    LOGI("ANativeWindow_fromSurface ");
+    ANativeWindow *mANativeWindow = ANativeWindow_fromSurface(env, surface);
+
+    if (mANativeWindow == NULL) {
+        LOGE("ANativeWindow_fromSurface error");
+        return;
+    }
+
+    LOGI("ANativeWindow_lock ");
+    if (0 != ANativeWindow_lock(mANativeWindow, &nwBuffer, 0)) {
+        LOGE("ANativeWindow_lock error");
+        return;
+    }
+
+    LOGI("ANativeWindow_lock nwBuffer->format ");
+    if (nwBuffer.format == WINDOW_FORMAT_RGB_565) {
+        int y, x;
+        LOGI("nwBuffer->format == WINDOW_FORMAT_RGB_565");
+        memset(nwBuffer.bits, color << 8, sizeof(__uint16_t) * nwBuffer.height * nwBuffer.width);
+    } else if (nwBuffer.format == WINDOW_FORMAT_RGBA_8888) {
+        LOGI("nwBuffer->format == WINDOW_FORMAT_RGBA_8888 ");
+        memset(nwBuffer.bits, color, sizeof(__uint32_t) * nwBuffer.height * nwBuffer.width);
+    }
+    LOGI("ANativeWindow_unlockAndPost ");
+    if (0 != ANativeWindow_unlockAndPost(mANativeWindow)) {
+        LOGE("ANativeWindow_unlockAndPost error");
+        return;
+    }
+
+    ANativeWindow_release(mANativeWindow);
+    LOGI("ANativeWindow_release ");
+}
