@@ -27,6 +27,8 @@ add_library( # Sets the name of the library.
              # Associated headers in the same location as their source
              # file are automatically included.
              opengl_native_lib.c
+        decode_buffer.cpp
+        decode_buffer.h
              )
 
 # Searches for a specified prebuilt library and stores the path as a
