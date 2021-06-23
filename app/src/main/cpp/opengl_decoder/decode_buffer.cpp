@@ -7,6 +7,26 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <android/native_window.h>
-#include <ui/GraphicBuffer.h>
+//#include <ui/GraphicBuffer.h>
 #include <dlfcn.h>
 #include "decode_buffer.h"
+
+#include <string.h>
+#include <jni.h>
+
+#include "android/log.h"
+
+static const char *TAG = "nativeGL";
+#define LOGI(fmt, args...) __android_log_print(ANDROID_LOG_INFO,  TAG, fmt, ##args)
+#define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, TAG, fmt, ##args)
+#define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
+
+void DecodeBuffer::drawBuffer(char *data) {
+
+}
+
+extern "C" {
+    JNIEXPORT void JNICALL Java_com_opengldecoder_jnibridge_JniBridge_drawBuffer(JNIEnv *env, jobject activity) {
+
+    }
+}

@@ -6,8 +6,9 @@
 #define LEARNOPENGL_DECODE_BUFFER_H
 
 
-class decode_buffer {
-
+class DecodeBuffer {
+public:
+    void drawBuffer(char* data);
 };
 
 
