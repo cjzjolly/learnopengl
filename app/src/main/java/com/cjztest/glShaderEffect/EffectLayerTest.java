@@ -21,6 +21,7 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
     private GLFrameBufferEffectDrawCircle mFBEDC;
     private GLFragEffectWave mWave;
     private GLFrameBufferEffect1 mBef1;
+    private GLFrameBufferEffectPBODemo mPBODemo;
     private int mBaseProgramPointer;
 
     public void initEffectLayer(int glBaseProgramPointer, int windowWidth, int windowHeight, Context context) {
@@ -29,18 +30,19 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
         mBaseProgramPointer = glBaseProgramPointer;
         this.mRatio = (float) windowHeight / windowWidth;
         this.mContext = context;
-        mRenderSea = new GLFragEffectSea(mBaseProgramPointer,-1f, -mRatio, 0f, 2, mRatio * 2, windowWidth, windowHeight, context);
-        mRenderLight = new GLFragEffectLightPot(mBaseProgramPointer, -1f, -mRatio, 0f, 2, mRatio * 2, windowWidth, windowHeight, context);
-        mCircle = new GLCircle(mBaseProgramPointer, 1f, 0xFFFF0000, 0xFF0000FF);
-        mFragCircle = new GLFragEffectCircle(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
-        mLine = new GLLine(mBaseProgramPointer);
-        mLine.addPoint(-1, -1, 0xFFFF0000);
-        mLine.addPoint(1, 1, 0xFF0000FF);
-        mImage = new GLImage(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, BitmapFactory.decodeResource(context.getResources(), R.drawable.test_pic), 1f);
-        mTw = new GLFragEffectTwirlImgEffect(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context, BitmapFactory.decodeResource(context.getResources(), R.drawable.test_pic));
-        mFBEDC = new GLFrameBufferEffectDrawCircle(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context, BitmapFactory.decodeResource(context.getResources(), R.drawable.test_pic_second));
-        mWave = new GLFragEffectWave(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
-        mBef1 = new GLFrameBufferEffect1(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
+//        mRenderSea = new GLFragEffectSea(mBaseProgramPointer,-1f, -mRatio, 0f, 2, mRatio * 2, windowWidth, windowHeight, context);
+//        mRenderLight = new GLFragEffectLightPot(mBaseProgramPointer, -1f, -mRatio, 0f, 2, mRatio * 2, windowWidth, windowHeight, context);
+//        mCircle = new GLCircle(mBaseProgramPointer, 1f, 0xFFFF0000, 0xFF0000FF);
+//        mFragCircle = new GLFragEffectCircle(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
+//        mLine = new GLLine(mBaseProgramPointer);
+//        mLine.addPoint(-1, -1, 0xFFFF0000);
+//        mLine.addPoint(1, 1, 0xFF0000FF);
+//        mImage = new GLImage(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, BitmapFactory.decodeResource(context.getResources(), R.drawable.test_pic), 1f);
+//        mTw = new GLFragEffectTwirlImgEffect(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context, BitmapFactory.decodeResource(context.getResources(), R.drawable.test_pic));
+//        mFBEDC = new GLFrameBufferEffectDrawCircle(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context, BitmapFactory.decodeResource(context.getResources(), R.drawable.test_pic_second));
+//        mWave = new GLFragEffectWave(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
+//        mBef1 = new GLFrameBufferEffect1(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
+        mPBODemo = new GLFrameBufferEffectPBODemo(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context, 100, 100);
     }
 
     /**按图层顺序渲染**/
@@ -50,12 +52,13 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
 //        mImage.drawTo(cameraMatrix, projMatrix);
 //        mCircle.drawTo(cameraMatrix, projMatrix);
 //        mBef1.drawTo(cameraMatrix, projMatrix);
-        mFBEDC.drawTo(cameraMatrix, projMatrix);
+//        mFBEDC.drawTo(cameraMatrix, projMatrix);
 //        mTw.drawTo(cameraMatrix, projMatrix);
 
 //        mLine.drawTo(cameraMatrix, projMatrix);
 //        mFragCircle.drawTo(cameraMatrix, projMatrix);
 //        mWave.drawTo(cameraMatrix, projMatrix);
+        mPBODemo.drawTo(cameraMatrix, projMatrix);
     }
 
     @Override
@@ -65,6 +68,6 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
 
     @Override
     public void onTouch(MotionEvent event) {
-        mFBEDC.onTouch(event);
+//        mFBEDC.onTouch(event);
     }
 }
