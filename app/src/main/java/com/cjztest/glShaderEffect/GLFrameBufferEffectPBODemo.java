@@ -5,9 +5,11 @@ import android.graphics.Bitmap;
 import android.opengl.GLES30;
 import android.opengl.GLUtils;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,6 +45,7 @@ public class GLFrameBufferEffectPBODemo extends GLLine {
 
     private static Map<Integer, Integer> mMapIndexToTextureID = new HashMap<>(); //(纹理id，纹理数)
     private int mGenTextureId = 0;
+    private int mImgByteSize;
 
     public GLFrameBufferEffectPBODemo(int baseProgramPointer, float x, float y, float z, float w, float h, int windowW, int windowH, Context context, int imgW, int imgH) {
         super(baseProgramPointer);
@@ -114,15 +117,15 @@ public class GLFrameBufferEffectPBODemo extends GLLine {
      **/
     private void createPBO() {
         int FBOCount = 2;
-        int imgByteSize = mImgWidth * mImgHeight;
+        mImgByteSize = mImgWidth * mImgHeight * 4;
         mPixelBuffferPointerArray = new int[FBOCount];
         GLES30.glGenBuffers(FBOCount, mPixelBuffferPointerArray, 0);
 
         GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mPixelBuffferPointerArray[0]);
-        GLES30.glBufferData(GLES30.GL_PIXEL_UNPACK_BUFFER, imgByteSize,  null, GLES30.GL_STREAM_DRAW);
+        GLES30.glBufferData(GLES30.GL_PIXEL_UNPACK_BUFFER, mImgByteSize,  null, GLES30.GL_STREAM_DRAW);
 
         GLES30.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, mPixelBuffferPointerArray[1]);
-        GLES30.glBufferData(GLES30.GL_PIXEL_PACK_BUFFER, imgByteSize,  null, GLES30.GL_STREAM_DRAW);
+        GLES30.glBufferData(GLES30.GL_PIXEL_PACK_BUFFER, mImgByteSize,  null, GLES30.GL_STREAM_DRAW);
     }
 
     @Override
@@ -149,10 +152,25 @@ public class GLFrameBufferEffectPBODemo extends GLLine {
 
 
 //            https://zhuanlan.zhihu.com/p/115257287
+//            https://www.jianshu.com/p/1fa36461fc6f?utm_campaign=hugo&utm_medium=reader_share&utm_content=note&utm_source=qq
+            //调用 glTexSubImage2D 后立即返回，不影响 CPU 时钟周期
             GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenTextureId);
-            GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mPixelBuffferPointerArray[mFrameCount % 0]);
+            GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mPixelBuffferPointerArray[mFrameCount % 2]);
             GLES30.glTexSubImage2D(GLES30.GL_TEXTURE_2D, 0, 0, 0, mImgWidth, mImgHeight, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, null);
+            //更新图像数据，复制到 PBO 中
+            GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mPixelBuffferPointerArray[(mFrameCount + 1) % 2]);
+            GLES30.glBufferData(GLES30.GL_PIXEL_UNPACK_BUFFER, mImgByteSize, null, GLES30.GL_STREAM_DRAW);
+            Buffer buf = GLES30.glMapBufferRange(GLES30.GL_PIXEL_UNPACK_BUFFER, 0, mImgByteSize, GLES30.GL_MAP_WRITE_BIT | GLES30.GL_MAP_INVALIDATE_BUFFER_BIT);
+            ByteBuffer bytebuffer = ((ByteBuffer) buf).order(ByteOrder.nativeOrder());
+            bytebuffer.position(0);
+            byte pixels[] = new byte[mImgByteSize];
+            Arrays.fill(pixels, (byte) (255 & 0xFF));
+            bytebuffer.put(pixels);
+            bytebuffer.position(0);
+            //todo 填充像素
+            GLES30.glUnmapBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER);
+            GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, 0);
 
 
             GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, mPointBufferPos / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
