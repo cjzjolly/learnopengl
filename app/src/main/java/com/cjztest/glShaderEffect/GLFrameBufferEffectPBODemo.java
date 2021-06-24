@@ -4,11 +4,15 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.opengl.GLES30;
 import android.opengl.GLUtils;
+import android.os.Build;
+
+import androidx.annotation.RequiresApi;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -109,6 +113,8 @@ public class GLFrameBufferEffectPBODemo extends GLLine {
         GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
         GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
         //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mBmpW, mBmpW, 0, GL_RGBA, GL_UNSIGNED_BYTE, 4);
+        //创建一个占用指定空间的纹理，但暂时不复制数据进去，等PBO进行数据传输，取代glTexImage2D，利用DMA提高数据拷贝速度
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RGBA, mImgWidth, mImgHeight, 0, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, null);
         mMapIndexToTextureID.put(mGenTextureId, 1); //使用该id作为纹理索引指针
     }
 
@@ -128,6 +134,7 @@ public class GLFrameBufferEffectPBODemo extends GLLine {
         GLES30.glBufferData(GLES30.GL_PIXEL_PACK_BUFFER, mImgByteSize,  null, GLES30.GL_STREAM_DRAW);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Override
     public void drawTo(float[] cameraMatrix, float[] projMatrix) {
         if (mIsDestroyed) {
@@ -162,13 +169,23 @@ public class GLFrameBufferEffectPBODemo extends GLLine {
             GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mPixelBuffferPointerArray[(mFrameCount + 1) % 2]);
             GLES30.glBufferData(GLES30.GL_PIXEL_UNPACK_BUFFER, mImgByteSize, null, GLES30.GL_STREAM_DRAW);
             Buffer buf = GLES30.glMapBufferRange(GLES30.GL_PIXEL_UNPACK_BUFFER, 0, mImgByteSize, GLES30.GL_MAP_WRITE_BIT | GLES30.GL_MAP_INVALIDATE_BUFFER_BIT);
+            //填充像素
             ByteBuffer bytebuffer = ((ByteBuffer) buf).order(ByteOrder.nativeOrder());
             bytebuffer.position(0);
-            byte pixels[] = new byte[mImgByteSize];
-            Arrays.fill(pixels, (byte) (255 & 0xFF));
-            bytebuffer.put(pixels);
-            bytebuffer.position(0);
-            //todo 填充像素
+            if (mFrameCount % 2 == 0) { //白红互刷
+                byte pixels[] = new byte[mImgByteSize];
+                Arrays.fill(pixels, (byte) (255 & 0xFF));
+                bytebuffer.put(pixels);
+                bytebuffer.position(0);
+            } else {
+                IntBuffer intBuffer = bytebuffer.asIntBuffer();
+                int pixels[] = new int[mImgByteSize / 4];
+                for (int i = 0; i < pixels.length; i++) {
+                    pixels[i] = 0xFF0000FF;
+                }
+                intBuffer.put(pixels);
+                intBuffer.position(0);
+            }
             GLES30.glUnmapBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER);
             GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, 0);
 
