@@ -26,7 +26,9 @@ add_library( # Sets the name of the library.
              # Provides a relative path to your source file(s).
              # Associated headers in the same location as their source
              # file are automatically included.
-             opengl_native_lib.c
+#        matrixState.c
+#        matrix.c
+        opengl_native_lib.c
         decode_buffer.cpp
         decode_buffer.h
              )
@@ -54,6 +56,8 @@ target_link_libraries(
                 ${OpenSLES-lib}
                 ${dl-lib}
                 ${z-lib}
+        #数学库:
+        m
 )
 
 

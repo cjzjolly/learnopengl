@@ -8,10 +8,15 @@
 #include <string.h>
 #include <jni.h>
 
+#include <GLES3/gl3.h>
+#include <GLES3/gl3ext.h>
+
 #include "android/log.h"
 #include "android/bitmap.h"
 #include "android/native_window_jni.h"
 #include <sys/time.h>
+#include "matrixState.c"
+
 
 static const char *TAG = "nativeGL";
 #define LOGI(fmt, args...) __android_log_print(ANDROID_LOG_INFO,  TAG, fmt, ##args)
@@ -74,4 +79,28 @@ JNIEXPORT void JNICALL Java_com_opengldecoder_jnibridge_JniBridge_drawToSurface(
 
     ANativeWindow_release(mANativeWindow);
     LOGI("ANativeWindow_release ");
+}
+
+void setupGraphics(int w, int h, float *bgColor)//初始化函数
+{
+    glViewport(0, 0, w, h);//设置视口
+    float ratio = (float) w/h;//计算宽长比glViewport
+    setProjectFrustum(-ratio, ratio, -1, 1, 1, 10);//设置投影矩阵
+    setCamera
+            (0, 0, 2,
+             0, 0, 0,
+             0, 1, 0);//设置摄像机矩阵
+    setInitStack();//初始化变换矩阵
+    glClearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);//设置背景颜色
+    return;
+}
+
+/**安卓系统在有GLSurfaceview的情况下不需要进行EGL相关操作**/
+void androidNativeInitGL(int viewPortW, int viewPortH) {
+    float bgColor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    setupGraphics(viewPortW, viewPortH, bgColor);
+}
+
+JNIEXPORT void JNICALL Java_com_opengldecoder_jnibridge_JniBridge_nativeGLInit(JNIEnv *env, jobject activity, jint viewPortWidth, jint viewPortHeight) {
+    androidNativeInitGL(viewPortWidth, viewPortHeight);
 }
