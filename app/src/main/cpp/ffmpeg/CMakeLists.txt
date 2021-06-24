@@ -3,12 +3,11 @@
 # value of 3.4.0 or lower.
 
 cmake_minimum_required(VERSION 3.4.1)
-#project(zbar LANGUAGES C VERSION 2.0.2)
-project(ffmpeg)
+project(ffmpeg_caller)
 
 #SET(zbar_sdk_dir ${CMAKE_SOURCE_DIR}/src/main/cpp/ffmpeg)
 message(AUTHOR_WARNING ${CMAKE_CURRENT_SOURCE_DIR})
-message(AUTHOR_WARNING ${ffmpeg})
+message(AUTHOR_WARNING ${ffmpeg_caller})
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -17,24 +16,8 @@ message(AUTHOR_WARNING ${ffmpeg})
 
 #INCLUDE_DIRECTORIES("/lib")
 
-add_library(ffmpeg-lib
-        SHARED
-        IMPORTED)
-
-set_target_properties(ffmpeg-lib
-        PROPERTIES
-        IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/libavcodec-57.so
-        IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/libavdevice-57.so
-        IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/libavfilter-6.so
-        IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/libavformat-57.so
-        IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/libavutil-55.so
-        IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/libpostproc-54.so
-        IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/libswresample-2.so
-        IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/libswscale-4.so
-        )
-
 add_library( # Sets the name of the library.
-        ffmpeg
+        ffmpeg_caller
 
         # Sets the library as a shared library.
         SHARED
@@ -44,6 +27,55 @@ add_library( # Sets the name of the library.
         # file are automatically included.
         ffmpeg.c
         )
+
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/include)
+#添加lib，SHARED类型，是IMPORTED 引入的库
+add_library(libavcodec
+        SHARED
+        IMPORTED)
+#设置 库的属性   里面是名称 ，属性：引入地址把我们的真实地址填写进去
+set_target_properties(libavcodec
+        PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/lib/libavcodec-57.so
+        )
+
+add_library(avfilter
+        SHARED
+        IMPORTED)
+set_target_properties( avfilter
+        PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/lib/libavfilter-6.so)
+
+add_library( avformat
+        SHARED
+        IMPORTED)
+set_target_properties( avformat
+        PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/lib/libavformat-57.so)
+
+add_library( avutil
+        SHARED
+        IMPORTED)
+set_target_properties( avutil
+        PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/lib/libavutil-55.so)
+
+add_library( swresample
+        SHARED
+        IMPORTED)
+set_target_properties( swresample
+        PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/lib/libswresample-2.so)
+
+add_library( swscale
+        SHARED
+        IMPORTED)
+set_target_properties( swscale
+        PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/lib/libswscale-4.so)
+
+
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
@@ -60,7 +92,8 @@ find_library(dl-lib dl)
 find_library(z-lib z)
 
 target_link_libraries(
-        ffmpeg
+        ffmpeg_caller
+        libavcodec
         ${log-lib}
         ${android-lib}
         ${EGL-lib}

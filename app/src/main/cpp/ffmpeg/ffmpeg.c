@@ -7,7 +7,8 @@
 
 #include <string.h>
 #include <jni.h>
-
+//#include "arm64-v8a/include/libavcodec/avcodec.h"
+#include "arm64-v8a/include/libavcodec/avcodec.h"
 #include "android/log.h"
 
 
@@ -38,5 +39,5 @@ char *jstringToChar(JNIEnv *env, jstring jstr) {
 }
 
 JNIEXPORT void JNICALL Java_com_ffmpeg_test(JNIEnv *env, jobject activity) {
-
+    av_codec_next(NULL);
 }
