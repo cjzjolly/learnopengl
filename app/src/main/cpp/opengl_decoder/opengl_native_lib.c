@@ -86,14 +86,18 @@ Java_com_opengldecoder_jnibridge_JniBridge_drawToSurface(JNIEnv *env, jobject ac
 void setupGraphics(int w, int h, float *bgColor)//初始化函数
 {
     glViewport(0, 0, w, h);//设置视口
-    float ratio = (float) w / h;//计算宽长比glViewport
-    setProjectFrustum(-ratio, ratio, -1, 1, 1, 10);//设置投影矩阵
-    setCamera
-            (0, 0, 2,
-             0, 0, 0,
-             0, 1, 0);//设置摄像机矩阵
+    float ratio = (float) h / w;//计算宽长比glViewport
+    setProjectFrustum(-1, 1, -ratio, ratio , 1, 50);//设置投影矩阵
+    setCamera(0, 0, 1, 0, 0, 0, 0, 1, 0);//设置摄像机矩阵
     setInitStack();//初始化变换矩阵
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
     glClearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);//设置背景颜色
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL); //还可以
+    //开启透明度混合能力
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  //todo 这个混合导致光影效果有点问题，需要处理一下
+    glDisable(GL_DITHER);
     return;
 }
 
