@@ -45,7 +45,9 @@ char *jstringToChar(JNIEnv *env, jstring jstr) {
 }
 
 ///*传入surface进行直接绘制的例子，传入颜色涂满整个surface */
-JNIEXPORT void JNICALL Java_com_opengldecoder_jnibridge_JniBridge_drawToSurface(JNIEnv *env, jobject activity, jobject surface, jint color) {
+JNIEXPORT void JNICALL
+Java_com_opengldecoder_jnibridge_JniBridge_drawToSurface(JNIEnv *env, jobject activity,
+                                                         jobject surface, jint color) {
     ANativeWindow_Buffer nwBuffer;
 
     LOGI("ANativeWindow_fromSurface ");
@@ -84,7 +86,7 @@ JNIEXPORT void JNICALL Java_com_opengldecoder_jnibridge_JniBridge_drawToSurface(
 void setupGraphics(int w, int h, float *bgColor)//初始化函数
 {
     glViewport(0, 0, w, h);//设置视口
-    float ratio = (float) w/h;//计算宽长比glViewport
+    float ratio = (float) w / h;//计算宽长比glViewport
     setProjectFrustum(-ratio, ratio, -1, 1, 1, 10);//设置投影矩阵
     setCamera
             (0, 0, 2,
@@ -101,6 +103,14 @@ void androidNativeInitGL(int viewPortW, int viewPortH) {
     setupGraphics(viewPortW, viewPortH, bgColor);
 }
 
-JNIEXPORT void JNICALL Java_com_opengldecoder_jnibridge_JniBridge_nativeGLInit(JNIEnv *env, jobject activity, jint viewPortWidth, jint viewPortHeight) {
+JNIEXPORT void JNICALL
+Java_com_opengldecoder_jnibridge_JniBridge_nativeGLInit(JNIEnv *env, jobject activity,
+                                                        jint viewPortWidth, jint viewPortHeight) {
     androidNativeInitGL(viewPortWidth, viewPortHeight);
+}
+
+JNIEXPORT void JNICALL
+Java_com_opengldecoder_jnibridge_JniBridge_draw(JNIEnv *env, jobject activity) {
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
+    glClearColor(1, 0, 0, 1);
 }
