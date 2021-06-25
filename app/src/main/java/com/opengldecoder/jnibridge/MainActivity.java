@@ -6,6 +6,7 @@ import android.view.View;
 
 import com.cjztest.glShaderEffect.EffectLayerTest;
 import com.cjztest.glShaderEffect.PanelView;
+import com.ffmpeg.FFMpegUtil;
 
 public class MainActivity extends Activity implements View.OnClickListener {
 
@@ -13,6 +14,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(new NativeGLSurfaceView(this));
+        FFMpegUtil.version();
     }
 
     @Override

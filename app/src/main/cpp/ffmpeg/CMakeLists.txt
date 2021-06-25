@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 3.4.1)
 project(ffmpeg_caller)
 
 #SET(zbar_sdk_dir ${CMAKE_SOURCE_DIR}/src/main/cpp/ffmpeg)
+#SET(ffmpeg_dir ${CMAKE_SOURCE_DIR}/src/main/cpp/ffmpeg)
 message(AUTHOR_WARNING ${CMAKE_CURRENT_SOURCE_DIR})
 message(AUTHOR_WARNING ${ffmpeg_caller})
 
@@ -28,52 +29,54 @@ add_library( # Sets the name of the library.
         ffmpeg.c
         )
 
+include_directories(
+        ${PROJECT_SOURCE_DIR}/include
+)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/include)
 #添加lib，SHARED类型，是IMPORTED 引入的库
-add_library(libavcodec
+add_library(avcodec
         SHARED
         IMPORTED)
 #设置 库的属性   里面是名称 ，属性：引入地址把我们的真实地址填写进去
-set_target_properties(libavcodec
+set_target_properties(avcodec
         PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/lib/libavcodec-57.so
+        ../../../../libs/${CMAKE_ANDROID_ARCH_ABI}/libavcodec-57.so
         )
 
-add_library(avfilter
+add_library(libavfilter
         SHARED
         IMPORTED)
-set_target_properties( avfilter
+set_target_properties(libavfilter
         PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/lib/libavfilter-6.so)
+        ../../../../libs/${CMAKE_ANDROID_ARCH_ABI}/libavfilter-6.so)
 
-add_library( avformat
+add_library(libavformat
         SHARED
         IMPORTED)
-set_target_properties( avformat
+set_target_properties(libavformat
         PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/lib/libavformat-57.so)
+        ../../../../libs/${CMAKE_ANDROID_ARCH_ABI}/libavformat-57.so)
 
-add_library( avutil
+add_library(libavutil
         SHARED
         IMPORTED)
-set_target_properties( avutil
+set_target_properties(libavutil
         PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/lib/libavutil-55.so)
+        ../../../../libs/${CMAKE_ANDROID_ARCH_ABI}/libavutil-55.so)
 
-add_library( swresample
+add_library(libswresample
         SHARED
         IMPORTED)
-set_target_properties( swresample
+set_target_properties(libswresample
         PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/lib/libswresample-2.so)
+        ../../../../libs/${CMAKE_ANDROID_ARCH_ABI}/libswresample-2.so)
 
-add_library( swscale
+add_library(libswscale
         SHARED
         IMPORTED)
-set_target_properties( swscale
+set_target_properties(libswscale
         PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_CURRENT_SOURCE_DIR}/${ANDROID_ABI}/lib/libswscale-4.so)
+        ../../../../libs/${CMAKE_ANDROID_ARCH_ABI}/libswscale-4.so)
 
 
 
@@ -93,7 +96,12 @@ find_library(z-lib z)
 
 target_link_libraries(
         ffmpeg_caller
-        libavcodec
+        avcodec
+        libavfilter
+        libavformat
+        libavutil
+        libswresample
+        libswscale
         ${log-lib}
         ${android-lib}
         ${EGL-lib}
