@@ -101,6 +101,7 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
         mTexCoorBuffer.position(0);//设置缓冲区起始位置
         startBindEmptyTexture(mYuvKinds);
         createPBO();
+        rotate(180, 0, 0, 1);
     }
 
     private void initVertxAndAlpha(int alpha) {
@@ -195,7 +196,7 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
         GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
         GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
         //创建一个占用指定空间的纹理，但暂时不复制数据进去，等PBO进行数据传输，取代glTexImage2D，利用DMA提高数据拷贝速度
-        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE_ALPHA, mImgWidth, mImgHeight, 0, GLES30.GL_LUMINANCE_ALPHA, GLES30.GL_UNSIGNED_BYTE, null);
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE_ALPHA, mImgWidth / 2, mImgHeight / 2, 0, GLES30.GL_LUMINANCE_ALPHA, GLES30.GL_UNSIGNED_BYTE, null); //因为这里使用了双字节，所以纹理大小对比使用单字节的Y通道纹理，宽度首先要缩小一般，而uv层高度本来就只有y层一般，所以高度也除以2
         mMapIndexToTextureID.put(mGenUVTextureId, 1); //使用该id作为纹理索引指针
         //生成textureU纹理
         while(mMapIndexToTextureID.get(mGenUTextureId) != null) {//顺序找到空缺的id
@@ -209,7 +210,7 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
         GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
         GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
         //创建一个占用指定空间的纹理，但暂时不复制数据进去，等PBO进行数据传输，取代glTexImage2D，利用DMA提高数据拷贝速度
-        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE, mImgWidth, mImgHeight, 0, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, null);
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE, mImgWidth, mImgHeight / 4, 0, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, null);
         mMapIndexToTextureID.put(mGenUTextureId, 1); //使用该id作为纹理索引指针
         //生成textureV纹理
         while(mMapIndexToTextureID.get(mGenVTextureId) != null) {//顺序找到空缺的id
@@ -223,7 +224,7 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
         GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
         GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
         //创建一个占用指定空间的纹理，但暂时不复制数据进去，等PBO进行数据传输，取代glTexImage2D，利用DMA提高数据拷贝速度
-        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE, mImgWidth, mImgHeight, 0, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, null);
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE, mImgWidth, mImgHeight / 4, 0, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, null);
         mMapIndexToTextureID.put(mGenVTextureId, 1); //使用该id作为纹理索引指针
     }
 
@@ -283,6 +284,7 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
                 //更新ypanel数据
                 GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
                 GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenYTextureId);
+                GLES30.glUniform1i(GLES30.glGetUniformLocation(mBaseProgram, "textureY"), 0); //获取纹理属性的指针
                 GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mYPanelPixelBuffferPointerArray[mFrameCount % 2]);
                 GLES30.glTexSubImage2D(GLES30.GL_TEXTURE_2D, 0, 0, 0, mImgWidth, mImgHeight, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, null); //1字节为一个单位
                 //更新图像数据，复制到 PBO 中
@@ -296,11 +298,13 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
                 bytebuffer.position(0);
                 GLES30.glUnmapBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER);
                 GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, 0);
+
                 //更新uvpanel数据
                 GLES30.glActiveTexture(GLES30.GL_TEXTURE1);
                 GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenUVTextureId);
+                GLES30.glUniform1i(GLES30.glGetUniformLocation(mBaseProgram, "textureUV"), 1); //获取纹理属性的指针
                 GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mUVPanelPixelBuffferPointerArray[mFrameCount % 2]);
-                GLES30.glTexSubImage2D(GLES30.GL_TEXTURE_2D, 0, 0, 0, mImgWidth, mImgHeight / 2 / 2, GLES30.GL_LUMINANCE_ALPHA, GLES30.GL_UNSIGNED_BYTE, null); //2字节为一个单位
+                GLES30.glTexSubImage2D(GLES30.GL_TEXTURE_2D, 0, 0, 0, mImgWidth / 2, mImgHeight / 2, GLES30.GL_LUMINANCE_ALPHA, GLES30.GL_UNSIGNED_BYTE, null); //2字节为一个单位，所以宽度因为单位为2字节一个，对比1字节时直接对半
                 //更新图像数据，复制到 PBO 中
                 GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mUVPanelPixelBuffferPointerArray[(mFrameCount + 1) % 2]);
                 GLES30.glBufferData(GLES30.GL_PIXEL_UNPACK_BUFFER, mImgPanelUVByteSize, null, GLES30.GL_STREAM_DRAW);
@@ -348,10 +352,18 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
         }
         locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
         if (mPointBuf != null && mColorBuf != null) {
-            GLES30.glUniform1i(mGLFunChoicePointer, 1); //选择纹理方式渲染
             mPointBuf.position(0);
             mColorBuf.position(0);
-            GLES30.glUniform1i(GLES30.glGetUniformLocation(mBaseProgram, "sTexture"), 0); //获取纹理属性的指针
+
+
+            GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenYTextureId);
+            GLES30.glUniform1i(GLES30.glGetUniformLocation(mYUVProgram, "textureY"), 0); //获取纹理属性的指针
+
+            GLES30.glActiveTexture(GLES30.GL_TEXTURE1);
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenUVTextureId);
+            GLES30.glUniform1i(GLES30.glGetUniformLocation(mYUVProgram, "textureUV"), 1); //获取纹理属性的指针
+
             //将顶点位置数据送入渲染管线
             GLES30.glVertexAttribPointer(mObjectPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mPointBuf); //三维向量，size为2
             //将顶点颜色数据送入渲染管线
@@ -367,7 +379,6 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
             GLES30.glDisableVertexAttribArray(mObjectVertColorArrayPointer);
             GLES30.glDisableVertexAttribArray(mVTexCoordPointer);
         }
-//        super.drawTo(programID, positionPointer, colorPointer, cameraMatrix, projMatrix, muMVPMatrixPointer, glFunChoicePointer);
         mFrameCount++;
     }
 

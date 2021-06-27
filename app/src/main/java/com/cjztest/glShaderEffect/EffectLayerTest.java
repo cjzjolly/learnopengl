@@ -2,6 +2,7 @@ package com.cjztest.glShaderEffect;
 
 import android.content.Context;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 import android.view.MotionEvent;
 
 import com.example.learnopengl.R;
@@ -27,6 +28,8 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
     private GLFrameBufferEffectPBOYuvDecoder mYuvDecoder;
     private int mBaseProgramPointer;
     private byte[] mYuvTestData;
+    private byte[] mYuvTestData2;
+    private int mFrameCount = 0;
 
     public void initEffectLayer(int glBaseProgramPointer, int windowWidth, int windowHeight, Context context) {
         mWidth = windowWidth;
@@ -48,6 +51,7 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
 //        mBef1 = new GLFrameBufferEffect1(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
 //        mPBODemo = new GLFrameBufferEffectPBODemo(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context, 100, 100);
         mYuvTestData = ShaderUtil.loadBytesFromAssetsFile("yuvtestdata/degree_90_1024x2048.nv21", context.getResources());
+        mYuvTestData2 = ShaderUtil.loadBytesFromAssetsFile("yuvtestdata/degree_270_1024x2048.nv21", context.getResources());
         mYuvDecoder = new GLFrameBufferEffectPBOYuvDecoder(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context, 1024, 2048, GLFrameBufferEffectPBOYuvDecoder.YuvKinds.YUV_420SP_UVUV);
     }
 
@@ -67,8 +71,11 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
 //        mPBODemo.drawTo(cameraMatrix, projMatrix);
 //        byte demoYuv420sp[] = new byte[100 * 100 * 3 / 2];
 //        Arrays.fill(demoYuv420sp, (byte) 128);
-        mYuvDecoder.refreshBuffer(mYuvTestData);
+        long startTime = System.currentTimeMillis();
+        mYuvDecoder.refreshBuffer(mFrameCount % 2 == 0 ? mYuvTestData : mYuvTestData2);
         mYuvDecoder.drawTo(cameraMatrix, projMatrix);
+//        Log.i("cjztest", "refresh and draw cost:" + (System.currentTimeMillis() - startTime) + " ms");
+        mFrameCount++;
     }
 
     @Override

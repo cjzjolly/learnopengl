@@ -22,21 +22,23 @@ vec3 yuvToRGB(float y, float u, float v) {
     float r = y + 1.370705 * (v - 0.5);
     float g = y - 0.337633 * (u - 0.5) - 0.698001 * (v - 0.5);
     float b = y + 1.732446 * (u - 0.5);
+//    r = clamp(r, 0.0, 1.0);
+//    g = clamp(g, 0.0, 1.0);
+//    b = clamp(b, 0.0, 1.0);
     return vec3(r, g, b);
 }
 
 void convertYUV420SP(bool reverse, in vec2 fragVTexCoord, out vec4 fragColor){
     float y = texture(textureY, fragVTexCoord)[0];
     //uvuvuvuv
-    float u = texture(textureUV, fragVTexCoord)[0];
-    float v = texture(textureUV, fragVTexCoord)[1];
+    float u = texture(textureUV, fragVTexCoord)[3];
+    float v = texture(textureUV, fragVTexCoord)[0];
     vec3 rgb;
     if (reverse) {
         rgb = yuvToRGB(y, v, u);  //NV21
     } else {
         rgb = yuvToRGB(y, u, v);  //NV12
     }
-//    fragColor = vec4(rgb, 1.0);
     fragColor = vec4(rgb, 1.0);
 }
 
