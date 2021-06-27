@@ -30,6 +30,27 @@ public class ShaderUtil {
         return result;
     }
 
+    public static byte[] loadBytesFromAssetsFile(String fname, Resources r)
+    {
+        byte result[] = null;
+        try {
+            InputStream in = r.getAssets().open(fname);
+            int ch = 0;
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            while ((ch = in.read()) != -1) {
+                baos.write(ch);
+            }
+            byte[] buff = baos.toByteArray();
+            baos.close();
+            in.close();
+            result = buff;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+
     public static int loadShader(int type, String shaderCode) {
         int shader = GLES30.glCreateShader(type);
         if (shader != 0) { //若创建shader脚本的"指针"成功

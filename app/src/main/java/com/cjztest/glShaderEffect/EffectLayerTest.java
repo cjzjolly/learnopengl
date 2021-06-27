@@ -6,6 +6,8 @@ import android.view.MotionEvent;
 
 import com.example.learnopengl.R;
 
+import java.util.Arrays;
+
 public class EffectLayerTest implements GLRenderer.onDrawListener {
     private Context mContext;
     private int mWidth;
@@ -22,7 +24,9 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
     private GLFragEffectWave mWave;
     private GLFrameBufferEffect1 mBef1;
     private GLFrameBufferEffectPBODemo mPBODemo;
+    private GLFrameBufferEffectPBOYuvDecoder mYuvDecoder;
     private int mBaseProgramPointer;
+    private byte[] mYuvTestData;
 
     public void initEffectLayer(int glBaseProgramPointer, int windowWidth, int windowHeight, Context context) {
         mWidth = windowWidth;
@@ -42,7 +46,9 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
 //        mFBEDC = new GLFrameBufferEffectDrawCircle(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context, BitmapFactory.decodeResource(context.getResources(), R.drawable.test_pic_second));
 //        mWave = new GLFragEffectWave(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
 //        mBef1 = new GLFrameBufferEffect1(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context);
-        mPBODemo = new GLFrameBufferEffectPBODemo(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context, 100, 100);
+//        mPBODemo = new GLFrameBufferEffectPBODemo(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context, 100, 100);
+        mYuvTestData = ShaderUtil.loadBytesFromAssetsFile("yuvtestdata/degree_90_1024x2048.nv21", context.getResources());
+        mYuvDecoder = new GLFrameBufferEffectPBOYuvDecoder(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context, 1024, 2048, GLFrameBufferEffectPBOYuvDecoder.YuvKinds.YUV_420SP_UVUV);
     }
 
     /**按图层顺序渲染**/
@@ -58,7 +64,11 @@ public class EffectLayerTest implements GLRenderer.onDrawListener {
 //        mLine.drawTo(cameraMatrix, projMatrix);
 //        mFragCircle.drawTo(cameraMatrix, projMatrix);
 //        mWave.drawTo(cameraMatrix, projMatrix);
-        mPBODemo.drawTo(cameraMatrix, projMatrix);
+//        mPBODemo.drawTo(cameraMatrix, projMatrix);
+//        byte demoYuv420sp[] = new byte[100 * 100 * 3 / 2];
+//        Arrays.fill(demoYuv420sp, (byte) 128);
+        mYuvDecoder.refreshBuffer(mYuvTestData);
+        mYuvDecoder.drawTo(cameraMatrix, projMatrix);
     }
 
     @Override
