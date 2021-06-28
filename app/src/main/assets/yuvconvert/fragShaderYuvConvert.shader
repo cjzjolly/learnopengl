@@ -2,8 +2,6 @@
 precision highp float;
 uniform sampler2D textureY;//YPanel纹理输入，glTexImage2d时要设置直字节格式为：GL_LUMINANCE/GL_ALPHA(单个字节), GL_UNSIGNED_BYTE
 uniform sampler2D textureUV;//UV输入，glTexImage2d时要设置直字节格式为：GL_LUMINANCE_ALPHA(双字节), GL_UNSIGNED_BYTE
-uniform sampler2D textureU;  //for yuv420sp，u和v分层，都用GL_LUMINANCE/GL_ALPHA(单个字节)
-uniform sampler2D textureV;
 uniform int funChoice;
 uniform float frame;//第几帧
 uniform vec2 resolution;//分辨率
@@ -48,10 +46,11 @@ void convertYUV420P(bool reverse, in vec2 fragVTexCoord, out vec4 fragColor){
     uuu...
     vvv....
     */
-    float u = texture(textureU, fragVTexCoord)[0];
-    float v = texture(textureV, fragVTexCoord)[0];
+    //????
+    float u = texture(textureUV, vec2(fragVTexCoord[0], fragVTexCoord[1] / 2.0))[0];
+    float v = texture(textureUV, vec2(fragVTexCoord[0], fragVTexCoord[1] / 2.0 + 0.5))[0];
     vec3 rgb;
-    if (reverse) {
+    if (!reverse) {
         rgb = yuvToRGB(y, v, u);  //YV12
     } else {
         rgb = yuvToRGB(y, u, v);  //YU12 / I420
