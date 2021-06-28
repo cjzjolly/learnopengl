@@ -124,6 +124,18 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
         }
     }
 
+    private void createEmptyTexture(int textureID, int imgWidth, int imgHeight, int pixelFormat) {
+        GLES30.glGenTextures(1, new int[] {textureID}, 0); //只要值不重复即可
+        //UV纹理初始化
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureID);
+        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_NEAREST);
+        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
+        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
+        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
+        //创建一个占用指定空间的纹理，但暂时不复制数据进去，等PBO进行数据传输，取代glTexImage2D，利用DMA提高数据拷贝速度
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, pixelFormat, imgWidth, imgHeight, 0, pixelFormat, GLES30.GL_UNSIGNED_BYTE, null); //因为这里使用了双字节，所以纹理大小对比使用单字节的Y通道纹理，宽度首先要缩小一般，而uv层高度本来就只有y层一般，所以高度也除以2
+    }
+
     private void startBindEmptyTexture(YuvKinds yuvKinds) {
         //特殊纹理，需要专门加载其他程序:
         String fragShaderScript = ShaderUtil.loadFromAssetsFile("yuvconvert/fragShaderYuvConvert.shader", mContext.getResources());
@@ -170,61 +182,30 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
         mResoulutionPointer = GLES30.glGetUniformLocation(mYUVProgram, "resolution");
         //功能选择
         mGLFunChoicePointer = GLES30.glGetUniformLocation(mBaseProgram, "funChoice");
+
         //生成textureY纹理
         while(mMapIndexToTextureID.get(mGenYTextureId) != null) {//顺序找到空缺的id
             mGenYTextureId++;
         }
-        GLES30.glGenTextures(1, new int[] {mGenYTextureId}, 0); //只要值不重复即可
-        //Y纹理初始化
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenYTextureId);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_NEAREST);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
-        //创建一个占用指定空间的纹理，但暂时不复制数据进去，等PBO进行数据传输，取代glTexImage2D，利用DMA提高数据拷贝速度
-        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE, mImgWidth, mImgHeight, 0, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, null);
+        createEmptyTexture(mGenYTextureId, mImgWidth, mImgHeight, GLES30.GL_LUMINANCE);
         mMapIndexToTextureID.put(mGenYTextureId, 1); //使用该id作为纹理索引指针
         //生成textureUV纹理
         while(mMapIndexToTextureID.get(mGenUVTextureId) != null) {//顺序找到空缺的id
             mGenUVTextureId++;
         }
-        GLES30.glGenTextures(1, new int[] {mGenUVTextureId}, 0); //只要值不重复即可
-        //UV纹理初始化
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenUVTextureId);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_NEAREST);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
-        //创建一个占用指定空间的纹理，但暂时不复制数据进去，等PBO进行数据传输，取代glTexImage2D，利用DMA提高数据拷贝速度
-        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE_ALPHA, mImgWidth / 2, mImgHeight / 2, 0, GLES30.GL_LUMINANCE_ALPHA, GLES30.GL_UNSIGNED_BYTE, null); //因为这里使用了双字节，所以纹理大小对比使用单字节的Y通道纹理，宽度首先要缩小一般，而uv层高度本来就只有y层一般，所以高度也除以2
+        createEmptyTexture(mGenUVTextureId, mImgWidth / 2, mImgHeight / 2, GLES30.GL_LUMINANCE_ALPHA);
         mMapIndexToTextureID.put(mGenUVTextureId, 1); //使用该id作为纹理索引指针
         //生成textureU纹理
         while(mMapIndexToTextureID.get(mGenUTextureId) != null) {//顺序找到空缺的id
             mGenUTextureId++;
         }
-        GLES30.glGenTextures(1, new int[] {mGenUTextureId}, 0); //只要值不重复即可
-        //U纹理初始化
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenUTextureId);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_NEAREST);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
-        //创建一个占用指定空间的纹理，但暂时不复制数据进去，等PBO进行数据传输，取代glTexImage2D，利用DMA提高数据拷贝速度
-        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE, mImgWidth, mImgHeight / 4, 0, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, null);
+        createEmptyTexture(mGenUTextureId, mImgWidth, mImgHeight / 4, GLES30.GL_LUMINANCE);
         mMapIndexToTextureID.put(mGenUTextureId, 1); //使用该id作为纹理索引指针
         //生成textureV纹理
         while(mMapIndexToTextureID.get(mGenVTextureId) != null) {//顺序找到空缺的id
             mGenVTextureId++;
         }
-        GLES30.glGenTextures(1, new int[] {mGenVTextureId}, 0); //只要值不重复即可
-        //V纹理初始化
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenVTextureId);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_NEAREST);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
-        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
-        //创建一个占用指定空间的纹理，但暂时不复制数据进去，等PBO进行数据传输，取代glTexImage2D，利用DMA提高数据拷贝速度
-        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE, mImgWidth, mImgHeight / 4, 0, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, null);
+        createEmptyTexture(mGenVTextureId, mImgWidth, mImgHeight / 4, GLES30.GL_LUMINANCE);
         mMapIndexToTextureID.put(mGenVTextureId, 1); //使用该id作为纹理索引指针
     }
 
@@ -274,6 +255,7 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
         GLES30.glBufferData(GLES30.GL_PIXEL_PACK_BUFFER, mImgPanelVByteSize,  null, GLES30.GL_STREAM_DRAW);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void refreshBuffer(byte[] imgBytes) {
 //            https://zhuanlan.zhihu.com/p/115257287
 //            https://www.jianshu.com/p/1fa36461fc6f?utm_campaign=hugo&utm_medium=reader_share&utm_content=note&utm_source=qq
