@@ -181,7 +181,7 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
         //设置分辨率指针，告诉gl脚本现在的分辨率
         mResoulutionPointer = GLES30.glGetUniformLocation(mYUVProgram, "resolution");
         //功能选择
-        mGLFunChoicePointer = GLES30.glGetUniformLocation(mBaseProgram, "funChoice");
+        mGLFunChoicePointer = GLES30.glGetUniformLocation(mYUVProgram, "funChoice");
 
         //生成textureY纹理
         while(mMapIndexToTextureID.get(mGenYTextureId) != null) {//顺序找到空缺的id
@@ -260,31 +260,31 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
 //            https://zhuanlan.zhihu.com/p/115257287
 //            https://www.jianshu.com/p/1fa36461fc6f?utm_campaign=hugo&utm_medium=reader_share&utm_content=note&utm_source=qq
         //调用 glTexSubImage2D 后立即返回，不影响 CPU 时钟周期
+        //更新ypanel数据
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenYTextureId);
+        GLES30.glUniform1i(GLES30.glGetUniformLocation(mYUVProgram, "textureY"), 0); //获取纹理属性的指针
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mYPanelPixelBuffferPointerArray[mFrameCount % 2]);
+        GLES30.glTexSubImage2D(GLES30.GL_TEXTURE_2D, 0, 0, 0, mImgWidth, mImgHeight, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, null); //1字节为一个单位
+        //更新图像数据，复制到 PBO 中
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mYPanelPixelBuffferPointerArray[(mFrameCount + 1) % 2]);
+        GLES30.glBufferData(GLES30.GL_PIXEL_UNPACK_BUFFER, mImgPanelYByteSize, null, GLES30.GL_STREAM_DRAW);
+        Buffer buf = GLES30.glMapBufferRange(GLES30.GL_PIXEL_UNPACK_BUFFER, 0, mImgPanelYByteSize, GLES30.GL_MAP_WRITE_BIT | GLES30.GL_MAP_INVALIDATE_BUFFER_BIT);
+        //填充像素
+        ByteBuffer bytebuffer = ((ByteBuffer) buf).order(ByteOrder.nativeOrder());
+        bytebuffer.position(0);
+        bytebuffer.put(imgBytes, 0, mImgWidth * mImgHeight);
+        bytebuffer.position(0);
+        GLES30.glUnmapBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER);
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, 0);
         switch (mYuvKinds) {
             default:
             case YUV_420SP_UVUV:
-                //更新ypanel数据
-                GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
-                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenYTextureId);
-                GLES30.glUniform1i(GLES30.glGetUniformLocation(mBaseProgram, "textureY"), 0); //获取纹理属性的指针
-                GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mYPanelPixelBuffferPointerArray[mFrameCount % 2]);
-                GLES30.glTexSubImage2D(GLES30.GL_TEXTURE_2D, 0, 0, 0, mImgWidth, mImgHeight, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, null); //1字节为一个单位
-                //更新图像数据，复制到 PBO 中
-                GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mYPanelPixelBuffferPointerArray[(mFrameCount + 1) % 2]);
-                GLES30.glBufferData(GLES30.GL_PIXEL_UNPACK_BUFFER, mImgPanelYByteSize, null, GLES30.GL_STREAM_DRAW);
-                Buffer buf = GLES30.glMapBufferRange(GLES30.GL_PIXEL_UNPACK_BUFFER, 0, mImgPanelYByteSize, GLES30.GL_MAP_WRITE_BIT | GLES30.GL_MAP_INVALIDATE_BUFFER_BIT);
-                //填充像素
-                ByteBuffer bytebuffer = ((ByteBuffer) buf).order(ByteOrder.nativeOrder());
-                bytebuffer.position(0);
-                bytebuffer.put(imgBytes, 0, mImgWidth * mImgHeight);
-                bytebuffer.position(0);
-                GLES30.glUnmapBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER);
-                GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, 0);
-
+            case YUV_420SP_VUVU:
                 //更新uvpanel数据
                 GLES30.glActiveTexture(GLES30.GL_TEXTURE1);
                 GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenUVTextureId);
-                GLES30.glUniform1i(GLES30.glGetUniformLocation(mBaseProgram, "textureUV"), 1); //获取纹理属性的指针
+                GLES30.glUniform1i(GLES30.glGetUniformLocation(mYUVProgram, "textureUV"), 1); //获取纹理属性的指针
                 GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mUVPanelPixelBuffferPointerArray[mFrameCount % 2]);
                 GLES30.glTexSubImage2D(GLES30.GL_TEXTURE_2D, 0, 0, 0, mImgWidth / 2, mImgHeight / 2, GLES30.GL_LUMINANCE_ALPHA, GLES30.GL_UNSIGNED_BYTE, null); //2字节为一个单位，所以宽度因为单位为2字节一个，对比1字节时直接对半
                 //更新图像数据，复制到 PBO 中
@@ -299,12 +299,53 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
                 GLES30.glUnmapBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER);
                 GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, 0);
                 break;
-            //todo:
-            case YUV_420SP_VUVU:
-                break;
             case YUV_420P_UUVV:
-                break;
             case YUV_420P_VVUU:
+                //这两种要分别更新U层和V层：
+                //更新upanel数据
+                GLES30.glActiveTexture(GLES30.GL_TEXTURE1);
+                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenUTextureId);
+                GLES30.glUniform1i(GLES30.glGetUniformLocation(mYUVProgram, "textureU"), 1); //获取纹理属性的指针
+                GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mUPanelPixelBuffferPointerArray[mFrameCount % 2]);
+                GLES30.glTexSubImage2D(GLES30.GL_TEXTURE_2D, 0, 0, 0, mImgWidth, mImgHeight / 2 / 2, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, null); //1字节为一个单位，uv层高度本来就 / 2，所以其中一层还要再 / 2
+                //更新图像数据，复制到 PBO 中
+                GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mUPanelPixelBuffferPointerArray[(mFrameCount + 1) % 2]);
+                GLES30.glBufferData(GLES30.GL_PIXEL_UNPACK_BUFFER, mImgPanelUByteSize, null, GLES30.GL_STREAM_DRAW);
+                buf = GLES30.glMapBufferRange(GLES30.GL_PIXEL_UNPACK_BUFFER, 0, mImgPanelUByteSize, GLES30.GL_MAP_WRITE_BIT | GLES30.GL_MAP_INVALIDATE_BUFFER_BIT);
+                //填充像素
+                bytebuffer = ((ByteBuffer) buf).order(ByteOrder.nativeOrder());
+                bytebuffer.position(0);
+                if (mYuvKinds == YuvKinds.YUV_420P_UUVV) {
+                    bytebuffer.put(imgBytes, mImgWidth * mImgHeight, mImgWidth * mImgHeight / 2 / 2);
+                } else { //vvuu
+                    bytebuffer.put(imgBytes, mImgWidth * mImgHeight + mImgWidth * mImgHeight / 2 / 2, mImgWidth * mImgHeight / 2 / 2);
+                }
+                bytebuffer.position(0);
+                bytebuffer.position(0);
+                GLES30.glUnmapBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER);
+                GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, 0);
+                //更新vpanel数据
+                GLES30.glActiveTexture(GLES30.GL_TEXTURE2);
+                GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenVTextureId);
+                GLES30.glUniform1i(GLES30.glGetUniformLocation(mYUVProgram, "textureV"), 2); //获取纹理属性的指针
+                GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mVPanelPixelBuffferPointerArray[mFrameCount % 2]);
+                GLES30.glTexSubImage2D(GLES30.GL_TEXTURE_2D, 0, 0, 0, mImgWidth, mImgHeight / 2 / 2, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, null); //1字节为一个单位，uv层高度本来就 / 2，所以其中一层还要再 / 2
+                //更新图像数据，复制到 PBO 中
+                GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mVPanelPixelBuffferPointerArray[(mFrameCount + 1) % 2]);
+                GLES30.glBufferData(GLES30.GL_PIXEL_UNPACK_BUFFER, mImgPanelVByteSize, null, GLES30.GL_STREAM_DRAW);
+                buf = GLES30.glMapBufferRange(GLES30.GL_PIXEL_UNPACK_BUFFER, 0, mImgPanelVByteSize, GLES30.GL_MAP_WRITE_BIT | GLES30.GL_MAP_INVALIDATE_BUFFER_BIT);
+                //填充像素
+                bytebuffer = ((ByteBuffer) buf).order(ByteOrder.nativeOrder());
+                bytebuffer.position(0);
+                if (mYuvKinds == YuvKinds.YUV_420P_UUVV) {
+                    bytebuffer.put(imgBytes, mImgWidth * mImgHeight + mImgWidth * mImgHeight / 2 / 2, mImgWidth * mImgHeight / 2 / 2);
+                } else { //vvuu
+                    bytebuffer.put(imgBytes, mImgWidth * mImgHeight, mImgWidth * mImgHeight / 2 / 2);
+                }
+                bytebuffer.position(0);
+                bytebuffer.position(0);
+                GLES30.glUnmapBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER);
+                GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, 0);
                 break;
         }
 
@@ -342,9 +383,24 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenYTextureId);
             GLES30.glUniform1i(GLES30.glGetUniformLocation(mYUVProgram, "textureY"), 0); //获取纹理属性的指针
 
-            GLES30.glActiveTexture(GLES30.GL_TEXTURE1);
-            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenUVTextureId);
-            GLES30.glUniform1i(GLES30.glGetUniformLocation(mYUVProgram, "textureUV"), 1); //获取纹理属性的指针
+            switch (mYuvKinds) {
+                default:
+                case YUV_420SP_UVUV:
+                case YUV_420SP_VUVU:
+                    GLES30.glActiveTexture(GLES30.GL_TEXTURE1);
+                    GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenUVTextureId);
+                    GLES30.glUniform1i(GLES30.glGetUniformLocation(mYUVProgram, "textureUV"), 1); //获取纹理属性的指针
+                    break;
+                case YUV_420P_UUVV:
+                case YUV_420P_VVUU:
+                    GLES30.glActiveTexture(GLES30.GL_TEXTURE1);
+                    GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenUTextureId);
+                    GLES30.glUniform1i(GLES30.glGetUniformLocation(mYUVProgram, "textureU"), 1); //获取纹理属性的指针
+                    GLES30.glActiveTexture(GLES30.GL_TEXTURE2);
+                    GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenVTextureId);
+                    GLES30.glUniform1i(GLES30.glGetUniformLocation(mYUVProgram, "textureV"), 2); //获取纹理属性的指针
+                    break;
+            }
 
             //将顶点位置数据送入渲染管线
             GLES30.glVertexAttribPointer(mObjectPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mPointBuf); //三维向量，size为2
