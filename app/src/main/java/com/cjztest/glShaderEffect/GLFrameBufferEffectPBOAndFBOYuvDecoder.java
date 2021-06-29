@@ -49,7 +49,7 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
     private int mGLFrameTargetXYPointer;
 
     /**是否每次渲染到frameBuffer前都清理**/
-    private boolean mFrameBufferClean = false;
+    private boolean mFrameBufferClean = true;
 
     private boolean mFrameBufferCleanOnce = false;
 
@@ -170,10 +170,6 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
         mGLFrameObjectPositionPointer = GLES30.glGetAttribLocation(mYuvBufferDrawProgram, "objectPosition");
         //渲染方式选择
         mGLFrameBufferProgramFunChoicePointer = GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "funChoice");
-        //作用半径
-        mGLFrameEffectRPointer = GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "effectR");
-        //作用位置
-        mGLFrameTargetXYPointer = GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "targetXY");
         //纹理采样坐标
         mGLFrameVTexCoordPointer = GLES30.glGetAttribLocation(mYuvBufferDrawProgram, "vTexCoord");
         //获取程序中顶点颜色属性引用"指针"
@@ -329,6 +325,21 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
             GLES30.glEnableVertexAttribArray(mGLFrameVTexCoordPointer);  //启用纹理采样定位坐标
 //            GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
             //todo 绘制yuv
+            switch (mYuvKinds) {
+                default:
+                case YUV_420SP_UVUV:
+                    GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, 0);
+                    break;
+                case YUV_420SP_VUVU:
+                    GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, 1);
+                    break;
+                case YUV_420P_UUVV:
+                    GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, 2);
+                    break;
+                case YUV_420P_VVUU:
+                    GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, 3);
+                    break;
+            }
 
             GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenYTextureId);
@@ -411,23 +422,9 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
 
         if (mPointBuf != null && mColorBuf != null) {
             Log.i("cjztest", "drawFramebuffer");
-            GLES30.glUniform1i(mGLFunChoicePointer, 1); //选择纹理方式渲染
+            GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, -1); //选择纹理方式渲染
             mPointBuf.position(0);
             mColorBuf.position(0);
-            GLES30.glUniform1i(GLES30.glGetUniformLocation(mBaseProgram, "sTexture"), 0); //获取纹理属性的指针
-            //将顶点位置数据送入渲染管线
-            GLES30.glVertexAttribPointer(mObjectPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mPointBuf); //三维向量，size为2
-            //将顶点颜色数据送入渲染管线
-            GLES30.glVertexAttribPointer(mGLFrameObjectVertColorArrayPointer, 4, GLES30.GL_FLOAT, false, 0, mColorBuf);
-            //将顶点纹理坐标数据传送进渲染管线
-            GLES30.glVertexAttribPointer(mGLFrameVTexCoordPointer, 2, GLES30.GL_FLOAT, false, 0, mTexCoorBuffer);  //二维向量，size为2
-            GLES30.glEnableVertexAttribArray(mObjectPositionPointer); //启用顶点属性
-            GLES30.glEnableVertexAttribArray(mGLFrameObjectVertColorArrayPointer);  //启用颜色属性
-            GLES30.glEnableVertexAttribArray(mGLFrameVTexCoordPointer);  //启用纹理采样定位坐标
-            //设置面向位置，因为是2d应用，所以不渲染背面，节约资源，参考https://www.jianshu.com/p/ee04165f2a02 >>>
-//            GLES30.glEnable(GLES30.GL_CULL_FACE);
-//            GLES30.glCullFace(GLES30.GL_FRONT);
-            //<<<
             GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
             //切换纹理到当前正在绘制的framebuffer
             if (mFrameCount % 2 == 1) { //todo 如果刷新实时性要求不高，可以只显示一个framebuffer，不然容易因为两者之间存在的微小差异产生震动感
@@ -435,10 +432,23 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
             } else {
                 GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointerArray[1]);
             }
-            GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, -1); //第一次加载选择纹理方式渲染
             GLES30.glUniform1i(GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "textureFBO"), 0); //获取纹理属性的指针
+//            GLES30.glUniform1i(GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "textureFBO"), 0); //获取纹理属性的指针
+            //将顶点位置数据送入渲染管线
+            GLES30.glVertexAttribPointer(mGLFrameObjectPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mPointBuf); //三维向量，size为2
+            //将顶点颜色数据送入渲染管线
+            GLES30.glVertexAttribPointer(mGLFrameObjectVertColorArrayPointer, 4, GLES30.GL_FLOAT, false, 0, mColorBuf);
+            //将顶点纹理坐标数据传送进渲染管线
+            GLES30.glVertexAttribPointer(mGLFrameVTexCoordPointer, 2, GLES30.GL_FLOAT, false, 0, mTexCoorBuffer);  //二维向量，size为2
+            GLES30.glEnableVertexAttribArray(mGLFrameObjectPositionPointer); //启用顶点属性
+            GLES30.glEnableVertexAttribArray(mGLFrameObjectVertColorArrayPointer);  //启用颜色属性
+            GLES30.glEnableVertexAttribArray(mGLFrameVTexCoordPointer);  //启用纹理采样定位坐标
+            //设置面向位置，因为是2d应用，所以不渲染背面，节约资源，参考https://www.jianshu.com/p/ee04165f2a02 >>>
+//            GLES30.glEnable(GLES30.GL_CULL_FACE);
+//            GLES30.glCullFace(GLES30.GL_FRONT);
+            //<<<
             GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, mPointBufferPos / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
-            GLES30.glDisableVertexAttribArray(mObjectPositionPointer);
+            GLES30.glDisableVertexAttribArray(mGLFrameObjectPositionPointer);
             GLES30.glDisableVertexAttribArray(mGLFrameObjectVertColorArrayPointer);
             GLES30.glDisableVertexAttribArray(mGLFrameVTexCoordPointer);
 //            GLES30.glClearColor(1, 0, 0, 1); //todo cjztest
