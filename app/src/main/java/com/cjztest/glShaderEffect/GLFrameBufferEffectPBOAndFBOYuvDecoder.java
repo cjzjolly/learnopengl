@@ -219,7 +219,7 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
 
 
     /**
-     * 创建2个framebuffer作为每次渲染结果的叠加专用纹理
+     * 创建2个framebuffer保存每次渲染结果
      **/
     private void createDoubleFrameBuffer() {
         int frameBufferCount = 2;
@@ -359,7 +359,7 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
             GLES30.glEnableVertexAttribArray(mGLFrameObjectVertColorArrayPointer);  //启用颜色属性
             GLES30.glEnableVertexAttribArray(mGLFrameVTexCoordPointer);  //启用纹理采样定位坐标
 //            GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
-            //todo 绘制yuv
+            //绘制yuv
             switch (mYuvKinds) {
                 default:
                 case YUV_420SP_UVUV:
@@ -462,7 +462,7 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
             mColorBuf.position(0);
             GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
             //切换纹理到当前正在绘制的framebuffer
-            if (mFrameCount % 2 == 1) { //todo 如果刷新实时性要求不高，可以只显示一个framebuffer，不然容易因为两者之间存在的微小差异产生震动感
+            if (mFrameCount % 2 == 1) { //另外一个当前不需要投上屏幕的FBO可以用于输出处理结果。
                 GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointerArray[0]);
             } else {
                 GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointerArray[1]);
@@ -486,7 +486,6 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
             GLES30.glDisableVertexAttribArray(mGLFrameObjectPositionPointer);
             GLES30.glDisableVertexAttribArray(mGLFrameObjectVertColorArrayPointer);
             GLES30.glDisableVertexAttribArray(mGLFrameVTexCoordPointer);
-//            GLES30.glClearColor(1, 0, 0, 1); //todo cjztest
         }
         GLES30.glUniform1i(mFrameCountPointer, mFrameCount++);
 
@@ -499,9 +498,19 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
         GLES30.glDeleteFramebuffers(mFrameBufferPointerArray.length, mFrameBufferPointerArray, 0);
     }
 
+    /**销毁PBO**/
+    private void destroyPBO() {
+        GLES30.glDeleteBuffers(2, mYPanelPixelBuffferPointerArray, 0);
+        GLES30.glDeleteBuffers(2, mUVPanelPixelBuffferPointerArray, 0);
+    }
+
     public void destroy() {
         if (!mIsDestroyed) {
+            GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
+            GLES30.glDeleteTextures(2, new int[] {mGenYTextureId, mGenUVTextureId}, 0); //销毁纹理,gen和delete要成对出现
             destroyFrameBuffer();
+            destroyPBO();
             //去除特殊shader程序
             destroyShader(mYuvBufferDrawProgram, mYuvVertexShaderPointer, mYuvFragShaderPointer);
             mContext = null;
