@@ -1,15 +1,13 @@
 package com.cjztest.glShaderEffect;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.opengl.GLES30;
-import android.opengl.GLUtils;
 import android.os.Build;
 import android.util.Log;
-import android.view.MotionEvent;
 
 import androidx.annotation.RequiresApi;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -35,9 +33,9 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
     //    private int mGenImageTextureId = 0;
     private boolean mIsDestroyed = false;
     private int mAlpha;
-    private int mWaveFragShaderPointer;
-    private int mWaveVertexShaderPointer;
-    private int mFrameBufferDrawProgram;
+    private int mYuvFragShaderPointer;
+    private int mYuvVertexShaderPointer;
+    private int mYuvBufferDrawProgram;
     private int mObjectPositionPointer;
     private int mGLFrameVTexCoordPointer;
     private int mGLFrameObjectVertColorArrayPointer;
@@ -63,6 +61,14 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
     private int[] mFrameBufferPointerArray;
     private int[] mFrameBufferTexturePointerArray;
     private int[] mRenderBufferPointerArray;
+    private int mGenYTextureId = 0;
+    private int mGenUVTextureId = 0;
+    private int mImgPanelYByteSize;
+    private int mImgPanelUVByteSize;
+    private int mYUVFragShaderPointer;
+    private int mYUVVertexShaderPointer;
+    private int[] mYPanelPixelBuffferPointerArray;
+    private int[] mUVPanelPixelBuffferPointerArray;
 
     public enum YuvKinds {
         YUV_420SP_UVUV,
@@ -105,6 +111,7 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
         mTexCoorBuffer.position(0);//设置缓冲区起始位置
         startBindTexture();
         createDoubleFrameBuffer();
+        createPBO();
     }
 
     private void initVertxAndAlpha(int alpha) {
@@ -132,51 +139,51 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
         String fragShaderScript = ShaderUtil.loadFromAssetsFile("yuvconvert/fragShaderYuvConvert.shader", mContext.getResources());
         String vertexShaderScript = ShaderUtil.loadFromAssetsFile("fragColorEffect1/vertShader.shader", mContext.getResources());
         //基于顶点着色器与片元着色器创建程序 step_0：编译脚本
-        mWaveFragShaderPointer = loadShader(GLES30.GL_FRAGMENT_SHADER, fragShaderScript);
-        mWaveVertexShaderPointer = loadShader(GLES30.GL_VERTEX_SHADER, vertexShaderScript);
-        mFrameBufferDrawProgram = GLES30.glCreateProgram();
+        mYuvFragShaderPointer = loadShader(GLES30.GL_FRAGMENT_SHADER, fragShaderScript);
+        mYuvVertexShaderPointer = loadShader(GLES30.GL_VERTEX_SHADER, vertexShaderScript);
+        mYuvBufferDrawProgram = GLES30.glCreateProgram();
         //若程序创建成功则向程序中加入顶点着色器与片元着色器
-        if (mFrameBufferDrawProgram != 0) { //step 1: 创建program后附加编译后的脚本
+        if (mYuvBufferDrawProgram != 0) { //step 1: 创建program后附加编译后的脚本
             //>>>>>>>>>>>>
             //向程序中加入顶点着色器
-            GLES30.glAttachShader(mFrameBufferDrawProgram, mWaveFragShaderPointer);
+            GLES30.glAttachShader(mYuvBufferDrawProgram, mYuvFragShaderPointer);
             checkGlError("glAttachShader");
             //向程序中加入片元着色器
-            GLES30.glAttachShader(mFrameBufferDrawProgram, mWaveVertexShaderPointer);
+            GLES30.glAttachShader(mYuvBufferDrawProgram, mYuvVertexShaderPointer);
             checkGlError("glAttachShader");
             //链接程序
-            GLES30.glLinkProgram(mFrameBufferDrawProgram);
+            GLES30.glLinkProgram(mYuvBufferDrawProgram);
             //<<<<<<<<<<<<
             //存放链接成功program数量的数组
             int[] linkStatus = new int[1];
             //获取program的链接情况
-            GLES30.glGetProgramiv(mFrameBufferDrawProgram, GLES30.GL_LINK_STATUS, linkStatus, 0);
+            GLES30.glGetProgramiv(mYuvBufferDrawProgram, GLES30.GL_LINK_STATUS, linkStatus, 0);
             //若链接失败则报错并删除程序
             if (linkStatus[0] != GLES30.GL_TRUE) { //step 2: 检查是否链接并附加成功，不成功要清理
                 Log.e("ES30_ERROR", "Could not link program: ");
-                Log.e("ES30_ERROR", GLES30.glGetProgramInfoLog(mFrameBufferDrawProgram));
-                GLES30.glDeleteProgram(mFrameBufferDrawProgram);
-                mFrameBufferDrawProgram = 0;
+                Log.e("ES30_ERROR", GLES30.glGetProgramInfoLog(mYuvBufferDrawProgram));
+                GLES30.glDeleteProgram(mYuvBufferDrawProgram);
+                mYuvBufferDrawProgram = 0;
             }
         }
         //获取程序中顶点位置属性引用"指针"
-        mGLFrameObjectPositionPointer = GLES30.glGetAttribLocation(mFrameBufferDrawProgram, "objectPosition");
+        mGLFrameObjectPositionPointer = GLES30.glGetAttribLocation(mYuvBufferDrawProgram, "objectPosition");
         //渲染方式选择
-        mGLFrameBufferProgramFunChoicePointer = GLES30.glGetUniformLocation(mFrameBufferDrawProgram, "funChoice");
+        mGLFrameBufferProgramFunChoicePointer = GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "funChoice");
         //作用半径
-        mGLFrameEffectRPointer = GLES30.glGetUniformLocation(mFrameBufferDrawProgram, "effectR");
+        mGLFrameEffectRPointer = GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "effectR");
         //作用位置
-        mGLFrameTargetXYPointer = GLES30.glGetUniformLocation(mFrameBufferDrawProgram, "targetXY");
+        mGLFrameTargetXYPointer = GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "targetXY");
         //纹理采样坐标
-        mGLFrameVTexCoordPointer = GLES30.glGetAttribLocation(mFrameBufferDrawProgram, "vTexCoord");
+        mGLFrameVTexCoordPointer = GLES30.glGetAttribLocation(mYuvBufferDrawProgram, "vTexCoord");
         //获取程序中顶点颜色属性引用"指针"
-        mGLFrameObjectVertColorArrayPointer = GLES30.glGetAttribLocation(mFrameBufferDrawProgram, "objectColor");
+        mGLFrameObjectVertColorArrayPointer = GLES30.glGetAttribLocation(mYuvBufferDrawProgram, "objectColor");
         //获取程序中总变换矩阵引用"指针"
-        mGLFrameuMVPMatrixPointer = GLES30.glGetUniformLocation(mFrameBufferDrawProgram, "uMVPMatrix");
+        mGLFrameuMVPMatrixPointer = GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "uMVPMatrix");
         //渲染帧计数指针
-        mFrameCountPointer = GLES30.glGetUniformLocation(mFrameBufferDrawProgram, "frame");
+        mFrameCountPointer = GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "frame");
         //设置分辨率指针，告诉gl脚本现在的分辨率
-        mResoulutionPointer = GLES30.glGetUniformLocation(mFrameBufferDrawProgram, "resolution");
+        mResoulutionPointer = GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "resolution");
     }
 
 
@@ -250,12 +257,38 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);//绑定帧缓冲id
     }
 
+    /**
+     * 创建2个framebuffer作为每次渲染结果的叠加专用纹理
+     **/
+    private void createPBO() {
+        //创建Y通道PBO
+        mImgPanelYByteSize = mImgWidth * mImgHeight;
+        mYPanelPixelBuffferPointerArray = new int[2];
+        GLES30.glGenBuffers(2, mYPanelPixelBuffferPointerArray, 0);
+
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mYPanelPixelBuffferPointerArray[0]);
+        GLES30.glBufferData(GLES30.GL_PIXEL_UNPACK_BUFFER, mImgPanelYByteSize,  null, GLES30.GL_STREAM_DRAW);
+
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, mYPanelPixelBuffferPointerArray[1]);
+        GLES30.glBufferData(GLES30.GL_PIXEL_PACK_BUFFER, mImgPanelYByteSize,  null, GLES30.GL_STREAM_DRAW);
+        //创建UV通道PBO
+        mImgPanelUVByteSize = mImgWidth * mImgHeight / 2;
+        mUVPanelPixelBuffferPointerArray = new int[2];
+        GLES30.glGenBuffers(2, mUVPanelPixelBuffferPointerArray, 0);
+
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mUVPanelPixelBuffferPointerArray[0]);
+        GLES30.glBufferData(GLES30.GL_PIXEL_UNPACK_BUFFER, mImgPanelUVByteSize,  null, GLES30.GL_STREAM_DRAW);
+
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, mUVPanelPixelBuffferPointerArray[1]);
+        GLES30.glBufferData(GLES30.GL_PIXEL_PACK_BUFFER, mImgPanelUVByteSize,  null, GLES30.GL_STREAM_DRAW);
+    }
+
     /**绘制画面到framebuffer**/
     private void drawToFrameBuffer(float[] cameraMatrix, float[] projMatrix) {
         if (mIsDestroyed) {
             return;
         }
-        GLES30.glUseProgram(mFrameBufferDrawProgram);
+        GLES30.glUseProgram(mYuvBufferDrawProgram);
         //设置视窗大小及位置
         GLES30.glViewport(0, 0, mFrameBufferWidth, mFrameBufferHeight);
         //绑定帧缓冲id
@@ -271,7 +304,7 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
         }
         if (mFrameBufferClean) {
             GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_COLOR_BUFFER_BIT);
-            GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, 0); //第一次加载选择纹理方式渲染
+            GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, -1); //第一次加载选择纹理方式渲染
         }
         //设置它的坐标系
         locationTrans(cameraMatrix, projMatrix, this.mGLFrameuMVPMatrixPointer);
@@ -284,7 +317,7 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
             }
             mPointBuf.position(0);
             mColorBuf.position(0);
-            GLES30.glUniform1i(GLES30.glGetUniformLocation(mFrameBufferDrawProgram, "sTexture"), 0); //获取纹理属性的指针
+//            GLES30.glUniform1i(GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "sTexture"), 0); //获取纹理属性的指针
             //将顶点位置数据送入渲染管线
             GLES30.glVertexAttribPointer(mGLFrameObjectPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mPointBuf); //三维向量，size为2
             //将顶点颜色数据送入渲染管线
@@ -294,8 +327,16 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
             GLES30.glEnableVertexAttribArray(mGLFrameObjectPositionPointer); //启用顶点属性
             GLES30.glEnableVertexAttribArray(mGLFrameObjectVertColorArrayPointer);  //启用颜色属性
             GLES30.glEnableVertexAttribArray(mGLFrameVTexCoordPointer);  //启用纹理采样定位坐标
-            GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+//            GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
             //todo 绘制yuv
+
+            GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenYTextureId);
+            GLES30.glUniform1i(GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "textureY"), 0); //获取纹理属性的指针
+
+            GLES30.glActiveTexture(GLES30.GL_TEXTURE1);
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenUVTextureId);
+            GLES30.glUniform1i(GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "textureUV"), 1); //获取纹理属性的指针
 
             GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, mPointBufferPos / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
             GLES30.glDisableVertexAttribArray(mGLFrameObjectPositionPointer);
@@ -308,7 +349,50 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void refreshBuffer(byte[] imgBytes) {
-
+        //更新ypanel数据
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenYTextureId);
+        GLES30.glUniform1i(GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "textureY"), 0); //获取纹理属性的指针
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mYPanelPixelBuffferPointerArray[mFrameCount % 2]);
+        GLES30.glTexSubImage2D(GLES30.GL_TEXTURE_2D, 0, 0, 0, mImgWidth, mImgHeight, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, null); //1字节为一个单位
+        //更新图像数据，复制到 PBO 中
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mYPanelPixelBuffferPointerArray[(mFrameCount + 1) % 2]);
+        GLES30.glBufferData(GLES30.GL_PIXEL_UNPACK_BUFFER, mImgPanelYByteSize, null, GLES30.GL_STREAM_DRAW);
+        Buffer buf = GLES30.glMapBufferRange(GLES30.GL_PIXEL_UNPACK_BUFFER, 0, mImgPanelYByteSize, GLES30.GL_MAP_WRITE_BIT | GLES30.GL_MAP_INVALIDATE_BUFFER_BIT);
+        //填充像素
+        ByteBuffer bytebuffer = ((ByteBuffer) buf).order(ByteOrder.nativeOrder());
+        bytebuffer.position(0);
+        bytebuffer.put(imgBytes, 0, mImgWidth * mImgHeight);
+        bytebuffer.position(0);
+        GLES30.glUnmapBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER);
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, 0);
+        //更新uvpanel数据
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE1);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenUVTextureId);
+        GLES30.glUniform1i(GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "textureUV"), 1); //获取纹理属性的指针
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mUVPanelPixelBuffferPointerArray[mFrameCount % 2]);
+        switch (mYuvKinds) {
+            default:
+            case YUV_420SP_UVUV:
+            case YUV_420SP_VUVU:
+                GLES30.glTexSubImage2D(GLES30.GL_TEXTURE_2D, 0, 0, 0, mImgWidth / 2, mImgHeight / 2, GLES30.GL_LUMINANCE_ALPHA, GLES30.GL_UNSIGNED_BYTE, null); //2字节为一个单位，所以宽度因为单位为2字节一个，对比1字节时直接对半
+                break;
+            case YUV_420P_UUVV:
+            case YUV_420P_VVUU:
+                GLES30.glTexSubImage2D(GLES30.GL_TEXTURE_2D, 0, 0, 0, mImgWidth, mImgHeight / 2, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, null);
+                break;
+        }
+        //更新图像数据，复制到 PBO 中
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, mUVPanelPixelBuffferPointerArray[(mFrameCount + 1) % 2]);
+        GLES30.glBufferData(GLES30.GL_PIXEL_UNPACK_BUFFER, mImgPanelUVByteSize, null, GLES30.GL_STREAM_DRAW);
+        buf = GLES30.glMapBufferRange(GLES30.GL_PIXEL_UNPACK_BUFFER, 0, mImgPanelUVByteSize, GLES30.GL_MAP_WRITE_BIT | GLES30.GL_MAP_INVALIDATE_BUFFER_BIT);
+        //填充像素
+        bytebuffer = ((ByteBuffer) buf).order(ByteOrder.nativeOrder());
+        bytebuffer.position(0);
+        bytebuffer.put(imgBytes, mImgWidth * mImgHeight, mImgWidth * mImgHeight / 2);
+        bytebuffer.position(0);
+        GLES30.glUnmapBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER);
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, 0);
     }
 
 
@@ -322,7 +406,7 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
         drawToFrameBuffer(cameraMatrix, projMatrix);
         //绘制
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);//绑定帧系统默认缓冲id
-        GLES30.glUseProgram(mBaseProgram);
+        GLES30.glUseProgram(mYuvBufferDrawProgram);
         locationTrans(cameraMatrix, projMatrix, mGLFrameuMVPMatrixPointer);
 
         if (mPointBuf != null && mColorBuf != null) {
@@ -351,6 +435,8 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
             } else {
                 GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFrameBufferTexturePointerArray[1]);
             }
+            GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, -1); //第一次加载选择纹理方式渲染
+            GLES30.glUniform1i(GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "textureFBO"), 0); //获取纹理属性的指针
             GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, mPointBufferPos / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
             GLES30.glDisableVertexAttribArray(mObjectPositionPointer);
             GLES30.glDisableVertexAttribArray(mGLFrameObjectVertColorArrayPointer);
@@ -372,7 +458,7 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
         if (!mIsDestroyed) {
             destroyFrameBuffer();
             //去除特殊shader程序
-            destroyShader(mFrameBufferDrawProgram, mWaveVertexShaderPointer, mWaveFragShaderPointer);
+            destroyShader(mYuvBufferDrawProgram, mYuvVertexShaderPointer, mYuvFragShaderPointer);
             mContext = null;
         }
         mIsDestroyed = true;
