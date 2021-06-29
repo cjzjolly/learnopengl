@@ -47,10 +47,10 @@ void convertYUV420P(bool reverse, in vec2 fragVTexCoord, out vec4 fragColor){
     vvv....
     */
     //????
-    float u = texture(textureUV, vec2(fragVTexCoord[0], fragVTexCoord[1] / 2.0))[0];
-    float v = texture(textureUV, vec2(fragVTexCoord[0], fragVTexCoord[1] / 2.0 + 0.5))[0];
+    float u = texture(textureUV, vec2(fragVTexCoord[0] / 2.0, fragVTexCoord[1] / 2.0))[0];
+    float v = texture(textureUV, vec2(fragVTexCoord[0] / 2.0, fragVTexCoord[1] / 2.0 + 0.5))[0];
     vec3 rgb;
-    if (!reverse) {
+    if (reverse) {
         rgb = yuvToRGB(y, v, u);  //YV12
     } else {
         rgb = yuvToRGB(y, u, v);  //YU12 / I420
