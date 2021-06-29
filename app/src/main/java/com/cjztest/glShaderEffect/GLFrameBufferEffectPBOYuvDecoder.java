@@ -15,6 +15,7 @@ import java.util.Map;
 import androidx.annotation.RequiresApi;
 
 import static com.cjztest.glShaderEffect.ShaderUtil.checkGlError;
+import static com.cjztest.glShaderEffect.ShaderUtil.destroyShader;
 import static com.cjztest.glShaderEffect.ShaderUtil.loadShader;
 
 /**Pixel Buffer PBO Demo**/
@@ -42,7 +43,6 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
     private boolean mFrameBufferCleanOnce = false;
 
 //    private static Map<Integer, Integer> mMapIndexToTextureID = new HashMap<>(); //(纹理id，纹理数)
-    private int mGenImageTextureId = 0;
     private int[] mYPanelPixelBuffferPointerArray;
     private int[] mUVPanelPixelBuffferPointerArray;
 
@@ -342,10 +342,10 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
     public void destroy() {
         if (!mIsDestroyed) {
             destroyPBO();
-            //去除特殊shader程序
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
-            //todo:
-            GLES30.glDeleteTextures(1, new int[] {mGenImageTextureId}, 0); //销毁纹理,gen和delete要成对出现
+            GLES30.glDeleteTextures(2, new int[] {mGenYTextureId, mGenUVTextureId}, 0); //销毁纹理,gen和delete要成对出现
+            //去除特殊shader程序
+            destroyShader(mYUVProgram, mYUVVertexShaderPointer, mYUVFragShaderPointer);
             mContext = null;
         }
         mIsDestroyed = true;
