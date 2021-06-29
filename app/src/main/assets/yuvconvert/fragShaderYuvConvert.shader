@@ -2,6 +2,7 @@
 precision highp float;
 uniform sampler2D textureY;//YPanel纹理输入，glTexImage2d时要设置直字节格式为：GL_LUMINANCE/GL_ALPHA(单个字节), GL_UNSIGNED_BYTE
 uniform sampler2D textureUV;//UV输入，glTexImage2d时要设置直字节格式为：GL_LUMINANCE_ALPHA(双字节), GL_UNSIGNED_BYTE
+uniform sampler2D textureFBO;
 uniform int funChoice;
 uniform float frame;//第几帧
 uniform vec2 resolution;//分辨率
@@ -74,5 +75,8 @@ void main() {
         case 3:
             convertYUV420P(true, fragVTexCoord, fragColor);   //vvvuuu
             break;
+        case -1:
+            fragColor = texture(textureFBO, fragVTexCoord);
+        break;
     }
 }

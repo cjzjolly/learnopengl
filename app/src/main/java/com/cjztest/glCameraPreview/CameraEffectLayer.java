@@ -13,6 +13,7 @@ import com.cjztest.glShaderEffect.GLFragEffectTwirlImgEffect;
 import com.cjztest.glShaderEffect.GLFragEffectWave;
 import com.cjztest.glShaderEffect.GLFrameBufferEffect1;
 import com.cjztest.glShaderEffect.GLFrameBufferEffectDrawCircle;
+import com.cjztest.glShaderEffect.GLFrameBufferEffectPBOAndFBOYuvDecoder;
 import com.cjztest.glShaderEffect.GLFrameBufferEffectPBODemo;
 import com.cjztest.glShaderEffect.GLFrameBufferEffectPBOYuvDecoder;
 import com.cjztest.glShaderEffect.GLImage;
@@ -28,7 +29,8 @@ public class CameraEffectLayer implements GLRenderer.onDrawListener {
     private int mWidth;
     private int mHeight;
     private float mRatio;
-    private GLFrameBufferEffectPBOYuvDecoder mYuvDecoder;
+    private GLFrameBufferEffectPBOAndFBOYuvDecoder mYuvDecoder;
+//    private GLFrameBufferEffectPBOYuvDecoder mYuvDecoder;
     private int mBaseProgramPointer;
     private int mFrameCount = 0;
     private byte[] mYuv;
@@ -44,7 +46,8 @@ public class CameraEffectLayer implements GLRenderer.onDrawListener {
         mBaseProgramPointer = glBaseProgramPointer;
         this.mRatio = (float) windowHeight / windowWidth;
         this.mContext = context;
-        mYuvDecoder = new GLFrameBufferEffectPBOYuvDecoder(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, mWidth, mHeight, mContext, mCameraWidth, mCameraHeight, GLFrameBufferEffectPBOYuvDecoder.YuvKinds.YUV_420SP_VUVU);
+        mYuvDecoder = new GLFrameBufferEffectPBOAndFBOYuvDecoder(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, mWidth, mHeight, mContext, mCameraWidth, mCameraHeight, GLFrameBufferEffectPBOAndFBOYuvDecoder.YuvKinds.YUV_420SP_VUVU);
+//        mYuvDecoder = new GLFrameBufferEffectPBOYuvDecoder(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, mWidth, mHeight, mContext, mCameraWidth, mCameraHeight, GLFrameBufferEffectPBOYuvDecoder.YuvKinds.YUV_420SP_VUVU);
     }
 
     /**按图层顺序渲染**/

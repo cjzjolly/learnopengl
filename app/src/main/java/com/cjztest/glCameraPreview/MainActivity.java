@@ -122,7 +122,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Came
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Override
     public void onPreview(byte[] y, byte[] u, byte[] v, Size previewSize, int stride) {
-        Log.i("cjztest", "camera");
+//        Log.i("cjztest", "camera");
         byte yuv[] = new byte[y.length + u.length + v.length];
         System.arraycopy(y, 0, yuv, 0, y.length);
         System.arraycopy(u, 0, yuv, y.length, u.length);

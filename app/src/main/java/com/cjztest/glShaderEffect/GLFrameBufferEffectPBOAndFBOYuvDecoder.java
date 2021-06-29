@@ -134,6 +134,18 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
         }
     }
 
+    private void createEmptyTexture(int textureID, int imgWidth, int imgHeight, int pixelFormat) {
+        GLES30.glGenTextures(1, new int[] {textureID}, 0); //只要值不重复即可
+        //UV纹理初始化
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureID);
+        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_NEAREST);
+        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
+        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
+        GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
+        //创建一个占用指定空间的纹理，但暂时不复制数据进去，等PBO进行数据传输，取代glTexImage2D，利用DMA提高数据拷贝速度
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, pixelFormat, imgWidth, imgHeight, 0, pixelFormat, GLES30.GL_UNSIGNED_BYTE, null); //因为这里使用了双字节，所以纹理大小对比使用单字节的Y通道纹理，宽度首先要缩小一般，而uv层高度本来就只有y层一般，所以高度也除以2
+    }
+
     private void startBindTexture() {
         //特殊纹理，需要专门加载其他程序:
         String fragShaderScript = ShaderUtil.loadFromAssetsFile("yuvconvert/fragShaderYuvConvert.shader", mContext.getResources());
@@ -180,6 +192,29 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
         mFrameCountPointer = GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "frame");
         //设置分辨率指针，告诉gl脚本现在的分辨率
         mResoulutionPointer = GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "resolution");
+
+        //生成textureY纹理
+        while(mMapIndexToTextureID.get(mGenYTextureId) != null) {//顺序找到空缺的id
+            mGenYTextureId++;
+        }
+        createEmptyTexture(mGenYTextureId, mImgWidth, mImgHeight, GLES30.GL_LUMINANCE);
+        mMapIndexToTextureID.put(mGenYTextureId, 1); //使用该id作为纹理索引指针
+        //生成textureUV纹理
+        while(mMapIndexToTextureID.get(mGenUVTextureId) != null) {//顺序找到空缺的id
+            mGenUVTextureId++;
+        }
+        switch (mYuvKinds) {
+            default:
+            case YUV_420SP_UVUV:
+            case YUV_420SP_VUVU:
+                createEmptyTexture(mGenUVTextureId, mImgWidth / 2, mImgHeight / 2, GLES30.GL_LUMINANCE_ALPHA);
+                break;
+            case YUV_420P_UUVV:
+            case YUV_420P_VVUU:
+                createEmptyTexture(mGenUVTextureId, mImgWidth, mImgHeight / 2, GLES30.GL_LUMINANCE);
+                break;
+        }
+        mMapIndexToTextureID.put(mGenUVTextureId, 1); //使用该id作为纹理索引指针
     }
 
 
@@ -417,7 +452,7 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
         drawToFrameBuffer(cameraMatrix, projMatrix);
         //绘制
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);//绑定帧系统默认缓冲id
-        GLES30.glUseProgram(mYuvBufferDrawProgram);
+//        GLES30.glUseProgram(mYuvBufferDrawProgram);
         locationTrans(cameraMatrix, projMatrix, mGLFrameuMVPMatrixPointer);
 
         if (mPointBuf != null && mColorBuf != null) {

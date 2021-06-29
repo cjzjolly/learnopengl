@@ -17,6 +17,7 @@ import static com.cjztest.glShaderEffect.ShaderUtil.checkGlError;
 import static com.cjztest.glShaderEffect.ShaderUtil.destroyShader;
 import static com.cjztest.glShaderEffect.ShaderUtil.loadShader;
 
+/**FBO使用Demo**/
 public class GLFrameBufferEffectPingPongSave extends GLLine {
     private final float mX;
     private final float mY;
@@ -308,7 +309,7 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
             GLES30.glEnableVertexAttribArray(mGLFrameVTexCoordPointer);  //启用纹理采样定位坐标
             GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
             //交替切换framebuffer，互为绑定对方为纹理
-            if (mFrameCount == 0) {
+            if (mFrameCount == 0) { //第一帧贴个图片
                 GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, 0); //选择各种绘制处理函数
                 GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenImageTextureId);
             } else {
