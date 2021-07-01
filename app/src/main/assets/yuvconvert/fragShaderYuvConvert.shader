@@ -128,7 +128,7 @@ void main() {
             break;
         case -1:
 //            fragColor = texture(textureFBO, fragVTexCoord);
-        kernalEffect(fragVTexCoord);
-        break;
+            kernalEffect(vec2(fragVTexCoord.s, 1.0 - fragVTexCoord.t));
+            break;
     }
 }
