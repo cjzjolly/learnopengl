@@ -28,9 +28,12 @@ add_library( # Sets the name of the library.
              # file are automatically included.
 #        matrixState.c
 #        matrix.c
+        shaderUtil.c
         opengl_native_lib.c
         decode_buffer.cpp
         decode_buffer.h
+        RenderProgramYUV.h
+        RenderProgramYUV.cpp
              )
 
 # Searches for a specified prebuilt library and stores the path as a

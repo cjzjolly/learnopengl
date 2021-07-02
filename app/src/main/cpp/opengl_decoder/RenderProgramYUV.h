@@ -6,6 +6,7 @@
 
 using namespace OPENGL_VIDEO_RENDERER;
 class RenderProgramYUV : public RenderProgram {
+public:
     void createRender();
 
     void requestRender(int outputFBOTexturePointer, int texturesPointer[], int dataArrayLength);

@@ -21,12 +21,19 @@ static const char *TAG = "nativeGL";
 #define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, TAG, fmt, ##args)
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
 
-void DecodeBuffer::drawBuffer(char *data) {
 
+DecodeBuffer mDecodeBuffer;
+
+void DecodeBuffer::drawBuffer(char *data) {
+    if (mRenderProgramYuv == nullptr) {
+        mRenderProgramYuv = new RenderProgramYUV();
+        mRenderProgramYuv->createRender();
+    }
 }
+
 
 extern "C" {
     JNIEXPORT void JNICALL Java_com_opengldecoder_jnibridge_JniBridge_drawBuffer(JNIEnv *env, jobject activity) {
-
+        mDecodeBuffer.drawBuffer(nullptr);
     }
 }

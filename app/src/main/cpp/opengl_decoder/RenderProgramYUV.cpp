@@ -2,13 +2,14 @@
 // Created by jiezhuchen on 2021/6/21.
 //
 
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
+#include <GLES3/gl3.h>
+#include <GLES3/gl3ext.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <android/native_window.h>
 //#include <ui/GraphicBuffer.h>
 #include <dlfcn.h>
+#include "shaderUtil.c"
 #include "RenderProgramYUV.h"
 
 #include <string.h>
@@ -22,6 +23,8 @@ static const char *TAG = "nativeGL";
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
 
 using namespace OPENGL_VIDEO_RENDERER;
+
+gLslHandle mProgram;
 
 char vertShader[] = GL_SHADER_STRING(
         version 300 es
@@ -108,7 +111,7 @@ char fragShader[] = GL_SHADER_STRING(
 
 
 void RenderProgramYUV::createRender() {
-
+    mProgram = createProgram(vertShader, fragShader);
 }
 
 void RenderProgramYUV::requestRender(int outputFBOTexturePointer, int *texturesPointer,
