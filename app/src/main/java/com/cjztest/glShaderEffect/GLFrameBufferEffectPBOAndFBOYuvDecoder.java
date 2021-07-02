@@ -134,10 +134,10 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
         }
     }
 
-    private void createEmptyTexture(int textureID, int imgWidth, int imgHeight, int pixelFormat) {
-        GLES30.glGenTextures(1, new int[] {textureID}, 0); //只要值不重复即可
+    private void createEmptyTexture(int texturePointers[], int imgWidth, int imgHeight, int pixelFormat) {
+        GLES30.glGenTextures(1, texturePointers, 0); //只要值不重复即可
         //UV纹理初始化
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureID);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texturePointers[0]);
         GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_NEAREST);
         GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
         GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
@@ -194,26 +194,24 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
         mResoulutionPointer = GLES30.glGetUniformLocation(mYuvBufferDrawProgram, "resolution");
 
         //生成textureY纹理
-        while(mMapIndexToTextureID.get(mGenYTextureId) != null) {//顺序找到空缺的id
-            mGenYTextureId++;
-        }
-        createEmptyTexture(mGenYTextureId, mImgWidth, mImgHeight, GLES30.GL_LUMINANCE);
+        int mGenYTexutreArray[] = new int[1];
+        createEmptyTexture(mGenYTexutreArray, mImgWidth, mImgHeight, GLES30.GL_LUMINANCE);
+        mGenYTextureId = mGenYTexutreArray[0];
         mMapIndexToTextureID.put(mGenYTextureId, 1); //使用该id作为纹理索引指针
         //生成textureUV纹理
-        while(mMapIndexToTextureID.get(mGenUVTextureId) != null) {//顺序找到空缺的id
-            mGenUVTextureId++;
-        }
+        int mGenUVTexutreArray[] = new int[1];
         switch (mYuvKinds) {
             default:
             case YUV_420SP_UVUV:
             case YUV_420SP_VUVU:
-                createEmptyTexture(mGenUVTextureId, mImgWidth / 2, mImgHeight / 2, GLES30.GL_LUMINANCE_ALPHA);
+                createEmptyTexture(mGenUVTexutreArray, mImgWidth / 2, mImgHeight / 2, GLES30.GL_LUMINANCE_ALPHA);
                 break;
             case YUV_420P_UUVV:
             case YUV_420P_VVUU:
-                createEmptyTexture(mGenUVTextureId, mImgWidth, mImgHeight / 2, GLES30.GL_LUMINANCE);
+                createEmptyTexture(mGenUVTexutreArray, mImgWidth, mImgHeight / 2, GLES30.GL_LUMINANCE);
                 break;
         }
+        mGenUVTextureId = mGenUVTexutreArray[0];
         mMapIndexToTextureID.put(mGenUVTextureId, 1); //使用该id作为纹理索引指针
     }
 
@@ -312,6 +310,9 @@ public class GLFrameBufferEffectPBOAndFBOYuvDecoder extends GLLine {
 
         GLES30.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, mUVPanelPixelBuffferPointerArray[1]);
         GLES30.glBufferData(GLES30.GL_PIXEL_PACK_BUFFER, mImgPanelUVByteSize,  null, GLES30.GL_STREAM_DRAW);
+        //初始化完重新绑定默认buffer，否则可能影响其他图形
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_UNPACK_BUFFER, 0);
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, 0);
     }
 
     /**绘制画面到framebuffer**/

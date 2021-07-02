@@ -82,10 +82,9 @@ public class GLImage extends GLLine {
     }
 
     private void startBindTexture(Bitmap bitmap) {
-        while(mMapIndexToTextureID.get(mGenTextureId) != null) {//顺序找到空缺的id
-            mGenTextureId++;
-        }
-        GLES30.glGenTextures(1, new int[] {mGenTextureId}, 0); //只要值不重复即可
+        int texturePointers[] = new int[1];
+        GLES30.glGenTextures(1, texturePointers, 0); //只要值不重复即可
+        mGenTextureId = texturePointers[0];
         //绑定处理
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenTextureId);
         GLES30.glTexParameterf(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_NEAREST);
@@ -104,12 +103,12 @@ public class GLImage extends GLLine {
             return;
         }
         GLES30.glUseProgram(mBaseProgram);
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
         locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
         if (mPointBuf != null && mColorBuf != null) {
             GLES30.glUniform1i(mGLFunChoicePointer, 1); //选择纹理方式渲染
             mPointBuf.position(0);
             mColorBuf.position(0);
-            GLES30.glUniform1i(GLES30.glGetUniformLocation(mBaseProgram, "sTexture"), 0); //获取纹理属性的指针
             //将顶点位置数据送入渲染管线
             GLES30.glVertexAttribPointer(mObjectPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mPointBuf); //三维向量，size为2
             //将顶点颜色数据送入渲染管线
@@ -125,6 +124,7 @@ public class GLImage extends GLLine {
             //<<<
             GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mGenTextureId);
+            GLES30.glUniform1i(GLES30.glGetUniformLocation(mBaseProgram, "sTexture"), 0); //获取纹理属性的指针
             GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, mPointBufferPos / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
             GLES30.glDisableVertexAttribArray(mObjectPositionPointer);
             GLES30.glDisableVertexAttribArray(mObjectVertColorArrayPointer);
