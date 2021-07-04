@@ -55,6 +55,7 @@ float texCoor[]   //纹理内采样坐标,类似于canvas坐标 //这东西有�
                 0.0, 1.0
         };
 float mVert[4 * 3];
+bool mIsDestroyed = false;
 
 char vertShader[] = GL_SHADER_STRING(
         version 300 es
@@ -248,20 +249,88 @@ void refreshBuffer(char *imgBytes, int mImgWidth, int mImgHeight) {
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 }
 
-void drawTo(int fboTexturePointer, float *cameraMatrix, float *projMatrix) {
+
+/**绘制画面到framebuffer**/
+void drawToFrameBuffer(int outputFBOTexturePointer, float cameraMatrix[], float projMatrix[]) {
     if (mIsDestroyed) {
         return;
     }
-    locationTrans(cameraMatrix, projMatrix, mGLFrameuMVPMatrixPointer);
-    //先绘制内容到frambuffer
-    drawToFrameBuffer(cameraMatrix, projMatrix);
-    //绘制
     glUseProgram(mYuvBufferDrawProgram.programHandle);
-    locationTrans(cameraMatrix, projMatrix, mGLFrameuMVPMatrixPointer);
+    //设置视窗大小及位置
+    glViewport(0, 0, mFrameBufferWidth, mFrameBufferHeight);
+    //绑定帧缓冲id
+    if (mFrameCount % 2 == 0) {
+        glBindFramebuffer(GL_FRAMEBUFFER, mFrameBufferPointerArray[0]);
+    } else {
+        glBindFramebuffer(GL_FRAMEBUFFER, mFrameBufferPointerArray[1]);
+    }
+    //清除深度缓冲与颜色缓冲
+    if (!mFrameBufferClean && !mFrameBufferCleanOnce) { //实现渲染画面叠加
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+        mFrameBufferCleanOnce = true;
+    }
+    if (mFrameBufferClean) {
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+        glUniform1i(mGLFrameBufferProgramFunChoicePointer, -1); //第一次加载选择纹理方式渲染
+    }
+    //设置它的坐标系
+    locationTrans(cameraMatrix, projMatrix, this.mGLFrameuMVPMatrixPointer);
+    //设置图像分辨率
+    glUniform2fv(mResoulutionPointer, 1, new float[]{mWindowW, mWindowH}, 0);
+    locationTrans(cameraMatrix, projMatrix, this.mGLFrameuMVPMatrixPointer);
+    if (mPointBuf != null && mColorBuf != null) {
+        if (mFrameCount < 0) {
+            mFrameCount = 0;
+        }
+        mPointBuf.position(0);
+        mColorBuf.position(0);
+//            glUniform1i(glGetUniformLocation(mYuvBufferDrawProgram, "sTexture"), 0); //获取纹理属性的指针
+        //将顶点位置数据送入渲染管线
+        glVertexAttribPointer(mGLFrameObjectPositionPointer, 3, GL_FLOAT, false, 0, mPointBuf); //三维向量，size为2
+        //将顶点颜色数据送入渲染管线
+        glVertexAttribPointer(mGLFrameObjectVertColorArrayPointer, 4, GL_FLOAT, false, 0, mColorBuf);
+        //将顶点纹理坐标数据传送进渲染管线
+        glVertexAttribPointer(mGLFrameVTexCoordPointer, 2, GL_FLOAT, false, 0, mTexCoorBuffer);  //二维向量，size为2
+        glEnableVertexAttribArray(mGLFrameObjectPositionPointer); //启用顶点属性
+        glEnableVertexAttribArray(mGLFrameObjectVertColorArrayPointer);  //启用颜色属性
+        glEnableVertexAttribArray(mGLFrameVTexCoordPointer);  //启用纹理采样定位坐标
+//            glActiveTexture(GL_TEXTURE0);
+        //绘制yuv
+        switch (mYuvKinds) {
+            default:
+            case YUV_420SP_UVUV:
+                glUniform1i(mGLFrameBufferProgramFunChoicePointer, 0);
+                break;
+            case YUV_420SP_VUVU:
+                glUniform1i(mGLFrameBufferProgramFunChoicePointer, 1);
+                break;
+            case YUV_420P_UUVV:
+                glUniform1i(mGLFrameBufferProgramFunChoicePointer, 2);
+                break;
+            case YUV_420P_VVUU:
+                glUniform1i(mGLFrameBufferProgramFunChoicePointer, 3);
+                break;
+        }
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, mGenYTextureId);
+        glUniform1i(glGetUniformLocation(mYuvBufferDrawProgram, "textureY"), 0); //获取纹理属性的指针
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, mGenUVTextureId);
+        glUniform1i(glGetUniformLocation(mYuvBufferDrawProgram, "textureUV"), 1); //获取纹理属性的指针
+
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, mPointBufferPos / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+        glDisableVertexAttribArray(mGLFrameObjectPositionPointer);
+        glDisableVertexAttribArray(mGLFrameObjectVertColorArrayPointer);
+        glDisableVertexAttribArray(mGLFrameVTexCoordPointer);
+    }
+    //绑会系统默认framebuffer，否则会显示不出东西
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);//绑定帧缓冲id
 }
 
 /**YUV格式如果使用opengles 3.0的话，不需要在此时使用glTexImage2d，更建议在更新纹理的接口中使用PBO更新**/
-void RenderProgramYUV::drawData(int outputFBOTexturePointer, char *data, int width, int height, int pixelFormat) {
+void RenderProgramYUV::drawData(float *cameraMatrix, float *projMatrix, int outputFBOTexturePointer, char *data, int width, int height, int pixelFormat, int offset) {
     if (mIsFirstFrame) {
         //生成textureY纹理
         int mGenYTexutreArray[1];
@@ -284,11 +353,6 @@ void RenderProgramYUV::drawData(int outputFBOTexturePointer, char *data, int wid
         createPBO(width, height);
     }
     refreshBuffer(data, width, height);
+    drawToFrameBuffer(outputFBOTexturePointer, cameraMatrix, projMatrix);
     mIsFirstFrame = false;
-}
-
-extern "C" {
-//    JNIEXPORT void JNICALL Java_com_opengldecoder_jnibridge_JniBridge_drawBuffer(JNIEnv *env, jobject activity) {
-//
-//    }
 }
