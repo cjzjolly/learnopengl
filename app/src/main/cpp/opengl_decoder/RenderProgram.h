@@ -46,9 +46,10 @@ namespace OPENGL_VIDEO_RENDERER {
          * @param 决定物体怎么投影到视点
          * @param outputFBOTexturePointer 最终结果承载FBO，例如图层FBO。各个图层的FBO自底向上渲染**/
         void locationTrans(float cameraMatrix[], float projMatrix[], int muMVPMatrixPointer);
+
     private:
         float mObjectMatrix[16];    //具体物体的3D变换矩阵，包括旋转、平移、缩放
-
+        float mMVPMatrix[16];//创建用来存放最终变换矩阵的数组
     };
 }
 

@@ -11,7 +11,7 @@ class DecodeBuffer {
 public:
     void drawBuffer(char* data);
 private:
-    RenderProgramYUV *mRenderProgramYuv;
+//    RenderProgramYUV *mRenderProgramYuv;
 };
 
 

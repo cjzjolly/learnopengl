@@ -4,14 +4,7 @@
 
 #include <GLES3/gl3.h>
 #include <GLES3/gl3ext.h>
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-#include <android/native_window.h>
-//#include <ui/GraphicBuffer.h>
-#include <dlfcn.h>
 #include "shaderUtil.c"
-#include "matrix.c"
-#include "matrixState.c"
 #include "RenderProgramImage.h"
 
 #include <string.h>
@@ -19,11 +12,12 @@
 
 #include "android/log.h"
 
+
+using namespace OPENGL_VIDEO_RENDERER;
 static const char *TAG = "nativeGL";
 #define LOGI(fmt, args...) __android_log_print(ANDROID_LOG_INFO,  TAG, fmt, ##args)
 #define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, TAG, fmt, ##args)
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
-using namespace OPENGL_VIDEO_RENDERER;
 
 /**绑定纹理**/
 GLuint texturePointers[1];

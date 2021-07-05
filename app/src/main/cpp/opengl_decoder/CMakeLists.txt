@@ -26,8 +26,8 @@ add_library( # Sets the name of the library.
              # Provides a relative path to your source file(s).
              # Associated headers in the same location as their source
              # file are automatically included.
-        matrixState.c
-        matrix.c
+        matrixState.h
+#        matrix.h
         shaderUtil.c
         opengl_native_lib.c
         decode_buffer.cpp
