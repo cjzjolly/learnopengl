@@ -25,10 +25,10 @@ static const char *TAG = "nativeGL";
 DecodeBuffer mDecodeBuffer;
 
 void DecodeBuffer::drawBuffer(char *data) {
-//    if (mRenderProgramYuv == nullptr) {
-//        mRenderProgramYuv = new RenderProgramYUV();
-//        mRenderProgramYuv->createRender();
-//    }
+    if (mRenderProgramImage == nullptr) {
+        mRenderProgramImage = new RenderProgramImage();
+        mRenderProgramImage->createRender()
+    }
 }
 
 

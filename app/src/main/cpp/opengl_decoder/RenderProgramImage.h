@@ -11,6 +11,8 @@ public:
 
     void loadData(char *data, int width, int height, int pixelFormat, int offset);
 
+    void loadTexture(int *texturePointers, int width, int height);
+
     void drawTo(float *cameraMatrix, float *projMatrix, int outputFBOTexturePointer, int fboW, int fboH);
 
     void destroy();
