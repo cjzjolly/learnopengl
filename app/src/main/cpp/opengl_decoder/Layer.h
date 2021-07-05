@@ -5,8 +5,8 @@
 
 #ifndef LEARNOPENGL_LAYER_H
 #define LEARNOPENGL_LAYER_H
-#include <list>
 #include "RenderProgram.h"
+#include <list>
 using namespace OPENGL_VIDEO_RENDERER;
 
 
@@ -18,7 +18,7 @@ public:
     Layer(float x, float y, float z, float w, float h, int windowW, int windowH);
 
     /**渲染程序模板表，可以添加多个渲染模板到表中实现图像流水线式加工**/
-    void addRenderProgram(RenderProgram program);
+    void addRenderProgram(RenderProgram *program);
 
     /**传入数据源**/
     /**更新显存中对应纹理地址的图像数据
@@ -33,7 +33,7 @@ public:
     void drawTo(float *cameraMatrix, float *projMatrix, int outputFBOTexturePointer, int fboW, int fboH);
 private:
     /**渲染程序模板表，可以添加多个渲染模板到表中实现图像流水线式加工**/
-    std::list<RenderProgram> mRenderProgramList;
+    std::list<RenderProgram*> mRenderProgramList;
 };
 
 

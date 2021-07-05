@@ -15,6 +15,7 @@
 #include "android/bitmap.h"
 #include "android/native_window_jni.h"
 #include <sys/time.h>
+#include "opengl_native_lib.h"
 #include "matrixState.c"
 
 
@@ -24,23 +25,22 @@ static const char *TAG = "nativeGL";
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
 
 
-char *jstringToChar(JNIEnv *env, jstring jstr);
-
+extern "C" {
 // 由于jvm和c++对中文的编码不一样，因此需要转码。 utf8/16转换成gb2312
 char *jstringToChar(JNIEnv *env, jstring jstr) {
     char *rtn = NULL;
-    jclass clsstring = (*env)->FindClass(env, "java/lang/String");
-    jstring strencode = (*env)->NewStringUTF(env, "GB2312");
-    jmethodID mid = (*env)->GetMethodID(env, clsstring, "getBytes", "(Ljava/lang/String;)[B");
-    jbyteArray barr = (jbyteArray) (*env)->CallObjectMethod(env, jstr, mid, strencode);
-    jsize alen = (*env)->GetArrayLength(env, barr);
-    jbyte *ba = (*env)->GetByteArrayElements(env, barr, JNI_FALSE);
+    jclass clsstring = env->FindClass("java/lang/String");
+    jstring strencode = env->NewStringUTF("GB2312");
+    jmethodID mid = env->GetMethodID(clsstring, "getBytes", "(Ljava/lang/String;)[B");
+    jbyteArray barr = (jbyteArray) env->CallObjectMethod(jstr, mid, strencode);
+    jsize alen = env->GetArrayLength(barr);
+    jbyte *ba = env->GetByteArrayElements(barr, JNI_FALSE);
     if (alen > 0) {
         rtn = (char *) malloc(alen + 1);
         memcpy(rtn, ba, alen);
         rtn[alen] = 0;
     }
-    (*env)->ReleaseByteArrayElements(env, barr, ba, 0);
+    env->ReleaseByteArrayElements(barr, ba, 0);
     return rtn;
 }
 
@@ -87,7 +87,7 @@ void setupGraphics(int w, int h, float *bgColor)//初始化函数
 {
     glViewport(0, 0, w, h);//设置视口
     float ratio = (float) h / w;//计算宽长比glViewport
-    setProjectFrustum(-1, 1, -ratio, ratio , 1, 50);//设置投影矩阵
+    setProjectFrustum(-1, 1, -ratio, ratio, 1, 50);//设置投影矩阵
     setCamera(0, 0, 1, 0, 0, 0, 0, 1, 0);//设置摄像机矩阵
     setInitStack();//初始化变换矩阵
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
@@ -103,7 +103,7 @@ void setupGraphics(int w, int h, float *bgColor)//初始化函数
 
 /**安卓系统在有GLSurfaceview的情况下不需要进行EGL相关操作**/
 void androidNativeInitGL(int viewPortW, int viewPortH) {
-    float bgColor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    float bgColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
     setupGraphics(viewPortW, viewPortH, bgColor);
 }
 
@@ -117,4 +117,5 @@ JNIEXPORT void JNICALL
 Java_com_opengldecoder_jnibridge_JniBridge_draw(JNIEnv *env, jobject activity) {
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
     glClearColor(1, 0, 0, 1);
+}
 }

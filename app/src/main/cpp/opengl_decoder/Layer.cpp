@@ -39,7 +39,7 @@ Layer::Layer(float x, float y, float z, float w, float h, int windowW, int windo
     mRenderSrcTexture.texturePointers = nullptr;
 }
 
-void Layer::addRenderProgram(RenderProgram program) {
+void Layer::addRenderProgram(RenderProgram *program) {
     mRenderProgramList.push_back(program);
 }
 
@@ -66,16 +66,16 @@ void Layer::drawTo(float *cameraMatrix, float *projMatrix, int outputFBOTextureP
         //第一个渲染器接受图层原始数据，其他的从渲染结果中作为输入
         if (i == 0) {
             if (mRenderSrcData.data != nullptr) {
-                item->loadData(mRenderSrcData.data, mRenderSrcData.width, mRenderSrcData.height, mRenderSrcData.pixelFormat, mRenderSrcData.offset);
+                (*item)->loadData(mRenderSrcData.data, mRenderSrcData.width, mRenderSrcData.height, mRenderSrcData.pixelFormat, mRenderSrcData.offset);
             }
             if (mRenderSrcTexture.texturePointers != nullptr) {
-                item->loadTexture(mRenderSrcTexture.texturePointers, mRenderSrcTexture.width, mRenderSrcTexture.height);
+                (*item)->loadTexture(mRenderSrcTexture.texturePointers, mRenderSrcTexture.width, mRenderSrcTexture.height);
             }
         } else { //如果只有一个渲染器则走不到else里，否则第0个打后的渲染器依次使用上一个渲染器的结果，也就是图层FBO中的数据作为输入
             int textures[] = {outputFBOTexturePointer};
-            item->loadTexture(textures, fboW, fboH); //使用上一个渲染器的渲染结果作为绘制输入
+            (*item)->loadTexture(textures, fboW, fboH); //使用上一个渲染器的渲染结果作为绘制输入
         }
-        item->drawTo(cameraMatrix, projMatrix, outputFBOTexturePointer, fboW, fboH);
+        (*item)->drawTo(cameraMatrix, projMatrix, outputFBOTexturePointer, fboW, fboH);
     }
 }
 
