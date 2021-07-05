@@ -47,7 +47,7 @@ public abstract class GLObject {
         Matrix.translateM(mObjectMatrix, 0, dx, dy, dz);
     }
 
-    public void rotate(int degree,float roundX, float roundY, float roundZ) {
+    public void rotate(int degree, float roundX, float roundY, float roundZ) {
         mRotatedDegree += degree;
         Matrix.rotateM(mObjectMatrix, 0, degree, roundX, roundY, roundZ);
     }
