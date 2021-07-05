@@ -165,6 +165,10 @@ void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, int outp
     }
 }
 
+void RenderProgramImage::loadTexture(int *texturePointers, int width, int height) {
+
+}
+
 void RenderProgramImage::destroy() {
     if (!mIsDestroyed) {
         //释放纹理所占用的显存

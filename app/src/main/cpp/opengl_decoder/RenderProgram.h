@@ -11,7 +11,7 @@ namespace OPENGL_VIDEO_RENDERER {
     class RenderProgram {
     public:
         /**创建对象，创建物体本身作未经处理的坐标（物体空间），编译shader，获取shader属性等
-         * @param x,y,z 初始化渲染面左上角（归一式坐标）
+         * @param x,y,z 初始化渲染面左上角（归一式坐标），传到objectMatrix中
          * @param w,h 初始化渲染面（归一式坐标）
          * @param windowW,windowH 渲染面实际分辨率**/
         virtual void createRender(float x, float y, float z, float w, float h, int windowW, int windowH) = 0;

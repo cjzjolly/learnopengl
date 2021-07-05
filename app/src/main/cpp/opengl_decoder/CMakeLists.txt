@@ -34,6 +34,7 @@ add_library( # Sets the name of the library.
         decode_buffer.h
         RenderProgram.cpp
         RenderProgramImage.cpp
+        Layer.cpp
              )
 
 # Searches for a specified prebuilt library and stores the path as a

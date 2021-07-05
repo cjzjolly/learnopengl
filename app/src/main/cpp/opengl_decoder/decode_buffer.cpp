@@ -27,8 +27,9 @@ DecodeBuffer mDecodeBuffer;
 void DecodeBuffer::drawBuffer(char *data) {
     if (mRenderProgramImage == nullptr) {
         mRenderProgramImage = new RenderProgramImage();
-        mRenderProgramImage->createRender()
+        mRenderProgramImage->createRender(-1, -1, 0, 2, 2, 1920, 1080); //cjztest
     }
+//    mRenderProgramImage->drawTo()
 }
 
 
