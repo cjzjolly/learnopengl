@@ -112,9 +112,12 @@ void RenderProgramImage::createRender(float x, float y, float z, float w, float 
 }
 
 void RenderProgramImage::loadData(char *data, int width, int height, int pixelFormat, int offset) {
-    glUseProgram(mImageProgram.programHandle);
-    glGenTextures(1, texturePointers);
-    mGenTextureId = texturePointers[0];
+    if (!mIsTexutresInited) {
+        glUseProgram(mImageProgram.programHandle);
+        glGenTextures(1, texturePointers);
+        mGenTextureId = texturePointers[0];
+        mIsTexutresInited = true;
+    }
     //绑定处理
     glBindTexture(GL_TEXTURE_2D, mGenTextureId);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
