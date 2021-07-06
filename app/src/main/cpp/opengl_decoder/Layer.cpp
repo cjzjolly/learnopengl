@@ -6,21 +6,6 @@
 using namespace OPENGL_VIDEO_RENDERER;
 
 
-struct RenderSrcData {
-    char* data;
-    int width;
-    int height;
-    int pixelFormat;
-    int offset;
-};
-struct RenderSrcData mRenderSrcData;
-struct RenderSrcTexture {
-    int *texturePointers;
-    int width;
-    int height;
-};
-struct RenderSrcTexture mRenderSrcTexture;
-
 Layer::Layer(float x, float y, float z, float w, float h, int windowW, int windowH) {
     mX = x;
     mY = y;

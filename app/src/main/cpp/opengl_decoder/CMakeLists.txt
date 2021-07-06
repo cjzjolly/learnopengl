@@ -28,9 +28,10 @@ add_library( # Sets the name of the library.
              # file are automatically included.
         matrix.h
         matrix.c
+        shaderUtil.h
         shaderUtil.c
-        opengl_native_lib.h
-        opengl_native_lib.cpp
+        OpenGLNativeLib.h
+        OpenGLNativeLib.cpp
         decode_buffer.cpp
         decode_buffer.h
         RenderProgram.cpp

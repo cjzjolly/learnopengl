@@ -41,6 +41,20 @@ private:
     float mHeight;
     int mWindowW;
     int mWindowH;
+    struct RenderSrcData {
+        char* data;
+        int width;
+        int height;
+        int pixelFormat;
+        int offset;
+    };
+    struct RenderSrcData mRenderSrcData;
+    struct RenderSrcTexture {
+        int *texturePointers;
+        int width;
+        int height;
+    };
+    struct RenderSrcTexture mRenderSrcTexture;
 };
 
 

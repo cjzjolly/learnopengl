@@ -3,20 +3,7 @@ shader加载、销毁工具 */
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <GLES3/gl3.h>
-#include <GLES3/gl3ext.h>
-
-typedef struct gLslHandle {
-	GLuint vertexShader;  //顶点shader
-	GLuint fragmentShader; //片元shader
-	GLuint programHandle;  //编译好的program句柄
-} GLslHandle;
-
-GLslHandle createProgram(char* vertexShaderSource,
-									char* fragmentShaderSource);
-GLuint loadShader(char* source, GLenum shaderType);
-void destroyProgram(GLslHandle programHandle);
-
+#include "shaderUtil.h"
 
 GLslHandle createProgram(char* vertexShaderSource,
 									char* fragmentShaderSource)

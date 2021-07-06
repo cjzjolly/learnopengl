@@ -4,12 +4,11 @@
 
 #include <GLES3/gl3.h>
 #include <GLES3/gl3ext.h>
-#include "shaderUtil.c"
-#include "RenderProgramImage.h"
 
 #include <string.h>
 #include <jni.h>
-
+#include "RenderProgramImage.h"
+#include "shaderUtil.c"
 #include "android/log.h"
 
 
@@ -19,76 +18,68 @@ static const char *TAG = "nativeGL";
 #define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, TAG, fmt, ##args)
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
 
-/**绑定纹理**/
-GLuint texturePointers[1];
-GLuint mGenTextureId = 0xFFFFFFFF;
-GLslHandle mImageProgram;
-GLint mObjectPositionPointer;
-GLint mVTexCoordPointer;
-GLint mObjectVertColorArrayPointer;
-GLint muMVPMatrixPointer;
-GLint mGLFunChoicePointer;
-GLint mFrameCountPointer;
-GLint mResoulutionPointer;
-int mWindowW, mWindowH;
-bool mIsDestroyed = false;
+RenderProgramImage::RenderProgramImage() {
+    vertShader = GL_SHADER_STRING(
+            version 300 es
+            uniform mat4 uMVPMatrix; //旋转平移缩放 总变换矩阵。物体矩阵乘以它即可产生变换
+            in vec3 objectPosition; //物体位置向量，参与运算但不输出给片源
 
-char vertShader[] = GL_SHADER_STRING(
-        version 300 es
-        uniform mat4 uMVPMatrix; //旋转平移缩放 总变换矩阵。物体矩阵乘以它即可产生变换
-        in vec3 objectPosition; //物体位置向量，参与运算但不输出给片源
+            in vec4 objectColor; //物理颜色向量
+            in vec2 vTexCoord; //纹理内坐标
+            out vec4 fragObjectColor;//输出处理后的颜色值给片元程序
+            out vec2 fragVTexCoord;//输出处理后的纹理内坐标给片元程序
 
-        in vec4 objectColor; //物理颜色向量
-        in vec2 vTexCoord; //纹理内坐标
-        out vec4 fragObjectColor;//输出处理后的颜色值给片元程序
-        out vec2 fragVTexCoord;//输出处理后的纹理内坐标给片元程序
-
-        void main() {
-            gl_Position = uMVPMatrix * vec4(objectPosition, 1.0); //设置物体位置
-            fragVTexCoord = vTexCoord; //默认无任何处理，直接输出物理内采样坐标
-            fragObjectColor = objectColor; //默认无任何处理，输出颜色值到片源
-        }
-);
-
-char fragShader[] = GL_SHADER_STRING(
-        version 300 es
-        precision highp float;
-        uniform sampler2D sTexture;//纹理输入
-        uniform int funChoice;
-        uniform float frame;//第几帧
-        uniform vec2 resolution;//分辨率
-        in vec4 fragObjectColor;//接收vertShader处理后的颜色值给片元程序
-        in vec2 fragVTexCoord;//接收vertShader处理后的纹理内坐标给片元程序
-        out vec4 fragColor;//输出到的片元颜色
-
-        void main() {
-            switch (funChoice) {
-                case 0://线条渲染
-                    fragColor = fragObjectColor;//给此片元颜色值
-                    break;
-                case 1://纹理渲染
-                    vec4 color = texture(sTexture, fragVTexCoord);//采样纹理中对应坐标颜色，进行纹理渲染
-                    color.a = color.a * fragObjectColor.a;//利用顶点透明度信息控制纹理透明度
-                    fragColor = color;
-                    break;
+            void main() {
+                gl_Position = uMVPMatrix * vec4(objectPosition, 1.0); //设置物体位置
+                fragVTexCoord = vTexCoord; //默认无任何处理，直接输出物理内采样坐标
+                fragObjectColor = objectColor; //默认无任何处理，输出颜色值到片源
             }
-        }
-);
+    );
+    fragShader = GL_SHADER_STRING(
+            version 300 es
+            precision highp float;
+            uniform sampler2D sTexture;//纹理输入
+            uniform int funChoice;
+            uniform float frame;//第几帧
+            uniform vec2 resolution;//分辨率
+            in vec4 fragObjectColor;//接收vertShader处理后的颜色值给片元程序
+            in vec2 fragVTexCoord;//接收vertShader处理后的纹理内坐标给片元程序
+            out vec4 fragColor;//输出到的片元颜色
 
-float texCoor[] =   //纹理内采样坐标,类似于canvas坐标 //这东西有问题，导致两个framebuffer的画面互相取纹理时互为颠倒
-        {
-                1.0, 0.0,
-                0.0, 0.0,
-                1.0, 1.0,
-                0.0, 1.0
-        };
-float mVertxData[3 * 4];
-float mColorBuf[] = {
-        1.0, 1.0, 1.0, 1.0,
-        1.0, 1.0, 1.0, 1.0,
-        1.0, 1.0, 1.0, 1.0,
-        1.0, 1.0, 1.0, 1.0
-};
+            void main() {
+                switch (funChoice) {
+                    case 0://线条渲染
+                        fragColor = fragObjectColor;//给此片元颜色值
+                        break;
+                    case 1://纹理渲染
+                        vec4 color = texture(sTexture, fragVTexCoord);//采样纹理中对应坐标颜色，进行纹理渲染
+                        color.a = color.a * fragObjectColor.a;//利用顶点透明度信息控制纹理透明度
+                        fragColor = color;
+                        break;
+                }
+            }
+    );
+
+    float tempTexCoord[] =   //纹理内采样坐标,类似于canvas坐标 //这东西有问题，导致两个framebuffer的画面互相取纹理时互为颠倒
+            {
+                    1.0, 0.0,
+                    0.0, 0.0,
+                    1.0, 1.0,
+                    0.0, 1.0
+            };
+    memcpy(texCoor, tempTexCoord, sizeof(tempTexCoord));
+    float tempColorBuf[] = {
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0
+    };
+    memcpy(mColorBuf, tempColorBuf, sizeof(tempColorBuf));
+}
+
+RenderProgramImage::~RenderProgramImage() {
+
+}
 
 void RenderProgramImage::createRender(float x, float y, float z, float w, float h, int windowW,
                                       int windowH) {
@@ -101,7 +92,7 @@ void RenderProgramImage::createRender(float x, float y, float z, float w, float 
             x + w, y + h, z,
             x, y + h, z,
     };
-    memcpy(mVertxData, vertxData, sizeof(float) * 12);
+    memcpy(mVertxData, vertxData, sizeof(vertxData));
     mImageProgram = createProgram(vertShader, fragShader);
     //获取程序中顶点位置属性引用"指针"
     mObjectPositionPointer = glGetAttribLocation(mImageProgram.programHandle, "objectPosition");
