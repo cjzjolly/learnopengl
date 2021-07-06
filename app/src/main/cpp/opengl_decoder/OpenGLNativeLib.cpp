@@ -52,6 +52,7 @@ void OpenGLNativeLib::setupGraphics(int w, int h, float *bgColor)//初始化函�
     float ratio = (float) h / w;//计算宽长比glViewport
     mWidth = w;
     mHeight = h;
+    mRatio = ratio;
     frustumM(mProjMatrix, 0, -1, 1, -ratio, ratio, 1, 50);//设置投影矩阵
     setLookAtM(mCameraMatrix, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0);//设置摄像机矩阵
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
@@ -66,8 +67,11 @@ void OpenGLNativeLib::setupGraphics(int w, int h, float *bgColor)//初始化函�
     mLayer = new Layer(-1, -ratio, 0, 2, ratio * 2, w, h);
     //添加渲染器:
     RenderProgramImage *renderProgramImage = new RenderProgramImage();
+    renderProgramImage->createRender(-1, -ratio, 0, 2, ratio * 2, w, h);
     mTestBMP = (int*) malloc(sizeof(int) * 100 * 100);
-    memset(mTestBMP, 0xFF0000FF, 100 * 100);
+    for (int i = 0; i < 100 * 100; i ++) {
+        mTestBMP[i] = i << 24 | i << 16 | i << 8 | 0xFF;
+    }
     mLayer->addRenderProgram(renderProgramImage);
     mLayer->loadData((char *) mTestBMP, 100, 100, GL_RGBA, 0);
     return;

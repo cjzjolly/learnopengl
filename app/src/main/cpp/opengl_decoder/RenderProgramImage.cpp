@@ -19,8 +19,9 @@ static const char *TAG = "nativeGL";
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
 
 RenderProgramImage::RenderProgramImage() {
+    //todo #号如何放进去，暂时opengl version声明只能用很奇怪的写法，通过双#号放进去之后，把第一个#号舍弃
     vertShader = GL_SHADER_STRING(
-            version 300 es
+            ##version 300 es\n
             uniform mat4 uMVPMatrix; //旋转平移缩放 总变换矩阵。物体矩阵乘以它即可产生变换
             in vec3 objectPosition; //物体位置向量，参与运算但不输出给片源
 
@@ -36,7 +37,7 @@ RenderProgramImage::RenderProgramImage() {
             }
     );
     fragShader = GL_SHADER_STRING(
-            version 300 es
+            ##version 300 es\n
             precision highp float;
             uniform sampler2D sTexture;//纹理输入
             uniform int funChoice;
@@ -78,7 +79,7 @@ RenderProgramImage::RenderProgramImage() {
 }
 
 RenderProgramImage::~RenderProgramImage() {
-
+    destroy();
 }
 
 void RenderProgramImage::createRender(float x, float y, float z, float w, float h, int windowW,
@@ -93,7 +94,7 @@ void RenderProgramImage::createRender(float x, float y, float z, float w, float 
             x, y + h, z,
     };
     memcpy(mVertxData, vertxData, sizeof(vertxData));
-    mImageProgram = createProgram(vertShader, fragShader);
+    mImageProgram = createProgram(vertShader + 1, fragShader + 1);
     //获取程序中顶点位置属性引用"指针"
     mObjectPositionPointer = glGetAttribLocation(mImageProgram.programHandle, "objectPosition");
     //纹理采样坐标
@@ -102,7 +103,7 @@ void RenderProgramImage::createRender(float x, float y, float z, float w, float 
     mObjectVertColorArrayPointer = glGetAttribLocation(mImageProgram.programHandle, "objectColor");
     //获取程序中总变换矩阵引用"指针"
     muMVPMatrixPointer = glGetUniformLocation(mImageProgram.programHandle, "uMVPMatrix");
-    //渲染方式选择，0为线条，1为纹理，2为纹理特效，以后还会有光点等等
+    //渲染方式选择，0为线条，1为纹理
     mGLFunChoicePointer = glGetUniformLocation(mImageProgram.programHandle, "funChoice");
     //渲染帧计数指针
     mFrameCountPointer = glGetUniformLocation(mImageProgram.programHandle, "frame");
@@ -111,6 +112,7 @@ void RenderProgramImage::createRender(float x, float y, float z, float w, float 
 }
 
 void RenderProgramImage::loadData(char *data, int width, int height, int pixelFormat, int offset) {
+    glUseProgram(mImageProgram.programHandle);
     glGenTextures(1, texturePointers);
     mGenTextureId = texturePointers[0];
     //绑定处理
@@ -119,7 +121,7 @@ void RenderProgramImage::loadData(char *data, int width, int height, int pixelFo
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, pixelFormat, width, height, 0, pixelFormat, GL_UNSIGNED_BYTE, (void*) (pixelFormat + offset));
+    glTexImage2D(GL_TEXTURE_2D, 0, pixelFormat, width, height, 0, pixelFormat, GL_UNSIGNED_BYTE, (void*) (data + offset));
 }
 
 void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, int outputFBOTexturePointer, int fboW, int fboH) {
@@ -128,14 +130,13 @@ void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, int outp
     }
     glUseProgram(mImageProgram.programHandle);
     //设置视窗大小及位置
-    glBindFramebuffer(GL_FRAMEBUFFER, outputFBOTexturePointer);
+//    glBindFramebuffer(GL_FRAMEBUFFER, outputFBOTexturePointer);
     glViewport(0, 0, fboW, fboH);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    glUniform1i(mGLFunChoicePointer, 1); //第一次加载选择纹理方式渲染
+    glUniform1i(mGLFunChoicePointer, 1);
     //传入位置信息
     locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
     if (mVertxData != nullptr && mColorBuf != nullptr) {
-        glUniform1i(mGLFunChoicePointer, 1); //选择纹理方式渲染
         //将顶点位置数据送入渲染管线
         glVertexAttribPointer(mObjectPositionPointer, 3, GL_FLOAT, false, 0, mVertxData); //三维向量，size为2
         //将顶点颜色数据送入渲染管线
@@ -146,13 +147,14 @@ void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, int outp
         glEnableVertexAttribArray(mObjectVertColorArrayPointer);  //启用颜色属性
         glEnableVertexAttribArray(mVTexCoordPointer);  //启用纹理采样定位坐标
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, mGenTextureId);
-        glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "sTexture"), 0); //获取纹理属性的指针
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, /*mPointBufferPos / 3*/ sizeof(mVertxData) / sizeof(float) / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+        glActiveTexture(GL_TEXTURE0); //激活0号纹理
+        glBindTexture(GL_TEXTURE_2D, mGenTextureId); //0号纹理绑定内容
+        glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "sTexture"), 0); //映射到渲染脚本，获取纹理属性的指针
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, /*mPointBufferPos / 3*/ 4); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
         glDisableVertexAttribArray(mObjectPositionPointer);
         glDisableVertexAttribArray(mObjectVertColorArrayPointer);
         glDisableVertexAttribArray(mVTexCoordPointer);
+//        LOGI("cjztest, image drawing");
     }
 }
 

@@ -45,7 +45,7 @@ public class NativeGLSurfaceView extends GLSurfaceView {
         @Override
         public void onDrawFrame(GL10 gl) {
             JniBridge.draw();
-            JniBridge.drawBuffer();
+//            JniBridge.drawBuffer();
         }
     }
 }

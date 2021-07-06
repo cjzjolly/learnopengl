@@ -7,7 +7,7 @@
 #include "matrix.h"
 
 namespace OPENGL_VIDEO_RENDERER {
-    #define GL_SHADER_STRING(x)   #x
+    #define GL_SHADER_STRING(SHADER_STR_X)   #SHADER_STR_X
 
     class RenderProgram {
     public:

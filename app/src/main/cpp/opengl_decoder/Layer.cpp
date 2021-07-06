@@ -40,7 +40,7 @@ void Layer::loadTexture(int *texturePointers, int width, int height) {
 
 /**逐步加工绘制**/
 void Layer::drawTo(float *cameraMatrix, float *projMatrix, int outputFBOTexturePointer, int fboW, int fboH) {
-    int i;
+    int i = 0;
     for (auto item = mRenderProgramList.begin(); item != mRenderProgramList.end(); item++, i++) {
         //第一个渲染器接受图层原始数据，其他的从渲染结果中作为输入
         if (i == 0) {
