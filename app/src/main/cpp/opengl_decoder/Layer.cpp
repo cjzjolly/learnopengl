@@ -5,13 +5,7 @@
 #include "Layer.h"
 using namespace OPENGL_VIDEO_RENDERER;
 
-float mX;
-float mY;
-float mZ;
-float mWidth;
-float mHeight;
-int mWindowW;
-int mWindowH;
+
 struct RenderSrcData {
     char* data;
     int width;

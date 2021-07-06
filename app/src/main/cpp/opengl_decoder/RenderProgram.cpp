@@ -4,8 +4,7 @@
 
 #include <GLES3/gl3.h>
 #include <GLES3/gl3ext.h>
-//#include "matrix.c"
-#include "matrixState.c"
+#include "matrix.c"
 #include "RenderProgram.h"
 
 using namespace OPENGL_VIDEO_RENDERER;

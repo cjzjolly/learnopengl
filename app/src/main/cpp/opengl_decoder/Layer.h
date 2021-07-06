@@ -34,6 +34,13 @@ public:
 private:
     /**渲染程序模板表，可以添加多个渲染模板到表中实现图像流水线式加工**/
     std::list<RenderProgram*> mRenderProgramList;
+    float mX;
+    float mY;
+    float mZ;
+    float mWidth;
+    float mHeight;
+    int mWindowW;
+    int mWindowH;
 };
 
 

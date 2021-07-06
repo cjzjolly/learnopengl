@@ -3,7 +3,7 @@
  gcc编译通过*/
 
 #include <math.h>
-#include "martrix.h"
+#include "matrix.h"
 
 void multiplyMM(float *result, int resultOffset, float *mlIn, int lhsOffset, float *mrIn, int rhsOffset)
 {
