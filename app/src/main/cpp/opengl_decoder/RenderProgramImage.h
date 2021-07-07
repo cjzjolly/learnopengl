@@ -18,7 +18,7 @@ public:
 
     void loadTexture(GLuint *texturePointers, int width, int height);
 
-    void drawTo(float *cameraMatrix, float *projMatrix, int outputFBOPointer, int fboW, int fboH);
+    void drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH);
 
     void destroy();
 

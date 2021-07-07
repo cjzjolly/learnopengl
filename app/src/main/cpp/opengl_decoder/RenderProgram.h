@@ -11,6 +11,11 @@ namespace OPENGL_VIDEO_RENDERER {
 
     class RenderProgram {
     public:
+        enum DrawType {
+            DRAW_DATA,  //绘制已经load好的像素
+            DRAW_TEXTURE  //绘制已经load好的纹理
+        };
+
         /**创建对象，创建物体本身作未经处理的坐标（物体空间），编译shader，获取shader属性等
          * @param x,y,z 初始化渲染面左上角（归一式坐标），传到objectMatrix中
          * @param w,h 初始化渲染面（归一式坐标）
@@ -27,7 +32,7 @@ namespace OPENGL_VIDEO_RENDERER {
         /** 把渲染结果绘制到目标frameBufferObject
          * @param outputFBOTexturePointer 最终结果承载FBO，例如图层FBO。各个图层的FBO自底向上渲染
          * @param fboW,fboH FBO的长和宽**/
-        virtual void drawTo(float *cameraMatrix, float *projMatrix, int outputFBOTexturePointer, int fboW, int fboH) = 0;
+        virtual void drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH) = 0;
 
         /**总的资源清理**/
         virtual void destroy() = 0;

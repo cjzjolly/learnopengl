@@ -17,6 +17,8 @@ public:
          * @param windowW,windowH 渲染面实际分辨率**/
     Layer(float x, float y, float z, float w, float h, int windowW, int windowH);
 
+    ~Layer();
+
     /**渲染程序模板表，可以添加多个渲染模板到表中实现图像流水线式加工**/
     void addRenderProgram(RenderProgram *program);
 
@@ -26,11 +28,13 @@ public:
     void loadData(char *data, int width, int height, int pixelFormat, int offset);
 
     /**如果要绘制的东西本身就是一个纹理呢**/
-    void loadTexture(int *texturePointers, int width, int height);
+    void loadTexture(GLuint *texturePointers, int width, int height);
 
     /**绘制，遍历mRenderProgramList中的所有渲染模板
-     * @param outputFBOTexturePointer 叠加用的FBO，使得图层处理效果和内容可以层层叠加，如果需要fboTexutre本身也可以视为一个处理对象放入drawTexture中进行处理**/
-    void drawTo(float *cameraMatrix, float *projMatrix, int outputFBOTexturePointer, int fboW, int fboH);
+     * @param outputFBOPointer 叠加用的FBO，使得图层处理效果和内容可以层层叠加，如果需要fboTexutre本身也可以视为一个处理对象放入drawTexture中进行处理**/
+    void drawTo(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, int fboW, int fboH);
+
+    void destroy();
 private:
     /**渲染程序模板表，可以添加多个渲染模板到表中实现图像流水线式加工**/
     std::list<RenderProgram*> mRenderProgramList;
@@ -50,7 +54,7 @@ private:
     };
     struct RenderSrcData mRenderSrcData;
     struct RenderSrcTexture {
-        int *texturePointers;
+        GLuint *texturePointers;
         int width;
         int height;
     };
