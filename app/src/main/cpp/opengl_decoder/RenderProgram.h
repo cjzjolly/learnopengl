@@ -22,7 +22,7 @@ namespace OPENGL_VIDEO_RENDERER {
         virtual void loadData(char *data, int width, int height, int pixelFormat, int offset) = 0;
 
         /**如果要绘制的东西本身就是一个纹理呢**/
-        virtual void loadTexture(int *texturePointers, int width, int height) = 0;
+        virtual void loadTexture(GLuint *texturePointers, int width, int height) = 0;
 
         /** 把渲染结果绘制到目标frameBufferObject
          * @param outputFBOTexturePointer 最终结果承载FBO，例如图层FBO。各个图层的FBO自底向上渲染

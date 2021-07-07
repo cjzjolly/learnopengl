@@ -127,13 +127,13 @@ void RenderProgramImage::loadData(char *data, int width, int height, int pixelFo
     glTexImage2D(GL_TEXTURE_2D, 0, pixelFormat, width, height, 0, pixelFormat, GL_UNSIGNED_BYTE, (void*) (data + offset));
 }
 
-void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, int outputFBOTexturePointer, int fboW, int fboH) {
+void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, int outputFBOPointer, int fboW, int fboH) {
     if (mIsDestroyed) {
         return;
     }
     glUseProgram(mImageProgram.programHandle);
     //设置视窗大小及位置
-//    glBindFramebuffer(GL_FRAMEBUFFER, outputFBOTexturePointer);
+    glBindFramebuffer(GL_FRAMEBUFFER, outputFBOPointer);
     glViewport(0, 0, fboW, fboH);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     glUniform1i(mGLFunChoicePointer, 1);
@@ -157,11 +157,10 @@ void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, int outp
         glDisableVertexAttribArray(mObjectPositionPointer);
         glDisableVertexAttribArray(mObjectVertColorArrayPointer);
         glDisableVertexAttribArray(mVTexCoordPointer);
-//        LOGI("cjztest, image drawing");
     }
 }
 
-void RenderProgramImage::loadTexture(int *texturePointers, int width, int height) {
+void RenderProgramImage::loadTexture(GLuint *texturePointers, int width, int height) {
 
 }
 
