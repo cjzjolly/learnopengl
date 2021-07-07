@@ -50,62 +50,67 @@ void Layer::locationTrans(float cameraMatrix[], float projMatrix[], int muMVPMat
     glUniformMatrix4fv(muMVPMatrixPointer, 1, false, mMVPMatrix);        //将最终变换关系传入渲染管线
 }
 
+//todo 每一次修改都会导致绑定的纹理本身被修改，这样会导致循环论证一样的问题，所以要使用双Framebuffer
 void Layer::createFrameBuffer() {
+    int frameBufferCount = sizeof(mFrameBufferPointerArray) / sizeof(GLuint);
+
     //生成framebuffer
-    glGenFramebuffers(1, mFrameBufferPointerArray);
+    glGenFramebuffers(frameBufferCount, mFrameBufferPointerArray);
 
     //生成渲染缓冲buffer
-    glGenRenderbuffers(1, mRenderBufferPointerArray);
+    glGenRenderbuffers(frameBufferCount, mRenderBufferPointerArray);
 
     //生成framebuffer纹理pointer
-    glGenTextures(1, mFrameBufferTexturePointerArray);
+    glGenTextures(frameBufferCount, mFrameBufferTexturePointerArray);
 
-    //绑定帧缓冲，遍历两个framebuffer分别初始化
-    glBindFramebuffer(GL_FRAMEBUFFER, mFrameBufferPointerArray[0]);
-    //绑定缓冲pointer
-    glBindRenderbuffer(GL_RENDERBUFFER, mRenderBufferPointerArray[0]);
-    //为渲染缓冲初始化存储，分配显存
-    glRenderbufferStorage(GL_RENDERBUFFER,
-                          GL_DEPTH_COMPONENT16, mWindowW, mWindowH); //设置framebuffer的长宽
+    //遍历framebuffer并初始化
+    for (int i = 0; i < frameBufferCount; i++) {
+        //绑定帧缓冲，遍历两个framebuffer分别初始化
+        glBindFramebuffer(GL_FRAMEBUFFER, mFrameBufferPointerArray[i]);
+        //绑定缓冲pointer
+        glBindRenderbuffer(GL_RENDERBUFFER, mRenderBufferPointerArray[i]);
+        //为渲染缓冲初始化存储，分配显存
+        glRenderbufferStorage(GL_RENDERBUFFER,
+                GL_DEPTH_COMPONENT16, mWindowW, mWindowH); //设置framebuffer的长宽
 
-    glBindTexture(GL_TEXTURE_2D, mFrameBufferTexturePointerArray[0]); //绑定纹理Pointer
+        glBindTexture(GL_TEXTURE_2D, mFrameBufferTexturePointerArray[i]); //绑定纹理Pointer
 
-    glTexParameterf(GL_TEXTURE_2D,//设置MIN采样方式
-                    GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D,//设置MAG采样方式
-                    GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D,//设置S轴拉伸方式
-                    GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D,//设置T轴拉伸方式
-                    GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D//设置颜色附件纹理图的格式
-            (
-                    GL_TEXTURE_2D,
-                    0,                        //层次
-                    GL_RGBA,        //内部格式
-                    mWindowW,            //宽度
-                    mWindowH,            //高度
-                    0,                        //边界宽度
-                    GL_RGBA,            //格式
-                    GL_UNSIGNED_BYTE,//每个像素数据格式
-                    nullptr
-            );
-    glFramebufferTexture2D        //设置自定义帧缓冲的颜色缓冲附件
-            (
-                    GL_FRAMEBUFFER,
-                    GL_COLOR_ATTACHMENT0,    //颜色缓冲附件
-                    GL_TEXTURE_2D,
-                    mFrameBufferTexturePointerArray[0],                        //纹理id
-                    0                                //层次
-            );
-    glFramebufferRenderbuffer    //设置自定义帧缓冲的深度缓冲附件
-            (
-                    GL_FRAMEBUFFER,
-                    GL_DEPTH_ATTACHMENT,        //深度缓冲附件
-                    GL_RENDERBUFFER,            //渲染缓冲
-                    mRenderBufferPointerArray[0]                //渲染深度缓冲id
-            );
-
+        glTexParameterf(GL_TEXTURE_2D,//设置MIN采样方式
+                GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D,//设置MAG采样方式
+                GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D,//设置S轴拉伸方式
+                GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameterf(GL_TEXTURE_2D,//设置T轴拉伸方式
+                GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D//设置颜色附件纹理图的格式
+                (
+                        GL_TEXTURE_2D,
+                0,                        //层次
+                GL_RGBA,        //内部格式
+                mWindowW,            //宽度
+                mWindowH,            //高度
+                0,                        //边界宽度
+                GL_RGBA,            //格式
+                GL_UNSIGNED_BYTE,//每个像素数据格式
+                nullptr
+        );
+        glFramebufferTexture2D        //设置自定义帧缓冲的颜色缓冲附件
+                (
+                        GL_FRAMEBUFFER,
+                GL_COLOR_ATTACHMENT0,    //颜色缓冲附件
+                GL_TEXTURE_2D,
+                mFrameBufferTexturePointerArray[i],                        //纹理id
+                0                                //层次
+        );
+        glFramebufferRenderbuffer    //设置自定义帧缓冲的深度缓冲附件
+                (
+                        GL_FRAMEBUFFER,
+                GL_DEPTH_ATTACHMENT,        //深度缓冲附件
+                GL_RENDERBUFFER,            //渲染缓冲
+                mRenderBufferPointerArray[i]                //渲染深度缓冲id
+        );
+    }
     //绑回系统默认framebuffer，否则会显示不出东西
     glBindFramebuffer(GL_FRAMEBUFFER, 0);//绑定帧缓冲id
 }
@@ -140,7 +145,7 @@ void Layer::createLayerProgram() {
                     color.a = color.a * fragObjectColor.a;//利用顶点透明度信息控制纹理透明度
                     fragColor = color;
             }
-            );
+    );
     float ratio = (float) mWindowH / mWindowW;;
     float tempTexCoord[] =   //纹理内采样坐标,类似于canvas坐标 //这东西有问题，导致两个framebuffer的画面互相取纹理时互为颠倒
             {
@@ -198,45 +203,71 @@ void Layer::drawLayerToFrameBuffer(float *cameraMatrix, float *projMatrix, GLuin
     glUseProgram(mLayerProgram.programHandle);
     glBindFramebuffer(GL_FRAMEBUFFER, outputFBOPointer);
     locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, mFrameBufferTexturePointerArray[0]);
-    glUniform1i(glGetUniformLocation(mLayerProgram.programHandle, "textureFBO"), 0); //获取纹理属性的指针
-    //将顶点位置数据送入渲染管线
-    glVertexAttribPointer(mObjectPositionPointer, 3, GL_FLOAT, false, 0, mVertxData); //三维向量，size为2
-    //将顶点颜色数据送入渲染管线
-    glVertexAttribPointer(mObjectVertColorArrayPointer, 4, GL_FLOAT, false, 0, mColorBuf);
-    //将顶点纹理坐标数据传送进渲染管线
-    glVertexAttribPointer(mVTexCoordPointer, 2, GL_FLOAT, false, 0, mTexCoor);  //二维向量，size为2
-    glEnableVertexAttribArray(mObjectPositionPointer); //启用顶点属性
-    glEnableVertexAttribArray(mObjectVertColorArrayPointer);  //启用颜色属性
-    glEnableVertexAttribArray(mVTexCoordPointer);  //启用纹理采样定位坐标
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
-    glDisableVertexAttribArray(mObjectPositionPointer);
-    glDisableVertexAttribArray(mObjectVertColorArrayPointer);
-    glDisableVertexAttribArray(mVTexCoordPointer);
+    /**实现两个Framebuffer的画面叠加，这里解释一下：
+     * 如果是偶数个渲染器，那么在交替渲染之后，那么第0个FBO的画面是上一个画面，第1个FBO为最新画面，所以要先绘制第0个FBO内容再叠加第一个
+     * 否则则是交替后，第1个渲染器是上个画面，第0个FBO是上一个画面，叠加顺序则要进行更改**/
+    for(int i = 0; i < 2; i ++) {
+        glActiveTexture(GL_TEXTURE0);
+        if (mRenderProgramList.size() % 2 == 0) {
+            glBindTexture(GL_TEXTURE_2D, mFrameBufferTexturePointerArray[i]);
+        } else {
+            glBindTexture(GL_TEXTURE_2D, mFrameBufferTexturePointerArray[1 - i]);
+        }
+        glUniform1i(glGetUniformLocation(mLayerProgram.programHandle, "textureFBO"), 0); //获取纹理属性的指针
+        //将顶点位置数据送入渲染管线
+        glVertexAttribPointer(mObjectPositionPointer, 3, GL_FLOAT, false, 0, mVertxData); //三维向量，size为2
+        //将顶点颜色数据送入渲染管线
+        glVertexAttribPointer(mObjectVertColorArrayPointer, 4, GL_FLOAT, false, 0, mColorBuf);
+        //将顶点纹理坐标数据传送进渲染管线
+        glVertexAttribPointer(mVTexCoordPointer, 2, GL_FLOAT, false, 0, mTexCoor);  //二维向量，size为2
+        glEnableVertexAttribArray(mObjectPositionPointer); //启用顶点属性
+        glEnableVertexAttribArray(mObjectVertColorArrayPointer);  //启用颜色属性
+        glEnableVertexAttribArray(mVTexCoordPointer);  //启用纹理采样定位坐标
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+        glDisableVertexAttribArray(mObjectPositionPointer);
+        glDisableVertexAttribArray(mObjectVertColorArrayPointer);
+        glDisableVertexAttribArray(mVTexCoordPointer);
+    }
 }
 
 /**逐步加工绘制**/
 void
 Layer::drawTo(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, int fboW, int fboH) {
+    glBindFramebuffer(1, mFrameBufferPointerArray[0]);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
+    glBindFramebuffer(1, mFrameBufferPointerArray[1]);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
     int i = 0;
+    /**第0个渲染器以data为数据输入，使用FBO[0]渲染结果。第1个渲染器使用FBO_texture[0]作为纹理输入，渲染结果输出到FBO[1]。
+     * 第2个渲染器使用FBO_texture[1]作为纹理输入，渲染结果输出到FBO[0]，依次循环互换结果和输入，实现效果叠加。
+     * 使用双FBO互为绑定的原因是为了解决部分shader算法如果绑定的FBO_texture和输出的FBO是同一个将会出现异常，所以使用此方法**/
     for (auto item = mRenderProgramList.begin(); item != mRenderProgramList.end(); item++, i++) {
+        //接收绘制数据的framebuffer和作为纹理输入使用的framebuffer不能是同一个
+        int fbo = i % 2 == 0 ? mFrameBufferPointerArray[0] : mFrameBufferPointerArray[1];
+        int fboTexture = i % 2 == 1 ? mFrameBufferTexturePointerArray[0] : mFrameBufferTexturePointerArray[1];
         //第一个渲染器接受图层原始数据，其他的从上一个渲染结果中作为输入
         if (i == 0) {
             if (mRenderSrcData.data != nullptr) {
                 (*item)->loadData(mRenderSrcData.data, mRenderSrcData.width, mRenderSrcData.height,
                                   mRenderSrcData.pixelFormat, mRenderSrcData.offset);
+                //渲染器处理结果放到图层FBO中
+                (*item)->drawTo(cameraMatrix, projMatrix, RenderProgram::DRAW_DATA,
+                                fbo, mWindowW, mWindowH);
             }
-        } else { //如果只有一个渲染器则走不到else里，否则第0个打后的渲染器依次使用上一个渲染器的结果，也就是图层FBO中的数据作为输入
-            //todo 使用上一个渲染器保存到FBO的结果，也就是FBO_texture作为纹理输入进行二次处理
-//            GLuint textures[] = {};
-//            (*item)->loadTexture(textures, fboW, fboH); //使用上一个渲染器的渲染结果作为绘制输入
+        } else { //如果只有一个渲染器则走不到else里，否则第0个打后的渲染器依次使用上一个渲染器的结果，也就是图层FBO中的数据作为输入  bug
+            //使用上一个渲染器保存到FBO的结果，也就是FBO_texture作为纹理输入进行二次处理
+            GLuint t = fboTexture;
+            GLuint textures[] = {t};
+            (*item)->loadTexture(textures, mWindowW, mWindowH); //使用上一个渲染器的渲染结果作为绘制输入
+            //渲染器处理结果放到图层FBO中
+            (*item)->drawTo(cameraMatrix, projMatrix, RenderProgram::DRAW_TEXTURE,
+                            fbo, mWindowW, mWindowH);
         }
-        (*item)->drawTo(cameraMatrix, projMatrix, RenderProgram::DRAW_DATA,
-                        mFrameBufferPointerArray[0], fboW, fboH);
     }
     //最后渲染到目标framebuffer
     drawLayerToFrameBuffer(cameraMatrix, projMatrix, outputFBOPointer);
+    //渲染统计
+    mFrameCount++;
 }
 
 

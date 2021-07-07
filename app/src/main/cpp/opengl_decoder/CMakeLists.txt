@@ -34,8 +34,12 @@ add_library( # Sets the name of the library.
         OpenGLNativeRender.cpp
         decode_buffer.cpp
         decode_buffer.h
+        RenderProgram.h
         RenderProgram.cpp
+        RenderProgramImage.h
         RenderProgramImage.cpp
+        RenderProgramCornerPick.h
+        RenderProgramCornerPick.cpp
         Layer.cpp
              )
 
@@ -55,6 +59,7 @@ find_library(z-lib z)
 
 target_link_libraries(
         opengl_decoder
+        jnigraphics
         ${log-lib}
                 ${android-lib}
                 ${EGL-lib}

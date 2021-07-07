@@ -5,6 +5,7 @@
 #ifndef LEARNOPENGL_RENDER_PROGRAM_H
 #define LEARNOPENGL_RENDER_PROGRAM_H
 #include "matrix.h"
+#include "shaderUtil.h"
 
 namespace OPENGL_VIDEO_RENDERER {
     #define GL_SHADER_STRING(SHADER_STR_X)   #SHADER_STR_X

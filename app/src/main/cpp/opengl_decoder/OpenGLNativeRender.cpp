@@ -17,6 +17,7 @@
 #include <sys/time.h>
 #include "OpenGLNativeRender.h"
 #include "RenderProgramImage.h"
+#include "RenderProgramCornerPick.h"
 
 
 static const char *TAG = "nativeGL";
@@ -68,16 +69,22 @@ void OpenGLNativeRender::setupGraphics(int w, int h, float *bgColor)//初始化�
     //添加渲染器:
     RenderProgramImage *renderProgramImage = new RenderProgramImage();
     renderProgramImage->createRender(-1, -ratio, 0, 2, ratio * 2, w, h);
-    mTestBMP = (int*) malloc(sizeof(int) * 100 * 100);
-    for (int i = 0; i < 100 * 100; i ++) {
-        mTestBMP[i] = i << 24 | i << 16 | i << 8 | 0xFF;
-    }
+    RenderProgramCornerPick *renderProgramCornerPick = new RenderProgramCornerPick();
+    renderProgramCornerPick->createRender(-1, -ratio, 0, 2, ratio * 2, w, h);
+//    mTestBMP = (int*) malloc(sizeof(int) * 100 * 100);
+//    for (int i = 0; i < 100 * 100; i ++) {
+//        mTestBMP[i] = i << 24 | i << 16 | i << 8 | 0xFF;
+//    }
     mLayer->addRenderProgram(renderProgramImage);
-    mLayer->loadData((char *) mTestBMP, 100, 100, GL_RGBA, 0);
+    mLayer->addRenderProgram(renderProgramCornerPick);
+//    mLayer->loadData((char *) mTestBMP, 100, 100, GL_RGBA, 0);
     return;
 }
 
-void OpenGLNativeRender::draw() {
+void OpenGLNativeRender::drawRGBA(char *buf, int w, int h) {
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
+    mLayer->loadData(buf, w, h, GL_RGBA, 0);
+    //绘制到目标framebuffer，默认使用屏幕0
     mLayer->drawTo(mCameraMatrix, mProjMatrix, 0, mWidth, mHeight);
 }
 
@@ -134,8 +141,13 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
-    Java_com_opengldecoder_jnibridge_JniBridge_draw(JNIEnv *env, jobject activity) {
-        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
-        mOpenGLNativeLib.draw();
+    Java_com_opengldecoder_jnibridge_JniBridge_drawRGBABitmap(JNIEnv *env, jobject activity, jobject bmp, jint bmpW, jint bmpH) {
+        uint32_t* sourceData;
+        int result = AndroidBitmap_lockPixels(env, bmp, (void**)& sourceData); //指针变量本身有内存地址，所以可以取指针的指针来让函数引用放数据
+        if (result < 0) {
+            return;
+        }
+        mOpenGLNativeLib.drawRGBA((char *) sourceData, bmpW, bmpH);
+        AndroidBitmap_unlockPixels(env, bmp);
     }
 }

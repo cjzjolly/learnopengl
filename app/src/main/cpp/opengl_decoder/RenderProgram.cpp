@@ -6,6 +6,7 @@
 #include <GLES3/gl3ext.h>
 #include "RenderProgram.h"
 #include "matrix.c"
+#include "shaderUtil.c"
 
 using namespace OPENGL_VIDEO_RENDERER;
 

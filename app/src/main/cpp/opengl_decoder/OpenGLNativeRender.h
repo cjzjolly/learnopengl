@@ -10,7 +10,7 @@
 class OpenGLNativeRender {
 public:
     void setupGraphics(int w, int h, float *bgColor);
-    void draw();
+    void drawRGBA(char *buf, int w, int h);
 private:
     Layer *mLayer;
     float mProjMatrix[16];

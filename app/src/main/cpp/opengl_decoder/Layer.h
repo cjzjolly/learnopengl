@@ -83,9 +83,10 @@ private:
     GLint mVTexCoordPointer;
     GLint mObjectVertColorArrayPointer;
     GLint muMVPMatrixPointer;
-    GLuint mFrameBufferPointerArray[1];
-    GLuint mRenderBufferPointerArray[1];
-    GLuint mFrameBufferTexturePointerArray[1];
+    GLuint mFrameBufferPointerArray[2];
+    GLuint mRenderBufferPointerArray[2];
+    GLuint mFrameBufferTexturePointerArray[2];
+    int mFrameCount = 0;
 };
 
 

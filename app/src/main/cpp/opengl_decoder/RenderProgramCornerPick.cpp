@@ -1,13 +1,12 @@
 //
-// Created by jiezhuchen on 2021/6/21.
+// Created by jiezhuchen on 2021/7/7.
 //
-
 #include <GLES3/gl3.h>
 #include <GLES3/gl3ext.h>
 
 #include <string.h>
 #include <jni.h>
-#include "RenderProgramImage.h"
+#include "RenderProgramCornerPick.h"
 #include "android/log.h"
 
 
@@ -17,7 +16,7 @@ static const char *TAG = "nativeGL";
 #define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, TAG, fmt, ##args)
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
 
-RenderProgramImage::RenderProgramImage() {
+RenderProgramCornerPick::RenderProgramCornerPick() {
     //todo #号如何放进去，暂时opengl version声明只能用很奇怪的写法，通过双#号放进去之后，把第一个#号舍弃
     vertShader = GL_SHADER_STRING(
             ##version 300 es\n
@@ -30,15 +29,15 @@ RenderProgramImage::RenderProgramImage() {
             out vec2 fragVTexCoord;//输出处理后的纹理内坐标给片元程序
 
             void main() {
-                gl_Position = uMVPMatrix * vec4(objectPosition, 1.0); //设置物体位置
-                fragVTexCoord = vTexCoord; //默认无任何处理，直接输出物理内采样坐标
-                fragObjectColor = objectColor; //默认无任何处理，输出颜色值到片源
-            }
+            gl_Position = uMVPMatrix * vec4(objectPosition, 1.0); //设置物体位置
+            fragVTexCoord = vTexCoord; //默认无任何处理，直接输出物理内采样坐标
+            fragObjectColor = objectColor; //默认无任何处理，输出颜色值到片源
+    }
     );
     fragShader = GL_SHADER_STRING(
             ##version 300 es\n
             precision highp float;
-            uniform sampler2D sTexture;//纹理输入
+            uniform sampler2D textureFBO;//纹理输入
             uniform int funChoice;
             uniform float frame;//第几帧
             uniform vec2 resolution;//分辨率
@@ -46,17 +45,40 @@ RenderProgramImage::RenderProgramImage() {
             in vec2 fragVTexCoord;//接收vertShader处理后的纹理内坐标给片元程序
             out vec4 fragColor;//输出到的片元颜色
 
+            void kernalEffect(vec2 TexCoords)
+            {
+                    float offset = 1.0 / resolution.x;
+                    vec2 offsets[9] = vec2[](
+                            vec2(-offset, offset), // 左上
+                            vec2(0.0, offset), // 正上
+                            vec2(offset, offset), // 右上
+                            vec2(-offset, 0.0), // 左
+                            vec2(0.0, 0.0), // 中
+                            vec2(offset, 0.0), // 右
+                            vec2(-offset, -offset), // 左下
+                            vec2(0.0, -offset), // 正下
+                            vec2(offset, -offset)// 右下
+                    );
+                    float kernel[9] = float[](
+                            1.0, 1.0, 1.0,
+                            1.0, -7.0, 1.0,
+                            1.0, 1.0, 1.0
+                    );
+
+                    vec3 sampleTex[9];
+                    for (int i = 0; i < 9; i++)
+                    {
+                            sampleTex[i] = vec3(texture(textureFBO, TexCoords.st + offsets[i]));
+                    }
+                    vec3 col = vec3(0.0);
+                    for (int i = 0; i < 9; i++)
+                    col += sampleTex[i] * kernel[i];
+
+                    fragColor = vec4(col, 1.0) * fragObjectColor;
+            }
+
             void main() {
-                switch (funChoice) {
-                    case 0://线条渲染
-                        fragColor = fragObjectColor;//给此片元颜色值
-                        break;
-                    case 1://纹理渲染
-                        vec4 color = texture(sTexture, fragVTexCoord);//采样纹理中对应坐标颜色，进行纹理渲染
-                        color.a = color.a * fragObjectColor.a;//利用顶点透明度信息控制纹理透明度
-                        fragColor = color;
-                        break;
-                }
+                kernalEffect(vec2(fragVTexCoord.s, fragVTexCoord.t));
             }
     );
 
@@ -77,11 +99,11 @@ RenderProgramImage::RenderProgramImage() {
     memcpy(mColorBuf, tempColorBuf, sizeof(tempColorBuf));
 }
 
-RenderProgramImage::~RenderProgramImage() {
+RenderProgramCornerPick::~RenderProgramCornerPick() {
     destroy();
 }
 
-void RenderProgramImage::createRender(float x, float y, float z, float w, float h, int windowW,
+void RenderProgramCornerPick::createRender(float x, float y, float z, float w, float h, int windowW,
                                       int windowH) {
     mWindowW = windowW;
     mWindowH = windowH;
@@ -93,26 +115,26 @@ void RenderProgramImage::createRender(float x, float y, float z, float w, float 
             x, y + h, z,
     };
     memcpy(mVertxData, vertxData, sizeof(vertxData));
-    mImageProgram = createProgram(vertShader + 1, fragShader + 1);
+    mCornerPickProgram = createProgram(vertShader + 1, fragShader + 1);
     //获取程序中顶点位置属性引用"指针"
-    mObjectPositionPointer = glGetAttribLocation(mImageProgram.programHandle, "objectPosition");
+    mObjectPositionPointer = glGetAttribLocation(mCornerPickProgram.programHandle, "objectPosition");
     //纹理采样坐标
-    mVTexCoordPointer = glGetAttribLocation(mImageProgram.programHandle, "vTexCoord");
+    mVTexCoordPointer = glGetAttribLocation(mCornerPickProgram.programHandle, "vTexCoord");
     //获取程序中顶点颜色属性引用"指针"
-    mObjectVertColorArrayPointer = glGetAttribLocation(mImageProgram.programHandle, "objectColor");
+    mObjectVertColorArrayPointer = glGetAttribLocation(mCornerPickProgram.programHandle, "objectColor");
     //获取程序中总变换矩阵引用"指针"
-    muMVPMatrixPointer = glGetUniformLocation(mImageProgram.programHandle, "uMVPMatrix");
+    muMVPMatrixPointer = glGetUniformLocation(mCornerPickProgram.programHandle, "uMVPMatrix");
     //渲染方式选择，0为线条，1为纹理
-    mGLFunChoicePointer = glGetUniformLocation(mImageProgram.programHandle, "funChoice");
+    mGLFunChoicePointer = glGetUniformLocation(mCornerPickProgram.programHandle, "funChoice");
     //渲染帧计数指针
-    mFrameCountPointer = glGetUniformLocation(mImageProgram.programHandle, "frame");
+    mFrameCountPointer = glGetUniformLocation(mCornerPickProgram.programHandle, "frame");
     //设置分辨率指针，告诉gl脚本现在的分辨率
-    mResoulutionPointer = glGetUniformLocation(mImageProgram.programHandle, "resolution");
+    mResoulutionPointer = glGetUniformLocation(mCornerPickProgram.programHandle, "resolution");
 }
 
-void RenderProgramImage::loadData(char *data, int width, int height, int pixelFormat, int offset) {
+void RenderProgramCornerPick::loadData(char *data, int width, int height, int pixelFormat, int offset) {
     if (!mIsTexutresInited) {
-        glUseProgram(mImageProgram.programHandle);
+        glUseProgram(mCornerPickProgram.programHandle);
         glGenTextures(1, texturePointers);
         mGenTextureId = texturePointers[0];
         mIsTexutresInited = true;
@@ -124,23 +146,26 @@ void RenderProgramImage::loadData(char *data, int width, int height, int pixelFo
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage2D(GL_TEXTURE_2D, 0, pixelFormat, width, height, 0, pixelFormat, GL_UNSIGNED_BYTE, (void*) (data + offset));
+    mInputDataWidth = width;
+    mInputDataHeight = height;
 }
 
 /**@param texturePointers 传入需要渲染处理的纹理，可以为上一次处理的结果，例如处理完后的FBOTexture **/
-void RenderProgramImage::loadTexture(GLuint *texturePointers, int width, int height) {
-
+void RenderProgramCornerPick::loadTexture(GLuint *texturePointers, int width, int height) {
+    mInputTextures = texturePointers;
+    mInputTexturesWidth = width;
+    mInputTexturesHeight = height;
 }
 
 /**@param outputFBOPointer 绘制到哪个framebuffer，系统默认一般为0 **/
-void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH) {
+void RenderProgramCornerPick::drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH) {
     if (mIsDestroyed) {
         return;
     }
-    glUseProgram(mImageProgram.programHandle);
+    glUseProgram(mCornerPickProgram.programHandle);
     //设置视窗大小及位置
     glBindFramebuffer(GL_FRAMEBUFFER, outputFBOPointer);
     glViewport(0, 0, fboW, fboH);
-    glUniform1i(mGLFunChoicePointer, 1);
     //传入位置信息
     locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
     if (mVertxData != nullptr && mColorBuf != nullptr) {
@@ -153,14 +178,27 @@ void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, DrawType
         glEnableVertexAttribArray(mObjectPositionPointer); //启用顶点属性
         glEnableVertexAttribArray(mObjectVertColorArrayPointer);  //启用颜色属性
         glEnableVertexAttribArray(mVTexCoordPointer);  //启用纹理采样定位坐标
+        //设置图像分辨率
+        float resolution[2];
 
         switch (drawType) {
             case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_DATA:
+                //设置图像分辨率
+                resolution[0] = mInputDataWidth;
+                resolution[1] = mInputDataHeight;
+                glUniform2fv(mResoulutionPointer, 1, resolution);
                 glActiveTexture(GL_TEXTURE0); //激活0号纹理
                 glBindTexture(GL_TEXTURE_2D, mGenTextureId); //0号纹理绑定内容
-                glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "sTexture"), 0); //映射到渲染脚本，获取纹理属性的指针
+                glUniform1i(glGetUniformLocation(mCornerPickProgram.programHandle, "textureFBO"), 0); //映射到渲染脚本，获取纹理属性的指针
                 break;
             case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_TEXTURE:
+                //设置图像分辨率
+                resolution[0] = mInputTexturesWidth;
+                resolution[1] = mInputTexturesHeight;
+                glUniform2fv(mResoulutionPointer, 1, resolution);
+                glActiveTexture(GL_TEXTURE0); //激活0号纹理
+                glBindTexture(GL_TEXTURE_2D, mInputTextures[0]); //0号纹理绑定内容
+                glUniform1i(glGetUniformLocation(mCornerPickProgram.programHandle, "textureFBO"), 0); //映射到渲染脚本，获取纹理属性的指针
                 break;
         }
 
@@ -171,7 +209,7 @@ void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, DrawType
     }
 }
 
-void RenderProgramImage::destroy() {
+void RenderProgramCornerPick::destroy() {
     if (!mIsDestroyed) {
         //释放纹理所占用的显存
         glActiveTexture(GL_TEXTURE0);
@@ -179,7 +217,7 @@ void RenderProgramImage::destroy() {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 0, 0, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, nullptr);
         glDeleteTextures(1, texturePointers); //销毁纹理,gen和delete要成对出现
         //删除不用的shaderprogram
-        destroyProgram(mImageProgram);
+        destroyProgram(mCornerPickProgram);
     }
     mIsDestroyed = true;
 }
