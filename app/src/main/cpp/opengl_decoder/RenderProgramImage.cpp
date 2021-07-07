@@ -68,7 +68,7 @@ RenderProgramImage::RenderProgramImage() {
                     1.0, 1.0,
                     0.0, 1.0
             };
-    memcpy(texCoor, tempTexCoord, sizeof(tempTexCoord));
+    memcpy(mTexCoor, tempTexCoord, sizeof(tempTexCoord));
     float tempColorBuf[] = {
             1.0, 1.0, 1.0, 1.0,
             1.0, 1.0, 1.0, 1.0,
@@ -151,7 +151,7 @@ void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, DrawType
         //将顶点颜色数据送入渲染管线
         glVertexAttribPointer(mObjectVertColorArrayPointer, 4, GL_FLOAT, false, 0, mColorBuf);
         //将顶点纹理坐标数据传送进渲染管线
-        glVertexAttribPointer(mVTexCoordPointer, 2, GL_FLOAT, false, 0, texCoor);  //二维向量，size为2
+        glVertexAttribPointer(mVTexCoordPointer, 2, GL_FLOAT, false, 0, mTexCoor);  //二维向量，size为2
         glEnableVertexAttribArray(mObjectPositionPointer); //启用顶点属性
         glEnableVertexAttribArray(mObjectVertColorArrayPointer);  //启用颜色属性
         glEnableVertexAttribArray(mVTexCoordPointer);  //启用纹理采样定位坐标

@@ -15,7 +15,7 @@
 #include "android/bitmap.h"
 #include "android/native_window_jni.h"
 #include <sys/time.h>
-#include "OpenGLNativeLib.h"
+#include "OpenGLNativeRender.h"
 #include "RenderProgramImage.h"
 
 
@@ -25,7 +25,7 @@ static const char *TAG = "nativeGL";
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
 
 
-OpenGLNativeLib mOpenGLNativeLib;
+OpenGLNativeRender mOpenGLNativeLib;
 
 // 由于jvm和c++对中文的编码不一样，因此需要转码。 utf8/16转换成gb2312
 char *jstringToChar(JNIEnv *env, jstring jstr) {
@@ -46,7 +46,7 @@ char *jstringToChar(JNIEnv *env, jstring jstr) {
 }
 
 int *mTestBMP;
-void OpenGLNativeLib::setupGraphics(int w, int h, float *bgColor)//初始化函数
+void OpenGLNativeRender::setupGraphics(int w, int h, float *bgColor)//初始化函数
 {
     glViewport(0, 0, w, h);//设置视口
     float ratio = (float) h / w;//计算宽长比glViewport
@@ -77,7 +77,7 @@ void OpenGLNativeLib::setupGraphics(int w, int h, float *bgColor)//初始化函�
     return;
 }
 
-void OpenGLNativeLib::draw() {
+void OpenGLNativeRender::draw() {
     mLayer->drawTo(mCameraMatrix, mProjMatrix, 0, mWidth, mHeight);
 }
 

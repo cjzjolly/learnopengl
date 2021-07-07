@@ -2,12 +2,12 @@
 // Created by jiezhuchen on 2021/7/5.
 //
 
-#ifndef LEARNOPENGL_OPENGLNATIVELIB_H
-#define LEARNOPENGL_OPENGLNATIVELIB_H
+#ifndef LEARNOPENGL_OPENGLNATIVERENDER_H
+#define LEARNOPENGL_OPENGLNATIVERENDER_H
 #include "matrix.h"
 #include "Layer.h"
 
-class OpenGLNativeLib {
+class OpenGLNativeRender {
 public:
     void setupGraphics(int w, int h, float *bgColor);
     void draw();
@@ -21,4 +21,4 @@ private:
 };
 
 
-#endif //LEARNOPENGL_OPENGLNATIVELIB_H
+#endif //LEARNOPENGL_OPENGLNATIVERENDER_H

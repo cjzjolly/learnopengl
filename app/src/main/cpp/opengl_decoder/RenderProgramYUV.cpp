@@ -47,7 +47,7 @@
 //GLint mGLFrameuMVPMatrixPointer;
 //GLint mFrameCountPointer;
 //GLint mResoulutionPointer;
-//float texCoor[]   //纹理内采样坐标,类似于canvas坐标 //这东西有问题，导致两个framebuffer的画面互相取纹理时互为颠倒
+//float mTexCoor[]   //纹理内采样坐标,类似于canvas坐标 //这东西有问题，导致两个framebuffer的画面互相取纹理时互为颠倒
 //        {
 //                1.0, 0.0,
 //                0.0, 0.0,
