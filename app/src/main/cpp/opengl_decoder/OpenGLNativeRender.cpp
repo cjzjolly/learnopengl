@@ -69,6 +69,9 @@ void OpenGLNativeRender::setupGraphics(int w, int h, float *bgColor)//初始化�
     mLayer = new Layer(-1, -ratio, 0, 2, ratio * 2, w, h);
     //添加渲染器:
     RenderProgramImage *mRenderProgramImage = new RenderProgramImage();
+    int ww = 482;
+    int hh = 678;
+//    mRenderProgramImage->createRender(-1, -ratio, 0, 2 * ww / hh * ratio, ratio * 2, w, h);
     mRenderProgramImage->createRender(-1, -ratio, 0, 2, ratio * 2, w, h);
     float kernel[] = {
             1.0, 1.0, 1.0,

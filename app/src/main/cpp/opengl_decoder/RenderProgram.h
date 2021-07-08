@@ -65,6 +65,11 @@ namespace OPENGL_VIDEO_RENDERER {
 
         void rotate(int degree,float roundX, float roundY, float roundZ);
 
+        float* getObjectMatrix();
+
+        /**不用translate、scale等方式更改渲染器变换方式，而是选择直接设置**/
+        void setObjectMatrix(float objMatrix[]);
+
         /**传入shaderProgram的最终场景控制指针(ID)，把变换处理后的物品坐标传到muMVPMatrixPointer，
          * 整个场景的控制则由cameraMatrix摄像机矩阵和projMatrix投影矩阵控制
          * @param cameraMatrix 摄像机矩阵，决定你用什么角度和方式看东西

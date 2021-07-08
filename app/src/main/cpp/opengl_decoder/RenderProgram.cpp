@@ -27,6 +27,14 @@ void RenderProgram::rotate(int degree, float roundX, float roundY, float roundZ)
     rotateM(mObjectMatrix, 0, degree, roundX, roundY, roundZ);
 }
 
+float* RenderProgram::getObjectMatrix() {
+    return mObjectMatrix;
+}
+
+void RenderProgram::setObjectMatrix(float objMatrix[]) {
+    memcpy(mObjectMatrix, objMatrix, sizeof(mObjectMatrix));
+}
+
 void RenderProgram::locationTrans(float cameraMatrix[], float projMatrix[], int muMVPMatrixPointer) {
     multiplyMM(mMVPMatrix, 0, cameraMatrix, 0, mObjectMatrix, 0);         //将摄像机矩阵乘以物体矩阵
     multiplyMM(mMVPMatrix, 0, projMatrix, 0, mMVPMatrix, 0);         //将投影矩阵乘以上一步的结果矩阵

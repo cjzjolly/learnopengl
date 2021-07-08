@@ -48,5 +48,10 @@ private:
     float mVertxData[3 * 4];
     float mColorBuf[4 * 4];
 
+    int mDataWidth;
+    int mDataHeight;
+    int mInputTextureWidth;
+    int mInputTextureHeight;
+
     bool mIsTexutresInited = false;
 };

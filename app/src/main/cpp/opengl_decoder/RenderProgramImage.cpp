@@ -110,6 +110,14 @@ void RenderProgramImage::createRender(float x, float y, float z, float w, float 
     mResoulutionPointer = glGetUniformLocation(mImageProgram.programHandle, "resolution");
 }
 
+void RenderProgramImage::setAlpha(float alpha) {
+    if (mColorBuf != nullptr) {
+        for (int i = 3; i < sizeof(mColorBuf) / sizeof(float); i += 4) {
+            mColorBuf[i] = alpha;
+        }
+    }
+}
+
 void RenderProgramImage::loadData(char *data, int width, int height, int pixelFormat, int offset) {
     if (!mIsTexutresInited) {
         glUseProgram(mImageProgram.programHandle);
@@ -124,19 +132,15 @@ void RenderProgramImage::loadData(char *data, int width, int height, int pixelFo
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage2D(GL_TEXTURE_2D, 0, pixelFormat, width, height, 0, pixelFormat, GL_UNSIGNED_BYTE, (void*) (data + offset));
-}
-
-void RenderProgramImage::setAlpha(float alpha) {
-    if (mColorBuf != nullptr) {
-        for (int i = 3; i < sizeof(mColorBuf) / sizeof(float); i += 4) {
-            mColorBuf[i] = alpha;
-        }
-    }
+    mDataWidth = width;
+    mDataHeight = height;
 }
 
 /**@param texturePointers 传入需要渲染处理的纹理，可以为上一次处理的结果，例如处理完后的FBOTexture **/
 void RenderProgramImage::loadTexture(Textures textures[]) {
     mInputTexturesArray = textures[0].texturePointers;
+    mInputTextureWidth = textures[0].width;
+    mInputTextureHeight = textures[0].height;
 }
 
 /**@param outputFBOPointer 绘制到哪个framebuffer，系统默认一般为0 **/
@@ -147,10 +151,38 @@ void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, DrawType
     glUseProgram(mImageProgram.programHandle);
     //设置视窗大小及位置
     glBindFramebuffer(GL_FRAMEBUFFER, outputFBOPointer);
-    glViewport(0, 0, fboW, fboH);
+    glViewport(0, 0, mWindowW, mWindowH);
     glUniform1i(mGLFunChoicePointer, 1);
+    //保留物体缩放现场
+    float objMatrixClone[16];
+    memcpy(objMatrixClone, getObjectMatrix(), sizeof(objMatrixClone));
+    //按照图源比例进行缩放:
+    switch (drawType) {
+        case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_DATA: {
+            if (mDataHeight > mDataWidth) { //如果高比宽大
+                //保持高占满容器的同时，按图像比例缩小宽度:
+                float scaleX = (float) mDataWidth / (float) mDataHeight * (float) fboW / (float) fboH;
+                scale(scaleX, 1.0, 1.0);
+            } else {
+                float scaleY = (float) mDataHeight / (float) mDataWidth * (float) fboW / (float) fboH;
+                scale(1.0, scaleY, 1.0);
+                scale(1.0 / scaleY, 1.0 / scaleY, 1.0);
+                LOGI("cjztest scaleY:%f", scaleY);
+            }
+            break;
+        }
+        case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_TEXTURE: {
+            float scaleX = (float) mInputTextureWidth / (float) mInputTextureHeight * (float) fboH * (float) fboH;
+//            scale(scaleX, 1.0, 1.0);
+            break;
+        }
+    }
+//    scale(0.6, 0.6, 1.0);
     //传入位置信息
     locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
+    //还原缩放现场
+    setObjectMatrix(objMatrixClone);
+    //开始渲染：
     if (mVertxData != nullptr && mColorBuf != nullptr) {
         //将顶点位置数据送入渲染管线
         glVertexAttribPointer(mObjectPositionPointer, 3, GL_FLOAT, false, 0, mVertxData); //三维向量，size为2
@@ -161,20 +193,26 @@ void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, DrawType
         glEnableVertexAttribArray(mObjectPositionPointer); //启用顶点属性
         glEnableVertexAttribArray(mObjectVertColorArrayPointer);  //启用颜色属性
         glEnableVertexAttribArray(mVTexCoordPointer);  //启用纹理采样定位坐标
+        float resolution[2];
 
         switch (drawType) {
             case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_DATA:
                 glActiveTexture(GL_TEXTURE0); //激活0号纹理
                 glBindTexture(GL_TEXTURE_2D, mGenTextureId); //0号纹理绑定内容
                 glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "sTexture"), 0); //映射到渲染脚本，获取纹理属性的指针
+                resolution[0] = (float) mDataWidth;
+                resolution[1] = (float) mDataHeight;
+                glUniform2fv(mResoulutionPointer, 1, resolution);
                 break;
             case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_TEXTURE:
                 glActiveTexture(GL_TEXTURE0); //激活0号纹理
                 glBindTexture(GL_TEXTURE_2D, mTexturePointers[0]); //0号纹理绑定内容
                 glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "sTexture"), 0); //映射到渲染脚本，获取纹理属性的指针
+                resolution[0] = (float) mInputTextureWidth;
+                resolution[1] = (float) mInputTextureHeight;
+                glUniform2fv(mResoulutionPointer, 1, resolution);
                 break;
         }
-
         glDrawArrays(GL_TRIANGLE_STRIP, 0, /*mPointBufferPos / 3*/ 4); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
         glDisableVertexAttribArray(mObjectPositionPointer);
         glDisableVertexAttribArray(mObjectVertColorArrayPointer);

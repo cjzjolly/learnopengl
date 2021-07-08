@@ -22,7 +22,7 @@ public class NativeGLSurfaceView extends GLSurfaceView {
         mRenderer = new Renderer();//创建Renderer类的对象
         this.setRenderer(mRenderer);    //设置渲染器
         this.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-        mTestBmp = BitmapFactory.decodeResource(getResources(), R.drawable.test_pic_second);
+        mTestBmp = BitmapFactory.decodeResource(getResources(), R.drawable.test_pic);
     }
 
     public NativeGLSurfaceView(Context context, AttributeSet attrs) {
