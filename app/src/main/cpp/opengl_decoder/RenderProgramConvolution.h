@@ -2,25 +2,25 @@
 // Created by jiezhuchen on 2021/7/7.
 //
 
-#ifndef LEARNOPENGL_RENDERPROGRAMCORNERPICK_H
-#define LEARNOPENGL_RENDERPROGRAMCORNERPICK_H
+#ifndef LEARNOPENGL_RENDERPROGRAMCONVOLUTION_H
+#define LEARNOPENGL_RENDERPROGRAMCONVOLUTION_H
 #include "shaderUtil.h"
 #include "RenderProgram.h"
 
 using namespace OPENGL_VIDEO_RENDERER;
 
 
-class RenderProgramCornerPick : public RenderProgram {
+class RenderProgramConvolution : public RenderProgram {
 public:
-    RenderProgramCornerPick();
+    RenderProgramConvolution();
 
-    ~RenderProgramCornerPick();
+    ~RenderProgramConvolution();
 
     void createRender(float x, float y, float z, float w, float h, int windowW, int windowH);
 
     void loadData(char *data, int width, int height, int pixelFormat, int offset);
 
-    void loadTexture(GLuint *texturePointers, int width, int height);
+    void loadTexture(Textures textures[]);
 
     void drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH);
 
@@ -28,7 +28,7 @@ public:
 
 private:
     /**绑定纹理**/
-    GLuint texturePointers[1];
+    GLuint mTexturePointers[1];
     GLuint mGenTextureId = 0xFFFFFFFF;
     GLslHandle mCornerPickProgram;
     GLint mObjectPositionPointer;
@@ -38,7 +38,7 @@ private:
     GLint mGLFunChoicePointer;
     GLint mFrameCountPointer;
     GLint mResoulutionPointer;
-    GLuint *mInputTextures;
+    GLuint mInputTextures;
     int mInputTexturesWidth;
     int mInputTexturesHeight;
     int mInputDataWidth;
@@ -59,4 +59,4 @@ private:
 };
 
 
-#endif //LEARNOPENGL_RENDERPROGRAMCORNERPICK_H
+#endif //LEARNOPENGL_RENDERPROGRAMCONVOLUTION_H

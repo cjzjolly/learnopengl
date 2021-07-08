@@ -1,14 +1,19 @@
 package com.opengldecoder.jnibridge;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.util.Log;
+
+import com.example.learnopengl.R;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class NativeGLSurfaceView extends GLSurfaceView {
+    private Bitmap mTestBmp;
     private Renderer mRenderer;
 
     public NativeGLSurfaceView(Context context) {
@@ -17,6 +22,7 @@ public class NativeGLSurfaceView extends GLSurfaceView {
         mRenderer = new Renderer();//创建Renderer类的对象
         this.setRenderer(mRenderer);    //设置渲染器
         this.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+        mTestBmp = BitmapFactory.decodeResource(getResources(), R.drawable.test_pic_second);
     }
 
     public NativeGLSurfaceView(Context context, AttributeSet attrs) {
@@ -44,7 +50,7 @@ public class NativeGLSurfaceView extends GLSurfaceView {
 
         @Override
         public void onDrawFrame(GL10 gl) {
-            JniBridge.draw();
+            JniBridge.drawRGBABitmap(mTestBmp, mTestBmp.getWidth(), mTestBmp.getHeight());
 //            JniBridge.drawBuffer();
         }
     }

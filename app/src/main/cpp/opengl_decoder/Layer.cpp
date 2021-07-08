@@ -256,9 +256,11 @@ Layer::drawTo(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, i
             }
         } else { //如果只有一个渲染器则走不到else里，否则第0个打后的渲染器依次使用上一个渲染器的结果，也就是图层FBO中的数据作为输入  bug
             //使用上一个渲染器保存到FBO的结果，也就是FBO_texture作为纹理输入进行二次处理
-            GLuint t = fboTexture;
-            GLuint textures[] = {t};
-            (*item)->loadTexture(textures, mWindowW, mWindowH); //使用上一个渲染器的渲染结果作为绘制输入
+            Textures t[1];
+            t[0].texturePointers = fboTexture;
+            t[0].width = mWindowW;
+            t[0].height = mWindowH;
+            (*item)->loadTexture(t); //使用上一个渲染器的渲染结果作为绘制输入
             //渲染器处理结果放到图层FBO中
             (*item)->drawTo(cameraMatrix, projMatrix, RenderProgram::DRAW_TEXTURE,
                             fbo, mWindowW, mWindowH);

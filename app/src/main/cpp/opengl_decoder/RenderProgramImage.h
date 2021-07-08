@@ -16,7 +16,7 @@ public:
 
     void loadData(char *data, int width, int height, int pixelFormat, int offset);
 
-    void loadTexture(GLuint *texturePointers, int width, int height);
+    void loadTexture(Textures textures[]);
 
     void drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH);
 
@@ -24,8 +24,9 @@ public:
 
 private:
     /**绑定纹理**/
-    GLuint texturePointers[1];
+    GLuint mTexturePointers[1];
     GLuint mGenTextureId = 0xFFFFFFFF;
+    GLuint mInputTexturesArray;
     GLslHandle mImageProgram;
     GLint mObjectPositionPointer;
     GLint mVTexCoordPointer;

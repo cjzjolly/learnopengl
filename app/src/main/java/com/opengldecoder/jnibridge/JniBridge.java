@@ -1,5 +1,6 @@
 package com.opengldecoder.jnibridge;
 
+import android.graphics.Bitmap;
 import android.view.Surface;
 
 public class JniBridge {
@@ -10,7 +11,7 @@ public class JniBridge {
 
     public static native void nativeGLInit(int viewPortWidth, int viewPortHeight);
 
-    public static native void draw();
+    public static native void drawRGBABitmap(Bitmap bmp, int bmpW, int bmpH);
 
     public static native void drawToSurface(Surface surface, int color);
 

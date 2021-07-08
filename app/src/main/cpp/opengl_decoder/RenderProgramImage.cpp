@@ -113,8 +113,8 @@ void RenderProgramImage::createRender(float x, float y, float z, float w, float 
 void RenderProgramImage::loadData(char *data, int width, int height, int pixelFormat, int offset) {
     if (!mIsTexutresInited) {
         glUseProgram(mImageProgram.programHandle);
-        glGenTextures(1, texturePointers);
-        mGenTextureId = texturePointers[0];
+        glGenTextures(1, mTexturePointers);
+        mGenTextureId = mTexturePointers[0];
         mIsTexutresInited = true;
     }
     //绑定处理
@@ -127,8 +127,8 @@ void RenderProgramImage::loadData(char *data, int width, int height, int pixelFo
 }
 
 /**@param texturePointers 传入需要渲染处理的纹理，可以为上一次处理的结果，例如处理完后的FBOTexture **/
-void RenderProgramImage::loadTexture(GLuint *texturePointers, int width, int height) {
-
+void RenderProgramImage::loadTexture(Textures textures[]) {
+    mInputTexturesArray = textures[0].texturePointers;
 }
 
 /**@param outputFBOPointer 绘制到哪个framebuffer，系统默认一般为0 **/
@@ -161,6 +161,9 @@ void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, DrawType
                 glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "sTexture"), 0); //映射到渲染脚本，获取纹理属性的指针
                 break;
             case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_TEXTURE:
+                glActiveTexture(GL_TEXTURE0); //激活0号纹理
+                glBindTexture(GL_TEXTURE_2D, mTexturePointers[0]); //0号纹理绑定内容
+                glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "sTexture"), 0); //映射到渲染脚本，获取纹理属性的指针
                 break;
         }
 
@@ -177,7 +180,7 @@ void RenderProgramImage::destroy() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, 0);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 0, 0, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, nullptr);
-        glDeleteTextures(1, texturePointers); //销毁纹理,gen和delete要成对出现
+        glDeleteTextures(1, mTexturePointers); //销毁纹理,gen和delete要成对出现
         //删除不用的shaderprogram
         destroyProgram(mImageProgram);
     }

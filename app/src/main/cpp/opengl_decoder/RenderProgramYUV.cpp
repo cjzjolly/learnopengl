@@ -140,10 +140,10 @@
 //
 //);
 //
-//void createEmptyTexture(int *texturePointers, int imgWidth, int imgHeight, int pixelFormat) {
-//    glGenTextures(1, (GLuint*) texturePointers); //只要值不重复即可
+//void createEmptyTexture(int *mTexturePointers, int imgWidth, int imgHeight, int pixelFormat) {
+//    glGenTextures(1, (GLuint*) mTexturePointers); //只要值不重复即可
 //    //UV纹理初始化
-//    glBindTexture(GL_TEXTURE_2D, texturePointers[0]);
+//    glBindTexture(GL_TEXTURE_2D, mTexturePointers[0]);
 //    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 //    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 //    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

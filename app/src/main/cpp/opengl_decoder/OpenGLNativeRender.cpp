@@ -17,7 +17,7 @@
 #include <sys/time.h>
 #include "OpenGLNativeRender.h"
 #include "RenderProgramImage.h"
-#include "RenderProgramCornerPick.h"
+#include "RenderProgramConvolution.h"
 
 
 static const char *TAG = "nativeGL";
@@ -69,7 +69,7 @@ void OpenGLNativeRender::setupGraphics(int w, int h, float *bgColor)//初始化�
     //添加渲染器:
     RenderProgramImage *renderProgramImage = new RenderProgramImage();
     renderProgramImage->createRender(-1, -ratio, 0, 2, ratio * 2, w, h);
-    RenderProgramCornerPick *renderProgramCornerPick = new RenderProgramCornerPick();
+    RenderProgramConvolution *renderProgramCornerPick = new RenderProgramConvolution();
     renderProgramCornerPick->createRender(-1, -ratio, 0, 2, ratio * 2, w, h);
 //    mTestBMP = (int*) malloc(sizeof(int) * 100 * 100);
 //    for (int i = 0; i < 100 * 100; i ++) {

@@ -7,8 +7,21 @@
 #include "matrix.h"
 #include "shaderUtil.h"
 
+/**
+ * 渲染器基类，通过继承基类实现各种各样的画面渲染器，
+ * 实现类可以添加自己独有的函数，例如对比度调节渲染器，
+ * 可以添加对比度调节的参数。
+ * **/
 namespace OPENGL_VIDEO_RENDERER {
     #define GL_SHADER_STRING(SHADER_STR_X)   #SHADER_STR_X
+
+    /**渲染器输入纹理属性表**/
+    struct textures{
+        GLuint texturePointers;
+        int width;
+        int height;
+    };
+    typedef struct textures Textures;
 
     class RenderProgram {
     public:
@@ -27,8 +40,9 @@ namespace OPENGL_VIDEO_RENDERER {
          **/
         virtual void loadData(char *data, int width, int height, int pixelFormat, int offset) = 0;
 
-        /**如果要绘制的东西本身就是一个纹理呢**/
-        virtual void loadTexture(GLuint *texturePointers, int width, int height) = 0;
+        /**如果要绘制的东西本身就是纹理，例如YUV渲染器可以输入Y层纹理和UV层纹理两个纹理直接进行渲染
+   **/
+        virtual void loadTexture(Textures textures[]) = 0;
 
         /** 把渲染结果绘制到目标frameBufferObject
          * @param outputFBOTexturePointer 最终结果承载FBO，例如图层FBO。各个图层的FBO自底向上渲染
@@ -41,6 +55,7 @@ namespace OPENGL_VIDEO_RENDERER {
         /**把物品顶点变换矩阵初始化为单位矩阵。**/
         void initObjMatrix();
 
+        /**分别沿x,y,z轴放大何种比例**/
         void scale(float sx, float sy, float sz);
 
         void translate(float dx, float dy, float dz);

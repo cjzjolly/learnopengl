@@ -6,7 +6,7 @@
 
 #include <string.h>
 #include <jni.h>
-#include "RenderProgramCornerPick.h"
+#include "RenderProgramConvolution.h"
 #include "android/log.h"
 
 
@@ -16,7 +16,7 @@ static const char *TAG = "nativeGL";
 #define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, TAG, fmt, ##args)
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
 
-RenderProgramCornerPick::RenderProgramCornerPick() {
+RenderProgramConvolution::RenderProgramConvolution() {
     //todo #号如何放进去，暂时opengl version声明只能用很奇怪的写法，通过双#号放进去之后，把第一个#号舍弃
     vertShader = GL_SHADER_STRING(
             ##version 300 es\n
@@ -99,12 +99,12 @@ RenderProgramCornerPick::RenderProgramCornerPick() {
     memcpy(mColorBuf, tempColorBuf, sizeof(tempColorBuf));
 }
 
-RenderProgramCornerPick::~RenderProgramCornerPick() {
+RenderProgramConvolution::~RenderProgramConvolution() {
     destroy();
 }
 
-void RenderProgramCornerPick::createRender(float x, float y, float z, float w, float h, int windowW,
-                                      int windowH) {
+void RenderProgramConvolution::createRender(float x, float y, float z, float w, float h, int windowW,
+                                            int windowH) {
     mWindowW = windowW;
     mWindowH = windowH;
     initObjMatrix(); //使物体矩阵初始化为单位矩阵，否则接下来的矩阵操作因为都是乘以0而无效
@@ -132,11 +132,11 @@ void RenderProgramCornerPick::createRender(float x, float y, float z, float w, f
     mResoulutionPointer = glGetUniformLocation(mCornerPickProgram.programHandle, "resolution");
 }
 
-void RenderProgramCornerPick::loadData(char *data, int width, int height, int pixelFormat, int offset) {
+void RenderProgramConvolution::loadData(char *data, int width, int height, int pixelFormat, int offset) {
     if (!mIsTexutresInited) {
         glUseProgram(mCornerPickProgram.programHandle);
-        glGenTextures(1, texturePointers);
-        mGenTextureId = texturePointers[0];
+        glGenTextures(1, mTexturePointers);
+        mGenTextureId = mTexturePointers[0];
         mIsTexutresInited = true;
     }
     //绑定处理
@@ -151,14 +151,14 @@ void RenderProgramCornerPick::loadData(char *data, int width, int height, int pi
 }
 
 /**@param texturePointers 传入需要渲染处理的纹理，可以为上一次处理的结果，例如处理完后的FBOTexture **/
-void RenderProgramCornerPick::loadTexture(GLuint *texturePointers, int width, int height) {
-    mInputTextures = texturePointers;
-    mInputTexturesWidth = width;
-    mInputTexturesHeight = height;
+void RenderProgramConvolution::loadTexture(Textures textures[]) {
+    mInputTextures = textures[0].texturePointers;
+    mInputTexturesWidth = textures[0].width;
+    mInputTexturesHeight = textures[0].height;
 }
 
 /**@param outputFBOPointer 绘制到哪个framebuffer，系统默认一般为0 **/
-void RenderProgramCornerPick::drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH) {
+void RenderProgramConvolution::drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH) {
     if (mIsDestroyed) {
         return;
     }
@@ -197,7 +197,7 @@ void RenderProgramCornerPick::drawTo(float *cameraMatrix, float *projMatrix, Dra
                 resolution[1] = mInputTexturesHeight;
                 glUniform2fv(mResoulutionPointer, 1, resolution);
                 glActiveTexture(GL_TEXTURE0); //激活0号纹理
-                glBindTexture(GL_TEXTURE_2D, mInputTextures[0]); //0号纹理绑定内容
+                glBindTexture(GL_TEXTURE_2D, mInputTextures); //0号纹理绑定内容
                 glUniform1i(glGetUniformLocation(mCornerPickProgram.programHandle, "textureFBO"), 0); //映射到渲染脚本，获取纹理属性的指针
                 break;
         }
@@ -209,13 +209,13 @@ void RenderProgramCornerPick::drawTo(float *cameraMatrix, float *projMatrix, Dra
     }
 }
 
-void RenderProgramCornerPick::destroy() {
+void RenderProgramConvolution::destroy() {
     if (!mIsDestroyed) {
         //释放纹理所占用的显存
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, 0);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 0, 0, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, nullptr);
-        glDeleteTextures(1, texturePointers); //销毁纹理,gen和delete要成对出现
+        glDeleteTextures(1, mTexturePointers); //销毁纹理,gen和delete要成对出现
         //删除不用的shaderprogram
         destroyProgram(mCornerPickProgram);
     }

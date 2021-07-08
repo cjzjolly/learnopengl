@@ -38,8 +38,8 @@ add_library( # Sets the name of the library.
         RenderProgram.cpp
         RenderProgramImage.h
         RenderProgramImage.cpp
-        RenderProgramCornerPick.h
-        RenderProgramCornerPick.cpp
+        RenderProgramConvolution.h
+        RenderProgramConvolution.cpp
         Layer.cpp
              )
 
