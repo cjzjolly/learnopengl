@@ -13,6 +13,7 @@ public:
     void drawRGBA(char *buf, int w, int h);
 private:
     Layer *mLayer;
+    Layer *mLayer2;
     float mProjMatrix[16];
     float mCameraMatrix[16];
     float mRatio;

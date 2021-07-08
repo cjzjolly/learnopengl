@@ -233,10 +233,11 @@ void Layer::drawLayerToFrameBuffer(float *cameraMatrix, float *projMatrix, GLuin
 /**逐步加工绘制**/
 void
 Layer::drawTo(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, int fboW, int fboH) {
-    glBindFramebuffer(1, mFrameBufferPointerArray[0]);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
-    glBindFramebuffer(1, mFrameBufferPointerArray[1]);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
+    //清理双Framebuffer残留的内容
+    for (int i = 0; i < 2; i++) {
+        glBindFramebuffer(GL_FRAMEBUFFER, mFrameBufferPointerArray[i]);
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
+    }
     int i = 0;
     /**第0个渲染器以data为数据输入，使用FBO[0]渲染结果。第1个渲染器使用FBO_texture[0]作为纹理输入，渲染结果输出到FBO[1]。
      * 第2个渲染器使用FBO_texture[1]作为纹理输入，渲染结果输出到FBO[0]，依次循环互换结果和输入，实现效果叠加。
