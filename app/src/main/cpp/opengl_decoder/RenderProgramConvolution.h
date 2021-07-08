@@ -20,6 +20,8 @@ public:
 
     void loadData(char *data, int width, int height, int pixelFormat, int offset);
 
+    void setAlpha(float alpha);
+
     void loadTexture(Textures textures[]);
 
     void drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH);

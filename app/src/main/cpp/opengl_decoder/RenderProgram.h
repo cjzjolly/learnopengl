@@ -49,6 +49,9 @@ namespace OPENGL_VIDEO_RENDERER {
          * @param fboW,fboH FBO的长和宽**/
         virtual void drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH) = 0;
 
+        /**透明度调节**/
+        virtual void setAlpha(float alpha) = 0;
+
         /**总的资源清理**/
         virtual void destroy() = 0;
 

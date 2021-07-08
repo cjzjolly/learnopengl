@@ -77,7 +77,7 @@ RenderProgramConvolution::RenderProgramConvolution(float conKernel[]) {
                     for (int i = 0; i < 9; i++)
                     col += sampleTex[i] * kernel[i];
 
-                    fragColor = vec4(col, 1.0) * fragObjectColor;
+                    fragColor = vec4(col, fragObjectColor.a);
             }
 
             void main() {
@@ -153,6 +153,14 @@ void RenderProgramConvolution::loadData(char *data, int width, int height, int p
     glTexImage2D(GL_TEXTURE_2D, 0, pixelFormat, width, height, 0, pixelFormat, GL_UNSIGNED_BYTE, (void*) (data + offset));
     mInputDataWidth = width;
     mInputDataHeight = height;
+}
+
+void RenderProgramConvolution::setAlpha(float alpha) {
+    if (mColorBuf != nullptr) {
+        for (int i = 3; i < sizeof(mColorBuf) / sizeof(float); i += 4) {
+            mColorBuf[i] = alpha;
+        }
+    }
 }
 
 /**@param texturePointers 传入需要渲染处理的纹理，可以为上一次处理的结果，例如处理完后的FBOTexture **/
