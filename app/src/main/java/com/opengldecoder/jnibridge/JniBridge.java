@@ -5,7 +5,7 @@ import android.view.Surface;
 
 public class JniBridge {
 
-    static{
+    static {
         System.loadLibrary("opengl_decoder");
     }
 

@@ -55,7 +55,7 @@ void OpenGLNativeRender::setupGraphics(int w, int h, float *bgColor)//初始化�
     mHeight = h;
     mRatio = ratio;
     frustumM(mProjMatrix, 0, -1, 1, -ratio, ratio, 1, 50);//设置投影矩阵
-    setLookAtM(mCameraMatrix, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0);//设置摄像机矩阵
+    setLookAtM(mCameraMatrix, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0);//设置摄像机矩阵
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
     glClearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);//设置背景颜色
     glEnable(GL_DEPTH_TEST);
@@ -69,15 +69,15 @@ void OpenGLNativeRender::setupGraphics(int w, int h, float *bgColor)//初始化�
     //添加渲染器:
     RenderProgramImage *renderProgramImage = new RenderProgramImage();
     renderProgramImage->createRender(-1, -ratio, 0, 2, ratio * 2, w, h);
-    RenderProgramConvolution *renderProgramCornerPick = new RenderProgramConvolution();
+    float kernel[] = {
+            1.0, 1.0, 1.0,
+            1.0, -9.0, 1.0,
+            1.0, 1.0, 1.0
+    };
+    RenderProgramConvolution *renderProgramCornerPick = new RenderProgramConvolution(kernel);
     renderProgramCornerPick->createRender(-1, -ratio, 0, 2, ratio * 2, w, h);
-//    mTestBMP = (int*) malloc(sizeof(int) * 100 * 100);
-//    for (int i = 0; i < 100 * 100; i ++) {
-//        mTestBMP[i] = i << 24 | i << 16 | i << 8 | 0xFF;
-//    }
     mLayer->addRenderProgram(renderProgramImage);
     mLayer->addRenderProgram(renderProgramCornerPick);
-//    mLayer->loadData((char *) mTestBMP, 100, 100, GL_RGBA, 0);
     return;
 }
 

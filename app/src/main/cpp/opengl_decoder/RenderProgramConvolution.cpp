@@ -16,7 +16,9 @@ static const char *TAG = "nativeGL";
 #define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, TAG, fmt, ##args)
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
 
-RenderProgramConvolution::RenderProgramConvolution() {
+RenderProgramConvolution::RenderProgramConvolution(float conKernel[]) {
+    //拷贝一份卷积核
+    memcpy(mConKernel, conKernel, sizeof(mConKernel));
     //todo #号如何放进去，暂时opengl version声明只能用很奇怪的写法，通过双#号放进去之后，把第一个#号舍弃
     vertShader = GL_SHADER_STRING(
             ##version 300 es\n
@@ -41,6 +43,7 @@ RenderProgramConvolution::RenderProgramConvolution() {
             uniform int funChoice;
             uniform float frame;//第几帧
             uniform vec2 resolution;//分辨率
+            uniform mat3 conKernel; //卷积核
             in vec4 fragObjectColor;//接收vertShader处理后的颜色值给片元程序
             in vec2 fragVTexCoord;//接收vertShader处理后的纹理内坐标给片元程序
             out vec4 fragColor;//输出到的片元颜色
@@ -60,10 +63,10 @@ RenderProgramConvolution::RenderProgramConvolution() {
                             vec2(offset, -offset)// 右下
                     );
                     float kernel[9] = float[](
-                            1.0, 1.0, 1.0,
-                            1.0, -7.0, 1.0,
-                            1.0, 1.0, 1.0
-                    );
+                        conKernel[0][0], conKernel[0][1], conKernel[0][2],
+                        conKernel[1][0], conKernel[1][1], conKernel[1][2],
+                        conKernel[2][0], conKernel[2][1], conKernel[2][2]
+                      );
 
                     vec3 sampleTex[9];
                     for (int i = 0; i < 9; i++)
@@ -130,6 +133,8 @@ void RenderProgramConvolution::createRender(float x, float y, float z, float w, 
     mFrameCountPointer = glGetUniformLocation(mCornerPickProgram.programHandle, "frame");
     //设置分辨率指针，告诉gl脚本现在的分辨率
     mResoulutionPointer = glGetUniformLocation(mCornerPickProgram.programHandle, "resolution");
+    //卷积核
+    mConvolutionKernel = glGetUniformLocation(mCornerPickProgram.programHandle, "conKernel");
 }
 
 void RenderProgramConvolution::loadData(char *data, int width, int height, int pixelFormat, int offset) {
@@ -180,6 +185,7 @@ void RenderProgramConvolution::drawTo(float *cameraMatrix, float *projMatrix, Dr
         glEnableVertexAttribArray(mVTexCoordPointer);  //启用纹理采样定位坐标
         //设置图像分辨率
         float resolution[2];
+        glUniformMatrix3fv(mConvolutionKernel, 1, GL_FALSE, mConKernel);
 
         switch (drawType) {
             case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_DATA:
