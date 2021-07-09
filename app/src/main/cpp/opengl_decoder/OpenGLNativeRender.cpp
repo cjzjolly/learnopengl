@@ -46,8 +46,6 @@ char *jstringToChar(JNIEnv *env, jstring jstr) {
     return rtn;
 }
 
-int *mTestBMP;
-RenderProgramConvolution *renderProgramCornerPick;
 void OpenGLNativeRender::setupGraphics(int w, int h, float *bgColor)//初始化函数
 {
     glViewport(0, 0, w, h);//设置视口
@@ -75,23 +73,23 @@ void OpenGLNativeRender::setupGraphics(int w, int h, float *bgColor)//初始化�
     mRenderProgramImage->createRender(-1, -ratio, 0, 2, ratio * 2, w, h);
     float kernel[] = {
             1.0, 1.0, 1.0,
-            1.0, -9.0, 1.0,
+            1.0, -7.0, 1.0,
             1.0, 1.0, 1.0
     };
-    renderProgramCornerPick = new RenderProgramConvolution(kernel);
+    RenderProgramConvolution *renderProgramCornerPick = new RenderProgramConvolution(kernel);
     renderProgramCornerPick->createRender(-1, -ratio, 0, 2, ratio * 2, w, h);
     renderProgramCornerPick->setAlpha(0.8);
     mLayer->addRenderProgram(mRenderProgramImage);
-    mLayer->addRenderProgram(renderProgramCornerPick);
+//    mLayer->addRenderProgram(renderProgramCornerPick);
     return;
 }
 
 void OpenGLNativeRender::drawRGBA(char *buf, int w, int h) {
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
-    mLayer->loadData(buf, w, h, GL_RGBA, 0);
+    mLayer->loadData(buf, w, h, GL_RGBA, 0);  //todo 修改接口，set数据的接口和draw分离，不要每次都刷新
     //绘制到目标framebuffer，默认使用屏幕0
-    renderProgramCornerPick->rotate(1, 0, 0, 1);
-    mLayer->drawTo(mCameraMatrix, mProjMatrix, 0, mWidth, mHeight);
+//    renderProgramCornerPick->rotate(1, 0, 0, 1);
+    mLayer->drawTo(mCameraMatrix, mProjMatrix, 0, mWidth, mHeight, Layer::DRAW_DATA);
 }
 
 /**安卓系统在有GLSurfaceview的情况下不需要进行EGL相关操作**/

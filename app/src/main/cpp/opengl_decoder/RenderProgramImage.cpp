@@ -153,35 +153,8 @@ void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, DrawType
     glBindFramebuffer(GL_FRAMEBUFFER, outputFBOPointer);
     glViewport(0, 0, mWindowW, mWindowH);
     glUniform1i(mGLFunChoicePointer, 1);
-    //保留物体缩放现场
-    float objMatrixClone[16];
-    memcpy(objMatrixClone, getObjectMatrix(), sizeof(objMatrixClone));
-    //按照图源比例进行缩放:
-    switch (drawType) {
-        case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_DATA: {
-            if (mDataHeight > mDataWidth) { //如果高比宽大
-                //保持高占满容器的同时，按图像比例缩小宽度:
-                float scaleX = (float) mDataWidth / (float) mDataHeight * (float) fboW / (float) fboH;
-                scale(scaleX, 1.0, 1.0);
-            } else {
-                float scaleY = (float) mDataHeight / (float) mDataWidth * (float) fboW / (float) fboH;
-                scale(1.0, scaleY, 1.0);
-                scale(1.0 / scaleY, 1.0 / scaleY, 1.0);
-                LOGI("cjztest scaleY:%f", scaleY);
-            }
-            break;
-        }
-        case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_TEXTURE: {
-            float scaleX = (float) mInputTextureWidth / (float) mInputTextureHeight * (float) fboH * (float) fboH;
-//            scale(scaleX, 1.0, 1.0);
-            break;
-        }
-    }
-//    scale(0.6, 0.6, 1.0);
     //传入位置信息
     locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
-    //还原缩放现场
-    setObjectMatrix(objMatrixClone);
     //开始渲染：
     if (mVertxData != nullptr && mColorBuf != nullptr) {
         //将顶点位置数据送入渲染管线

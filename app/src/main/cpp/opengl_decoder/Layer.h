@@ -14,6 +14,11 @@ using namespace OPENGL_VIDEO_RENDERER;
 
 class Layer {
 public:
+    enum DrawType {
+        DRAW_DATA,  //绘制已经load好的像素
+        DRAW_TEXTURE  //绘制已经load好的纹理
+    };
+
     /** @param x,y,z 初始化图层左上角（归一式坐标），传到objectMatrix中
          * @param w,h 图层的长和宽（归一式坐标）
          * @param windowW,windowH 渲染面实际分辨率**/
@@ -29,9 +34,12 @@ public:
  **/
     void loadData(char *data, int width, int height, int pixelFormat, int offset);
 
+    /**如果要绘制的东西本身就是一个纹理呢**/
+    void loadTexture(GLuint texturePointer, int width, int height);
+
     /**绘制，遍历mRenderProgramList中的所有渲染模板
      * @param outputFBOPointer 叠加用的FBO，使得图层处理效果和内容可以层层叠加，如果需要fboTexutre本身也可以视为一个处理对象放入drawTexture中进行处理**/
-    void drawTo(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, int fboW, int fboH);
+    void drawTo(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, int fboW, int fboH, DrawType drawType);
 
     void destroy();
 
@@ -45,7 +53,7 @@ private:
     void createLayerProgram();
     /**把物品顶点变换矩阵初始化为单位矩阵。**/
     void initObjMatrix();
-    void drawLayerToFrameBuffer(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer);
+    void drawLayerToFrameBuffer(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, DrawType drawType);
 
     /**传入shaderProgram的最终场景控制指针(ID)，把变换处理后的物品坐标传到muMVPMatrixPointer，
      * 整个场景的控制则由cameraMatrix摄像机矩阵和projMatrix投影矩阵控制
@@ -70,6 +78,13 @@ private:
         int pixelFormat;
         int offset;
     };
+    struct RenderSrcTexture {
+        GLuint texturePointer;
+        int width;
+        int height;
+    };
+    struct RenderSrcData mRenderSrcData;
+    struct RenderSrcTexture mRenderSrcTexture;
 
     float mObjectMatrix[16];    //具体物体的3D变换矩阵，包括旋转、平移、缩放
     float mMVPMatrix[16];//创建用来存放最终变换矩阵的数组
@@ -78,7 +93,6 @@ private:
     float mColorBuf[4 * 4];
     GLslHandle mLayerProgram;
 
-    struct RenderSrcData mRenderSrcData;
     GLint mObjectPositionPointer;
     GLint mVTexCoordPointer;
     GLint mObjectVertColorArrayPointer;

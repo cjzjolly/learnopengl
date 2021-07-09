@@ -190,7 +190,7 @@ void Layer::addRenderProgram(RenderProgram *program) {
     mRenderProgramList.push_back(program);
 }
 
-/**给每个模板传入渲染数据**/
+/**给每个模板传入渲染数据**/  //todo 修改一下，如果data更新了才调用第一个渲染器loadData刷新纹理，节约CPU资源    加一个needRefresh标志
 void Layer::loadData(char *data, int width, int height, int pixelFormat, int offset) {
     mRenderSrcData.data = data;
     mRenderSrcData.width = width;
@@ -199,10 +199,64 @@ void Layer::loadData(char *data, int width, int height, int pixelFormat, int off
     mRenderSrcData.offset = offset;
 }
 
-void Layer::drawLayerToFrameBuffer(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer) {
+/**@param texturePointers 可以用于渲染已经绑定好的纹理，或者直接传入FBO，把上一个图层的结果进一步进行渲染，例如叠加图片、或者进行毛玻璃效果处理。当然也可以在一个图层上叠加更多渲染器实现，但多图层便于不同画面不同大小的重叠，渲染器在同一个图层中大小保持一致**/
+void Layer::loadTexture(GLuint texturePointer, int width, int height) {
+    mRenderSrcTexture.texturePointer = texturePointer;
+    mRenderSrcTexture.width = width;
+    mRenderSrcTexture.height = height;
+}
+
+void Layer::drawLayerToFrameBuffer(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, DrawType drawType) {
     glUseProgram(mLayerProgram.programHandle);
     glBindFramebuffer(GL_FRAMEBUFFER, outputFBOPointer);
+
+
+
+
+
+    //保留物体缩放现场
+    float objMatrixClone[16];
+    memcpy(objMatrixClone, mObjectMatrix, sizeof(objMatrixClone));
+    //这里的坐标轴逻辑上应该是x,y,z密度都相等的，但因为设备各式各样，x,y轴可能有不同程度的密度拉伸，所以要处理一下：
+    /**保持图片宽高的原理:
+     * 0、计算纹理占当前
+     * 最后贴图时，顶点乘以修改后的物体缩放关系矩阵，就实现了
+     * **/
+    if (drawType == DRAW_DATA) {
+        float ratio =
+                mWindowW > mWindowH ? ((float) mWindowH / (float) mWindowW) : ((float) mWindowW /
+                                                                               (float) mWindowH); //计算当前视口的短边/长边比例，从而得知X轴和Y轴的-1～1的归一化长度之间的实际长度的比例
+        //确定图片哪一边更能覆盖对应轴的视口长度，哪一边就让其充满空间，另一边则按OpenGL视口的短边/长边比缩放，此时任意长宽比的图片都会变成矩形，再乘以图片本身的比例转换为图片本身宽高比，即可在纹理渲染时还原图片本身比例
+        float widthPercentage = (float) mRenderSrcData.width / (float) mWindowW;
+        float heightPercentage = (float) mRenderSrcData.height / (float) mWindowH;
+        if (widthPercentage > heightPercentage) {
+            scale(1.0, ratio * ((float) mRenderSrcData.height / mRenderSrcData.width), 1.0);
+        } else {
+            scale(ratio * ((float) mRenderSrcData.width / mRenderSrcData.height), 1.0, 1.0);
+        }
+    } else {
+        float ratio =
+                mWindowW > mWindowH ? ((float) mWindowH / (float) mWindowW) : ((float) mWindowW /
+                                                                               (float) mWindowH); //计算当前视口的短边/长边比例，从而得知X轴和Y轴的-1～1的归一化长度之间的实际长度的比例
+        //确定图片哪一边更能覆盖对应轴的视口长度，哪一边就让其充满空间，另一边则按OpenGL视口的短边/长边比缩放，此时任意长宽比的图片都会变成矩形，再乘以图片本身的比例转换为图片本身宽高比，即可在纹理渲染时还原图片本身比例
+        float widthPercentage = (float) mRenderSrcTexture.width / (float) mWindowW;
+        float heightPercentage = (float) mRenderSrcTexture.height / (float) mWindowH;
+        if (widthPercentage > heightPercentage) {
+            scale(1.0, ratio * ((float) mRenderSrcTexture.height / mRenderSrcTexture.width), 1.0);
+        } else {
+            scale(ratio * ((float) mRenderSrcTexture.width / mRenderSrcTexture.height), 1.0, 1.0);
+        }
+    }
+
+
     locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
+
+
+    //还原缩放现场
+    memcpy(mObjectMatrix, objMatrixClone, sizeof(mObjectMatrix));
+
+
+
     /**实现两个Framebuffer的画面叠加，这里解释一下：
      * 如果是偶数个渲染器，那么在交替渲染之后，那么第0个FBO的画面是上一个画面，第1个FBO为最新画面，所以要先绘制第0个FBO内容再叠加第一个
      * 否则则是交替后，第1个渲染器是上个画面，第0个FBO是上一个画面，叠加顺序则要进行更改**/
@@ -230,9 +284,9 @@ void Layer::drawLayerToFrameBuffer(float *cameraMatrix, float *projMatrix, GLuin
     }
 }
 
-/**逐步加工绘制**/
+/**逐步加工绘制**/  //todo 修改一下，如果data更新了才调用第一个渲染器loadData刷新纹理，节约CPU资源
 void
-Layer::drawTo(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, int fboW, int fboH) {
+Layer::drawTo(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, int fboW, int fboH, DrawType drawType) {
     //清理双Framebuffer残留的内容
     for (int i = 0; i < 2; i++) {
         glBindFramebuffer(GL_FRAMEBUFFER, mFrameBufferPointerArray[i]);
@@ -268,7 +322,7 @@ Layer::drawTo(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, i
         }
     }
     //最后渲染到目标framebuffer
-    drawLayerToFrameBuffer(cameraMatrix, projMatrix, outputFBOPointer);
+    drawLayerToFrameBuffer(cameraMatrix, projMatrix, outputFBOPointer, drawType);
     //渲染统计
     mFrameCount++;
 }
