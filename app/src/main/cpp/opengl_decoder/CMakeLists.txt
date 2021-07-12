@@ -9,7 +9,7 @@ project(opengl_decoder)
 #SET(zbar_sdk_dir ${CMAKE_SOURCE_DIR}/src/main/cpp/opengl_decoder)
 message(AUTHOR_WARNING ${CMAKE_CURRENT_SOURCE_DIR})
 message(AUTHOR_WARNING ${opengl_decoder})
-
+add_definitions("-DDYNAMIC_ES3")
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
 # You can define multiple libraries, and CMake builds it for you.
@@ -52,7 +52,8 @@ add_library( # Sets the name of the library.
 find_library(log-lib log)
 find_library(android-lib android)
 find_library(EGL-lib EGL)
-find_library(GLESv2-lib GLESv2)
+#find_library(GLESv2-lib GLESv2)
+find_library(GLESv3-lib GLESv3)
 find_library(OpenSLES-lib OpenSLES)
 find_library(dl-lib dl)
 find_library(z-lib z)
@@ -63,7 +64,7 @@ target_link_libraries(
         ${log-lib}
                 ${android-lib}
                 ${EGL-lib}
-                ${GLESv2-lib}
+                ${GLESv3-lib}
                 ${OpenSLES-lib}
                 ${dl-lib}
                 ${z-lib}

@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.learnopengl"
-        minSdkVersion 16
+        minSdkVersion 18
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
@@ -46,6 +46,7 @@ android {
             jni.srcDirs = []
         }
     }
+    ndkVersion '20.1.5948944'
 }
 
 dependencies {

@@ -209,11 +209,6 @@ void Layer::loadTexture(GLuint texturePointer, int width, int height) {
 void Layer::drawLayerToFrameBuffer(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, DrawType drawType) {
     glUseProgram(mLayerProgram.programHandle);
     glBindFramebuffer(GL_FRAMEBUFFER, outputFBOPointer);
-
-
-
-
-
     //保留物体缩放现场
     float objMatrixClone[16];
     memcpy(objMatrixClone, mObjectMatrix, sizeof(objMatrixClone));
@@ -229,8 +224,8 @@ void Layer::drawLayerToFrameBuffer(float *cameraMatrix, float *projMatrix, GLuin
         //确定图片哪一边更能覆盖对应轴的视口长度，哪一边就让其充满空间，另一边则按OpenGL视口的短边/长边比缩放，此时任意长宽比的图片都会变成矩形，再乘以图片本身的比例转换为图片本身宽高比，即可在纹理渲染时还原图片本身比例
         float widthPercentage = (float) mRenderSrcData.width / (float) mWindowW;
         float heightPercentage = (float) mRenderSrcData.height / (float) mWindowH;
-        if (widthPercentage > heightPercentage) {
-            scale(1.0, ratio * ((float) mRenderSrcData.height / mRenderSrcData.width), 1.0);
+        if (widthPercentage > heightPercentage) { //如果宽占比更多，宽拉伸到尽，高按照视口比例重新调整为统一密度的单位，然后再根据图片高对宽的比例调整物体的高的边的缩放
+            scale(1.0, ratio * ((float) mRenderSrcData.height / mRenderSrcData.width), 1.0); //SCALEY为图片高占宽的比例 * 视口比例
         } else {
             scale(ratio * ((float) mRenderSrcData.width / mRenderSrcData.height), 1.0, 1.0);
         }
@@ -247,16 +242,10 @@ void Layer::drawLayerToFrameBuffer(float *cameraMatrix, float *projMatrix, GLuin
             scale(ratio * ((float) mRenderSrcTexture.width / mRenderSrcTexture.height), 1.0, 1.0);
         }
     }
-
-
+    //物体坐标*缩放平移旋转矩阵->应用按图片比例缩放效果
     locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
-
-
     //还原缩放现场
     memcpy(mObjectMatrix, objMatrixClone, sizeof(mObjectMatrix));
-
-
-
     /**实现两个Framebuffer的画面叠加，这里解释一下：
      * 如果是偶数个渲染器，那么在交替渲染之后，那么第0个FBO的画面是上一个画面，第1个FBO为最新画面，所以要先绘制第0个FBO内容再叠加第一个
      * 否则则是交替后，第1个渲染器是上个画面，第0个FBO是上一个画面，叠加顺序则要进行更改**/
