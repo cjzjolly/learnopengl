@@ -343,6 +343,7 @@ public class GLFrameBufferEffectPBOYuvDecoder extends GLLine {
         if (!mIsDestroyed) {
             destroyPBO();
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
+            GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE, 0, 0, 0, GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, null); //更新一个空图释放显存。
             GLES30.glDeleteTextures(2, new int[] {mGenYTextureId, mGenUVTextureId}, 0); //销毁纹理,gen和delete要成对出现
             //去除特殊shader程序
             destroyShader(mYUVProgram, mYUVVertexShaderPointer, mYUVFragShaderPointer);
