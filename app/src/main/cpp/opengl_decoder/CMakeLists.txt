@@ -40,6 +40,8 @@ add_library( # Sets the name of the library.
         RenderProgramImage.cpp
         RenderProgramConvolution.h
         RenderProgramConvolution.cpp
+        RenderProgramYUV.h
+        RenderProgramYUV.cpp
         Layer.cpp
              )
 
