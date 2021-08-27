@@ -214,7 +214,22 @@ void RenderProgramYUV::loadData(char *data, int width, int height, int pixelForm
                 break;
         }
     }
-    //todo 加载数据
+    //加载Y通道数据
+    glBindTexture(GL_TEXTURE_2D, mGenYTextureId);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width, height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, data);
+    //加载UV通道数据
+    glBindTexture(GL_TEXTURE_2D, mGenUVTextureId);
+    switch (mYuvKind) {
+        default:
+        case YUV_420SP_UVUV:
+        case YUV_420SP_VUVU:
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width / 2, height / 2, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, data + height * width); //2字节为一个单位，所以宽度因为单位为2字节一个，对比1字节时直接对半
+            break;
+        case YUV_420P_UUVV:
+        case YUV_420P_VVUU:
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height / 2, GL_LUMINANCE, GL_UNSIGNED_BYTE, data + height * width);
+            break;
+    }
 }
 
 void RenderProgramYUV::setAlpha(float alpha) {
@@ -222,7 +237,7 @@ void RenderProgramYUV::setAlpha(float alpha) {
 }
 
 void RenderProgramYUV::loadTexture(Textures textures[]) {
-
+    //todo 直接加载yuv纹理
 }
 
 void RenderProgramYUV::drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH) {

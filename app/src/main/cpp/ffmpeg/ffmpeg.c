@@ -74,6 +74,7 @@ int openFile(char *path) {
 //        return -1;
 //    }
     //寻找第一个视频帧:
+    LOGI("mFormatCtx->nb_streams:%d", mFormatCtx->nb_streams);
     for (i = 0; i < mFormatCtx->nb_streams; i++)
         if (mFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
             videoindex = i;
@@ -85,11 +86,12 @@ int openFile(char *path) {
     }
     //寻找视频流对应的解码器：
     pCodecCtx = mFormatCtx->streams[videoindex]->codec;
-    //avcodec_register_all();
     pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
     if (pCodec == NULL) {
         LOGI("Codec not found.\n");
         return -1;
+    } else {
+        LOGI("Codec found:%s\n", pCodec->name);
     }
     if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0) {
         LOGI("Could not open codec.\n");

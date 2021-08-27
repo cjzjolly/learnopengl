@@ -1,0 +1,180 @@
+//
+// Created by jiezhuchen on 2021/6/21.
+//
+
+#include <GLES3/gl3.h>
+#include <GLES3/gl3ext.h>
+
+#include <string.h>
+#include <jni.h>
+#include "RenderProgramOESTexture.h"
+#include "android/log.h"
+
+
+using namespace OPENGL_VIDEO_RENDERER;
+static const char *TAG = "nativeGL";
+#define LOGI(fmt, args...) __android_log_print(ANDROID_LOG_INFO,  TAG, fmt, ##args)
+#define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, TAG, fmt, ##args)
+#define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
+
+RenderProgramOESTexture::RenderProgramOESTexture() { //todo 不知道为何编译出错
+    vertShader = GL_SHADER_STRING(
+            ##version 300 es\n
+        uniform mat4 uMVPMatrix; //旋转平移缩放 总变换矩阵。物体矩阵乘以它即可产生变换
+        in vec3 objectPosition; //物体位置向量，参与运算但不输出给片源
+
+        in vec4 objectColor; //物理颜色向量
+        in vec2 vTexCoord; //纹理内坐标
+        out vec4 fragObjectColor;//输出处理后的颜色值给片元程序
+        out vec2 fragVTexCoordddd;//输出处理后的纹理内坐标给片元程序
+
+
+        void main() {
+            gl_Position = uMVPMatrix * vec4(objectPosition, 1.0); //设置物体位置
+            fragVTexCoordddd = vTexCoord; //默认无任何处理，直接输出物理内采样坐标
+            fragObjectColor = objectColor; //默认无任何处理，输出颜色值到片源
+        }
+    );
+    fragShader = GL_SHADER_STRING(
+    ##version 300 es\n
+            precision highp float;
+//            uniform samplerExternalOES oesTexture;//OES形式的纹理输入
+            uniform int funChoice;
+            uniform float frame;//第几帧
+            uniform vec2 resolution;//容器的分辨率
+            uniform vec2 videoResolution;//视频自身的分辨率
+            in vec4 fragObjectColor;//接收vertShader处理后的颜色值给片元程序
+            in vec2 fragVTexCoordddd;//接收vertShader处理后的纹理内坐标给片元程序
+            out vec4 fragColor;//输出到的片元颜色
+
+            void main() {
+//                fragColor = vec4(texture2D(oesTexture, xy).rgb, fragObjectColor.a);
+//                fragColor = vec4(1.0, 1.0, 1.0, 1.0);  //cjztest todo 显示不出来，貌似编译失败
+            }
+    );
+
+    float tempTexCoord[] =   //纹理内采样坐标,类似于canvas坐标 //这东西有问题，导致两个framebuffer的画面互相取纹理时互为颠倒
+            {
+                    1.0, 0.0,
+                    0.0, 0.0,
+                    1.0, 1.0,
+                    0.0, 1.0
+            };
+    memcpy(mTexCoor, tempTexCoord, sizeof(tempTexCoord));
+    float tempColorBuf[] = {
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0
+    };
+    memcpy(mColorBuf, tempColorBuf, sizeof(tempColorBuf));
+}
+
+RenderProgramOESTexture::~RenderProgramOESTexture() {
+    destroy();
+}
+
+void RenderProgramOESTexture::createRender(float x, float y, float z, float w, float h, int windowW,
+                                      int windowH) {
+    mWindowW = windowW;
+    mWindowH = windowH;
+    initObjMatrix(); //使物体矩阵初始化为单位矩阵，否则接下来的矩阵操作因为都是乘以0而无效
+    float vertxData[] = {
+            x + w, y, z,
+            x, y, z,
+            x + w, y + h, z,
+            x, y + h, z,
+    };
+    memcpy(mVertxData, vertxData, sizeof(vertxData));
+    mImageProgram = createProgram(vertShader + 1, fragShader + 1);
+    //获取程序中顶点位置属性引用"指针"
+    mObjectPositionPointer = glGetAttribLocation(mImageProgram.programHandle, "objectPosition");
+    //纹理采样坐标
+    mVTexCoordPointer = glGetAttribLocation(mImageProgram.programHandle, "vTexCoord");
+    //获取程序中顶点颜色属性引用"指针"
+    mObjectVertColorArrayPointer = glGetAttribLocation(mImageProgram.programHandle, "objectColor");
+    //获取程序中总变换矩阵引用"指针"
+    muMVPMatrixPointer = glGetUniformLocation(mImageProgram.programHandle, "uMVPMatrix");
+    //渲染方式选择，0为线条，1为纹理
+    mGLFunChoicePointer = glGetUniformLocation(mImageProgram.programHandle, "funChoice");
+    //渲染帧计数指针
+    mFrameCountPointer = glGetUniformLocation(mImageProgram.programHandle, "frame");
+    //设置分辨率指针，告诉gl脚本现在的分辨率
+    mResoulutionPointer = glGetUniformLocation(mImageProgram.programHandle, "resolution");
+}
+
+void RenderProgramOESTexture::setAlpha(float alpha) {
+    if (mColorBuf != nullptr) {
+        for (int i = 3; i < sizeof(mColorBuf) / sizeof(float); i += 4) {
+            mColorBuf[i] = alpha;
+        }
+    }
+}
+
+void RenderProgramOESTexture::loadData(char *data, int width, int height, int pixelFormat, int offset) {
+
+}
+
+/**@param texturePointers 传入需要渲染处理的纹理，可以为上一次处理的结果，例如处理完后的FBOTexture **/
+void RenderProgramOESTexture::loadTexture(Textures textures[]) {
+    mInputTexturesArray = textures[0].texturePointers;
+    mInputTextureWidth = textures[0].width;
+    mInputTextureHeight = textures[0].height;
+}
+
+/**@param outputFBOPointer 绘制到哪个framebuffer，系统默认一般为0 **/
+void RenderProgramOESTexture::drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH) {
+    if (mIsDestroyed) {
+        return;
+    }
+    glUseProgram(mImageProgram.programHandle);
+    //设置视窗大小及位置
+    glBindFramebuffer(GL_FRAMEBUFFER, outputFBOPointer);
+    glViewport(0, 0, mWindowW, mWindowH);
+    glUniform1i(mGLFunChoicePointer, 1);
+    //传入位置信息
+    locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
+    //开始渲染：
+    if (mVertxData != nullptr && mColorBuf != nullptr) {
+        //将顶点位置数据送入渲染管线
+        glVertexAttribPointer(mObjectPositionPointer, 3, GL_FLOAT, false, 0, mVertxData); //三维向量，size为2
+        //将顶点颜色数据送入渲染管线
+        glVertexAttribPointer(mObjectVertColorArrayPointer, 4, GL_FLOAT, false, 0, mColorBuf);
+        //将顶点纹理坐标数据传送进渲染管线
+        glVertexAttribPointer(mVTexCoordPointer, 2, GL_FLOAT, false, 0, mTexCoor);  //二维向量，size为2
+        glEnableVertexAttribArray(mObjectPositionPointer); //启用顶点属性
+        glEnableVertexAttribArray(mObjectVertColorArrayPointer);  //启用颜色属性
+        glEnableVertexAttribArray(mVTexCoordPointer);  //启用纹理采样定位坐标
+        float resolution[2];
+
+        switch (drawType) {
+            case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_DATA:
+                break;
+            case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_TEXTURE:
+                glActiveTexture(GL_TEXTURE0); //激活0号纹理
+                glBindTexture(GL_TEXTURE_2D, mTexturePointers[0]); //0号纹理绑定内容
+                glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "oesTexture"), 0); //映射到渲染脚本，获取纹理属性的指针
+                resolution[0] = (float) mInputTextureWidth;
+                resolution[1] = (float) mInputTextureHeight;
+                glUniform2fv(mResoulutionPointer, 1, resolution);
+                break;
+        }
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, /*mPointBufferPos / 3*/ 4); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+        glDisableVertexAttribArray(mObjectPositionPointer);
+        glDisableVertexAttribArray(mObjectVertColorArrayPointer);
+        glDisableVertexAttribArray(mVTexCoordPointer);
+    }
+}
+
+void RenderProgramOESTexture::destroy() {
+    if (!mIsDestroyed) {
+        //释放纹理所占用的显存
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 0, 0, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, nullptr);
+        glDeleteTextures(1, mTexturePointers); //销毁纹理,gen和delete要成对出现
+        //删除不用的shaderprogram
+        destroyProgram(mImageProgram);
+    }
+    mIsDestroyed = true;
+}

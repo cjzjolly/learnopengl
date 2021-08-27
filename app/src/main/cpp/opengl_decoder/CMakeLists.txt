@@ -42,6 +42,8 @@ add_library( # Sets the name of the library.
         RenderProgramConvolution.cpp
         RenderProgramYUV.h
         RenderProgramYUV.cpp
+        RenderProgramOESTexture.h
+        RenderProgramOESTexture.cpp
         Layer.cpp
              )
 

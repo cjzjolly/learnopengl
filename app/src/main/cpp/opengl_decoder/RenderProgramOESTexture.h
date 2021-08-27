@@ -6,18 +6,11 @@
 #include "RenderProgram.h"
 
 using namespace OPENGL_VIDEO_RENDERER;
-class RenderProgramYUV : public RenderProgram {
+class RenderProgramOESTexture : public RenderProgram {
 public:
-    enum RENDER_PROGRAM_YUV_KIND{
-        YUV_420SP_UVUV,
-        YUV_420SP_VUVU,
-        YUV_420P_UUVV,
-        YUV_420P_VVUU,
-    };
+    RenderProgramOESTexture();
 
-    RenderProgramYUV(RENDER_PROGRAM_YUV_KIND yuvKind);
-
-    ~RenderProgramYUV();
+    ~RenderProgramOESTexture();
 
     void createRender(float x, float y, float z, float w, float h, int windowW, int windowH);
 
@@ -32,15 +25,11 @@ public:
     void destroy();
 
 private:
-    /**yuv数据类型选择**/
-    RENDER_PROGRAM_YUV_KIND mYuvKind = YUV_420SP_UVUV;
     /**绑定纹理**/
     GLuint mTexturePointers[1];
     GLuint mGenTextureId = 0xFFFFFFFF;
-    GLuint mGenYTextureId = -1;
-    GLuint mGenUVTextureId = -1;
     GLuint mInputTexturesArray;
-    GLslHandle mYuvProgram;
+    GLslHandle mImageProgram;
     GLint mObjectPositionPointer;
     GLint mVTexCoordPointer;
     GLint mObjectVertColorArrayPointer;
@@ -65,6 +54,4 @@ private:
     int mInputTextureHeight;
 
     bool mIsTexutresInited = false;
-
-    void createEmptyTexture(GLuint *textureID, int imgWidth, int imgHeight, int pixelFormat);
 };

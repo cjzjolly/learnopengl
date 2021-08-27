@@ -78,7 +78,7 @@
 <!--                <category android:name="android.intent.category.LAUNCHER" />-->
 <!--            </intent-filter>-->
         </activity>
-        <activity android:name="com.opengldecoder.jnibridge.MainActivity">
+        <activity android:name="com.opengldecoder.jnibridge.NativeOpenGLOESRenderActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

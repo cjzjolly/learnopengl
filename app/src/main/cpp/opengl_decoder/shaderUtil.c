@@ -23,7 +23,7 @@ GLslHandle createProgram(char *vertexShaderSource,
     if (linkSuccess == GL_FALSE) {//若连接失败获取获取错误信息
         GLchar messages[1024 * 10];
         memset(messages, 0, sizeof(messages));
-        glGetProgramInfoLog(programHandle, sizeof(messages), 0, &messages[0]);
+        glGetProgramInfoLog(programHandle, 1024 * 10, 0, &messages[0]);
 //        LOGI("Shader Link Error:%s", messages);
         __android_log_print(ANDROID_LOG_INFO,  "nativegl_shaderUtil", "shader Link Error:%s", messages);
         // printf("%s",(char*)messages);

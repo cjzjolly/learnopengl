@@ -9,11 +9,32 @@ public class JniBridge {
         System.loadLibrary("opengl_decoder");
     }
 
+    /**渲染器类型枚举器 todo java要调用，则也要抄一份**/
+    public enum RENDER_PROGRAM_KIND {
+        RENDER_OES_TEXTURE, //OES纹理渲染
+        RENDER_YUV, //YUV数据或纹理渲染
+        RENDER_CONVOLUTION, //添加卷积处理
+    }
+
     public static native void nativeGLInit(int viewPortWidth, int viewPortHeight);
 
-    public static native void drawRGBABitmap(Bitmap bmp, int bmpW, int bmpH);
+//    public static native void drawRGBABitmap(Bitmap bmp, int bmpW, int bmpH);
 
     public static native void drawToSurface(Surface surface, int color);
 
     public static native void drawBuffer();
+
+    public static native long addLayer(int texturePointer, int textureWidthAndHeight[], long dataPointer,
+                                       int dataWidthAndHeight[],
+                                       int dataPixelFormat);
+
+    public static native void removeLayer(long layerPointer);
+
+    /**为指定图层添加渲染器
+     @param layerPointer 图层的内存地址**/
+    public static native long addRenderForLayer(long layerPointer,
+                                                int renderProgramKind);
+
+    public static native void renderLayer(int fboPointer, int fboWidth, int fboHeight);
+
 }
