@@ -15,7 +15,6 @@ import com.ffmpeg.FFMpegUtil;
 public class NativeOpenGLOESRenderActivity extends Activity implements View.OnClickListener {
 
     private NativeGLSurfaceView mNativeGLSurfaceView = null;
-    private Player mPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,12 +29,6 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         }
         setContentView(R.layout.native_oes_render_test);
         mNativeGLSurfaceView = findViewById(R.id.ngls);
-        mPlayer = new Player(this, mNativeGLSurfaceView.getSurface(), new MediaPlayer.OnVideoSizeChangedListener() {
-            @Override
-            public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
-                mNativeGLSurfaceView.setOESLayerSize(width, height);
-            }
-        });
     }
 
     protected void requestPermission(String permissions[]) {

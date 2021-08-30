@@ -20,20 +20,19 @@ static const char *TAG = "nativeGL";
 RenderProgramOESTexture::RenderProgramOESTexture() { //todo 不知道为何编译出错
     vertShader = GL_SHADER_STRING(
             ##version 300 es\n
-        uniform mat4 uMVPMatrix; //旋转平移缩放 总变换矩阵。物体矩阵乘以它即可产生变换
-        in vec3 objectPosition; //物体位置向量，参与运算但不输出给片源
+            uniform mat4 uMVPMatrix; //旋转平移缩放 总变换矩阵。物体矩阵乘以它即可产生变换
+            in vec3 objectPosition; //物体位置向量，参与运算但不输出给片源
 
-        in vec4 objectColor; //物理颜色向量
-        in vec2 vTexCoord; //纹理内坐标
-        out vec4 fragObjectColor;//输出处理后的颜色值给片元程序
-        out vec2 fragVTexCoordddd;//输出处理后的纹理内坐标给片元程序
+            in vec4 objectColor; //物理颜色向量
+            in vec2 vTexCoord; //纹理内坐标
+            out vec4 fragObjectColor;//输出处理后的颜色值给片元程序
+            out vec2 fragVTexCoord;//输出处理后的纹理内坐标给片元程序
 
-
-        void main() {
-            gl_Position = uMVPMatrix * vec4(objectPosition, 1.0); //设置物体位置
-            fragVTexCoordddd = vTexCoord; //默认无任何处理，直接输出物理内采样坐标
-            fragObjectColor = objectColor; //默认无任何处理，输出颜色值到片源
-        }
+            void main() {
+                    gl_Position = uMVPMatrix * vec4(objectPosition, 1.0); //设置物体位置
+                    fragVTexCoord = vTexCoord; //默认无任何处理，直接输出物理内采样坐标
+                    fragObjectColor = objectColor; //默认无任何处理，输出颜色值到片源
+            }
     );
     fragShader = GL_SHADER_STRING(
     ##version 300 es\n
@@ -44,12 +43,12 @@ RenderProgramOESTexture::RenderProgramOESTexture() { //todo 不知道为何编�
             uniform vec2 resolution;//容器的分辨率
             uniform vec2 videoResolution;//视频自身的分辨率
             in vec4 fragObjectColor;//接收vertShader处理后的颜色值给片元程序
-            in vec2 fragVTexCoordddd;//接收vertShader处理后的纹理内坐标给片元程序
+            in vec2 fragVTexCoord;//接收vertShader处理后的纹理内坐标给片元程序
             out vec4 fragColor;//输出到的片元颜色
 
             void main() {
 //                fragColor = vec4(texture2D(oesTexture, xy).rgb, fragObjectColor.a);
-//                fragColor = vec4(1.0, 1.0, 1.0, 1.0);  //cjztest todo 显示不出来，貌似编译失败
+                fragColor = vec4(1.0, 1.0, 1.0, 1.0);  //cjztest todo 显示不出来，貌似编译失败
             }
     );
 

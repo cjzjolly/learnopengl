@@ -19,11 +19,14 @@ GLslHandle createProgram(char *vertexShaderSource,
     GLint linkSuccess;//声明链接是否成功标志变量
     glGetProgramiv(programHandle, GL_LINK_STATUS, &linkSuccess);
     GLslHandle g;
-    __android_log_print(ANDROID_LOG_INFO,  "nativegl_shaderUtil", "vertexShaderSource:%s", vertexShaderSource);
+    __android_log_print(ANDROID_LOG_INFO,  "nativegl_shaderUtil", "vertexShaderSource:%s, linkResult:%d",
+                        vertexShaderSource, linkSuccess);
     if (linkSuccess == GL_FALSE) {//若连接失败获取获取错误信息
-        GLchar messages[1024 * 10];
+        int infoLen = 0;
+        glGetShaderiv(programHandle, GL_INFO_LOG_LENGTH, &infoLen);
+        GLchar messages[infoLen];
         memset(messages, 0, sizeof(messages));
-        glGetProgramInfoLog(programHandle, 1024 * 10, 0, &messages[0]);
+        glGetProgramInfoLog(programHandle, infoLen, &infoLen, messages);  //cjzmark todo 这里的length有问题
 //        LOGI("Shader Link Error:%s", messages);
         __android_log_print(ANDROID_LOG_INFO,  "nativegl_shaderUtil", "shader Link Error:%s", messages);
         // printf("%s",(char*)messages);
