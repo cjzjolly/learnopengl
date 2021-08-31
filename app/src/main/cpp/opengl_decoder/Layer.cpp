@@ -287,7 +287,7 @@ Layer::drawTo(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, i
      * 使用双FBO互为绑定的原因是为了解决部分shader算法如果绑定的FBO_texture和输出的FBO是同一个将会出现异常，所以使用此方法**/
     for (auto item = mRenderProgramList.begin(); item != mRenderProgramList.end(); item++, i++) {
         //接收绘制数据的framebuffer和作为纹理输入使用的framebuffer不能是同一个
-        int fbo = i % 2 == 0 ? mFrameBufferPointerArray[0] : mFrameBufferPointerArray[1];
+        int layerFrameBuffer = i % 2 == 0 ? mFrameBufferPointerArray[0] : mFrameBufferPointerArray[1];
         int fboTexture = i % 2 == 1 ? mFrameBufferTexturePointerArray[0] : mFrameBufferTexturePointerArray[1];
         //第一个渲染器接受图层原始数据（图层原始数据可以是输出的字节数组，或是纹理本身，例如OES纹理），其他的从上一个渲染结果中作为输入
         if (i == 0) {
@@ -299,7 +299,7 @@ Layer::drawTo(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, i
                                           mRenderSrcData.pixelFormat, mRenderSrcData.offset);
                         //渲染器处理结果放到图层FBO中
                         (*item)->drawTo(cameraMatrix, projMatrix, RenderProgram::DRAW_DATA,
-                                        fbo, mWindowW, mWindowH);
+                                        layerFrameBuffer, mWindowW, mWindowH);
                     }
                     break;
                 }
@@ -313,7 +313,7 @@ Layer::drawTo(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, i
                     (*item)->loadTexture(textures);
                     //渲染器处理结果放到图层FBO中
                     (*item)->drawTo(cameraMatrix, projMatrix, RenderProgram::DRAW_TEXTURE,
-                                    fbo, mWindowW, mWindowH);
+                                    layerFrameBuffer, mWindowW, mWindowH);
                     break;
                 }
             }
@@ -326,7 +326,7 @@ Layer::drawTo(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, i
             (*item)->loadTexture(t); //使用上一个渲染器的渲染结果作为绘制输入
             //渲染器处理结果放到图层FBO中
             (*item)->drawTo(cameraMatrix, projMatrix, RenderProgram::DRAW_TEXTURE,
-                            fbo, mWindowW, mWindowH);
+                            layerFrameBuffer, mWindowW, mWindowH);
         }
     }
     //最后渲染到目标framebuffer

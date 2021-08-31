@@ -28,8 +28,7 @@ public class NativeGLSurfaceView extends GLSurfaceView {
     //Android画面数据输入纹理
     private int[] mDataInputTexturesPointer = null;
     private SurfaceTexture mInputDataSurfaceTexture;
-    private int mVideoWidth;
-    private int mVideoHeight;
+
 
     public NativeGLSurfaceView(Context context) {
         super(context);
@@ -49,12 +48,6 @@ public class NativeGLSurfaceView extends GLSurfaceView {
 //        mTestBmp = BitmapFactory.decodeResource(getResources(), R.drawable.test_pic);
     }
 
-    /**设置OES图层内容得大小**/
-    public void setOESLayerSize(int width, int height) {
-        this.mVideoWidth = width;
-        this.mVideoHeight = height;
-    }
-
     public Surface getSurface() {
         Log.i("cjztest", "GLRenderer.getSurface：" + mDataInputSurface.toString());
         return mDataInputSurface;
@@ -64,10 +57,19 @@ public class NativeGLSurfaceView extends GLSurfaceView {
 
         private int mWidth;
         private int mHeight;
+        private int mVideoWidth;
+        private int mVideoHeight;
+        private boolean mIsFirstFrame = true;
+
 
         @Override
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-
+            Log.i("cjztest", String.format("NativeGlSurfaceView.onSurfaceCreated"));
+            mWidth = 0;
+            mHeight = 0;
+            mVideoWidth = 0;
+            mVideoHeight = 0;
+            mIsFirstFrame = true;
         }
 
         @Override
@@ -94,18 +96,16 @@ public class NativeGLSurfaceView extends GLSurfaceView {
                     mInputDataSurfaceTexture = new SurfaceTexture(mDataInputTexturesPointer[0]);
                     mDataInputSurface = new Surface(mInputDataSurfaceTexture);
                 }
-                //清除上次用过的图层
-                if (mLayer != Long.MIN_VALUE) {
-                    JniBridge.removeLayer(mLayer);
-                }
-                //创建一个图层（由于这个使用场景种没有数组数据，只有OES纹理，所以dataPointer为0）
-                mLayer = JniBridge.addLayer(mDataInputTexturesPointer[0], new int[] {width, height}, 0, new int[] {width, height}, GLES30.GL_RGBA);
-                //添加一个oes渲染器
-                mRender = JniBridge.addRenderForLayer(mLayer, JniBridge.RENDER_PROGRAM_KIND.RENDER_OES_TEXTURE.ordinal()); //传入oes纹理
                 Player mPlayer = new Player(getContext(), getSurface(), new MediaPlayer.OnVideoSizeChangedListener() {
                     @Override
                     public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
-                        setOESLayerSize(width, height);
+                        /**设置OES图层内容得大小**/
+                        if ((width != mVideoWidth || height != mVideoHeight) && width > 0 && height > 0) {
+                            Log.i("cjztest", String.format("onSurfaceChanged: w:%d, h:%d", width, height));
+                            mVideoWidth = width;
+                            mVideoHeight = height;
+                            mIsFirstFrame = true;
+                        }
                     }
                 });
             }
@@ -115,6 +115,19 @@ public class NativeGLSurfaceView extends GLSurfaceView {
         public void onDrawFrame(GL10 gl) {
 //            JniBridge.drawBuffer();
 //            Log.i("cjztest", "renderining");
+            if (mIsFirstFrame) {  //不能异步进行gl操作，所以只能移到第一帧（或glrender的各种回调中，但这里需要等待onVideoSizeChanged准备好）进行图层创建
+                if (mVideoWidth > 0 && mVideoHeight > 0) {
+                    //清除上次用过的图层
+                    if (mLayer != Long.MIN_VALUE) {
+                        JniBridge.removeLayer(mLayer);
+                    }
+                    //创建一个图层（由于这个使用场景种没有数组数据，只有OES纹理，所以dataPointer为0）
+                    mLayer = JniBridge.addLayer(mDataInputTexturesPointer[0], new int[]{mVideoWidth, mVideoHeight}, 0, new int[]{0, 0}, GLES30.GL_RGBA);  //依次传入纹理、纹理的宽高、数据地址（如果有）、数据的宽高
+                    //添加一个oes渲染器
+                    mRender = JniBridge.addRenderForLayer(mLayer, JniBridge.RENDER_PROGRAM_KIND.RENDER_OES_TEXTURE.ordinal()); //传入oes纹理
+                    mIsFirstFrame = false;
+                }
+            }
             JniBridge.renderLayer(0, mWidth, mHeight);
         }
     }

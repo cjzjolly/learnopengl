@@ -181,6 +181,33 @@ extern "C" {
     /**@param layerPointer 要删除的图层的内存地址**/
     JNIEXPORT void JNICALL
     Java_com_opengldecoder_jnibridge_JniBridge_removeLayer(JNIEnv *env, jobject activity, jlong layerPointer) {
+        Layer *layer = (Layer*) layerPointer;
+        if (mLayerList) {
+            struct ListElement* cursor = mLayerList;
+            struct ListElement* cursorPrev = nullptr;
+            while (cursor) {
+                if (cursor->layer == layer) {
+                    if (cursor == mLayerList) {
+                        if (mLayerList->next) {
+                            mLayerList = mLayerList->next;
+                            delete cursor;
+                            return;
+                        } else {
+                            delete cursor;
+                            return;
+                        }
+                    } else {
+                        if (cursorPrev != nullptr && cursor->next != nullptr) {
+                            cursorPrev->next = cursor->next;
+                            delete layer;
+                            return;
+                        }
+                    }
+                }
+                cursorPrev = cursor;
+                cursor = cursor->next;
+            }
+        }
         return;
     }
 
