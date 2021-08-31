@@ -22,6 +22,7 @@ public class NativeGLSurfaceView extends GLSurfaceView {
     private Renderer mRenderer;
     /**图层native指针**/
     private long mLayer = Long.MIN_VALUE;
+    private long mRender = Long.MIN_VALUE;
     //Android画面数据输入Surface
     private Surface mDataInputSurface = null;
     //Android画面数据输入纹理
@@ -52,8 +53,6 @@ public class NativeGLSurfaceView extends GLSurfaceView {
     public void setOESLayerSize(int width, int height) {
         this.mVideoWidth = width;
         this.mVideoHeight = height;
-        //添加一个oes渲染器
-        JniBridge.addRenderForLayer(mLayer, JniBridge.RENDER_PROGRAM_KIND.RENDER_OES_TEXTURE.ordinal()); //传入oes纹理
     }
 
     public Surface getSurface() {
@@ -101,6 +100,8 @@ public class NativeGLSurfaceView extends GLSurfaceView {
                 }
                 //创建一个图层（由于这个使用场景种没有数组数据，只有OES纹理，所以dataPointer为0）
                 mLayer = JniBridge.addLayer(mDataInputTexturesPointer[0], new int[] {width, height}, 0, new int[] {width, height}, GLES30.GL_RGBA);
+                //添加一个oes渲染器
+                mRender = JniBridge.addRenderForLayer(mLayer, JniBridge.RENDER_PROGRAM_KIND.RENDER_OES_TEXTURE.ordinal()); //传入oes纹理
                 Player mPlayer = new Player(getContext(), getSurface(), new MediaPlayer.OnVideoSizeChangedListener() {
                     @Override
                     public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {

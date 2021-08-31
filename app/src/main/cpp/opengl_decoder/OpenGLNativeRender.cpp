@@ -237,6 +237,9 @@ extern "C" {
      * 默认使用0号，也就是系统自身的屏幕FBO**/
     JNIEXPORT void JNICALL
     Java_com_opengldecoder_jnibridge_JniBridge_renderLayer(JNIEnv *env, jobject activity, jint fboPointer, jint fboWidth, jint fboHeight) {
+        //防止画面残留：
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
+        glClearColor(0.0, 0.0, 0.0, 0.0);
         //遍历图层并渲染
         if (mLayerList) {
             struct ListElement* cursor = mLayerList;

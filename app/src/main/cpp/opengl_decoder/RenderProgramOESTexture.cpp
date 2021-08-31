@@ -29,6 +29,7 @@ RenderProgramOESTexture::RenderProgramOESTexture() { //todo 不知道为何编�
             out vec2 fragVTexCoord;//输出处理后的纹理内坐标给片元程序
 
             void main() {
+                    vec2 temp = vec2(1.0, 1.0);
                     gl_Position = uMVPMatrix * vec4(objectPosition, 1.0); //设置物体位置
                     fragVTexCoord = vTexCoord; //默认无任何处理，直接输出物理内采样坐标
                     fragObjectColor = objectColor; //默认无任何处理，输出颜色值到片源
@@ -48,7 +49,7 @@ RenderProgramOESTexture::RenderProgramOESTexture() { //todo 不知道为何编�
 
             void main() {
 //                fragColor = vec4(texture2D(oesTexture, xy).rgb, fragObjectColor.a);
-                fragColor = vec4(1.0, 1.0, 1.0, 1.0);  //cjztest todo 显示不出来，貌似编译失败
+                fragColor = vec4(1.0, 0.0, 1.0, 1.0);  //cjztest todo 不知道为什么这个shader会被编译两次，然后就link error了
             }
     );
 
@@ -85,7 +86,7 @@ void RenderProgramOESTexture::createRender(float x, float y, float z, float w, f
             x, y + h, z,
     };
     memcpy(mVertxData, vertxData, sizeof(vertxData));
-    mImageProgram = createProgram(vertShader + 1, fragShader + 1);
+    mImageProgram = createProgram(vertShader + 1, fragShader + 1);  //cjztest 测试原因屏蔽：屏蔽了依然出现花屏
     //获取程序中顶点位置属性引用"指针"
     mObjectPositionPointer = glGetAttribLocation(mImageProgram.programHandle, "objectPosition");
     //纹理采样坐标
