@@ -19,14 +19,14 @@ static const char *TAG = "nativeGL";
 
 RenderProgramOESTexture::RenderProgramOESTexture() { //todo 不知道为何编译出错
     vertShader = GL_SHADER_STRING(
-            ##version 300 es\n
+            \n
             uniform mat4 uMVPMatrix; //旋转平移缩放 总变换矩阵。物体矩阵乘以它即可产生变换
-            in vec3 objectPosition; //物体位置向量，参与运算但不输出给片源
+            attribute vec3 objectPosition; //物体位置向量，参与运算但不输出给片源
 
-            in vec4 objectColor; //物理颜色向量
-            in vec2 vTexCoord; //纹理内坐标
-            out vec4 fragObjectColor;//输出处理后的颜色值给片元程序
-            out vec2 fragVTexCoord;//输出处理后的纹理内坐标给片元程序
+            attribute vec4 objectColor; //物理颜色向量
+            attribute vec2 vTexCoord; //纹理内坐标
+            varying vec4 fragObjectColor;//输出处理后的颜色值给片元程序
+            varying vec2 fragVTexCoord;//输出处理后的纹理内坐标给片元程序
 
             void main() {
                     vec2 temp = vec2(1.0, 1.0);
@@ -36,20 +36,20 @@ RenderProgramOESTexture::RenderProgramOESTexture() { //todo 不知道为何编�
             }
     );
     fragShader = GL_SHADER_STRING(
-    ##version 300 es\n
+            $#extension GL_OES_EGL_image_external : require\n
             precision highp float;
-//            uniform samplerExternalOES oesTexture;//OES形式的纹理输入
+            uniform samplerExternalOES oesTexture;//OES形式的纹理输入
             uniform int funChoice;
             uniform float frame;//第几帧
             uniform vec2 resolution;//容器的分辨率
             uniform vec2 videoResolution;//视频自身的分辨率
-            in vec4 fragObjectColor;//接收vertShader处理后的颜色值给片元程序
-            in vec2 fragVTexCoord;//接收vertShader处理后的纹理内坐标给片元程序
-            out vec4 fragColor;//输出到的片元颜色
+            varying vec4 fragObjectColor;//接收vertShader处理后的颜色值给片元程序
+            varying vec2 fragVTexCoord;//接收vertShader处理后的纹理内坐标给片元程序
 
             void main() {
-//                fragColor = vec4(texture2D(oesTexture, xy).rgb, fragObjectColor.a);
-                fragColor = vec4(1.0, 0.0, 1.0, 1.0);  //cjztest todo 不知道为什么这个shader会被编译两次，然后就link error了
+                vec2 xy = vec2(fragVTexCoord.s, fragVTexCoord.t);
+                gl_FragColor = vec4(texture2D(oesTexture, xy).rgb, 1.0);
+//                gl_FragColor = vec4(fragVTexCoord, 1.0, 1.0);
             }
     );
 

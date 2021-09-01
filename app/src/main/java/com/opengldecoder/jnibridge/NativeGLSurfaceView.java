@@ -113,8 +113,6 @@ public class NativeGLSurfaceView extends GLSurfaceView {
 
         @Override
         public void onDrawFrame(GL10 gl) {
-//            JniBridge.drawBuffer();
-//            Log.i("cjztest", "renderining");
             if (mIsFirstFrame) {  //不能异步进行gl操作，所以只能移到第一帧（或glrender的各种回调中，但这里需要等待onVideoSizeChanged准备好）进行图层创建
                 if (mVideoWidth > 0 && mVideoHeight > 0) {
                     //清除上次用过的图层
