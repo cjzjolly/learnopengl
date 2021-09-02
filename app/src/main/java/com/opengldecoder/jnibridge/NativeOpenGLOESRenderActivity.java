@@ -8,6 +8,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.SeekBar;
 
 import com.example.learnopengl.R;
 import com.ffmpeg.FFMpegUtil;
@@ -15,6 +16,7 @@ import com.ffmpeg.FFMpegUtil;
 public class NativeOpenGLOESRenderActivity extends Activity implements View.OnClickListener {
 
     private NativeGLSurfaceView mNativeGLSurfaceView = null;
+    private SeekBar mSeekBarBrightness = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +31,25 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         }
         setContentView(R.layout.native_oes_render_test);
         mNativeGLSurfaceView = findViewById(R.id.ngls);
+        mSeekBarBrightness = findViewById(R.id.seekBar_brightness);
+        mSeekBarBrightness.setMax(1000);
+        mSeekBarBrightness.setProgress(100);
+        mSeekBarBrightness.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean b) {
+                mNativeGLSurfaceView.setRenderBrightness((float) progress / 100f);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
     }
 
     protected void requestPermission(String permissions[]) {

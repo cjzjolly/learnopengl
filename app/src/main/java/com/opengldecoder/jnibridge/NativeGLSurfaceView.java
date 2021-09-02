@@ -51,6 +51,13 @@ public class NativeGLSurfaceView extends GLSurfaceView {
         return mDataInputSurface;
     }
 
+    /**亮度调整**/
+    public void setRenderBrightness (float brightness) {
+        if (mRenderOES != Long.MIN_VALUE) {
+            JniBridge.setBrightness(mRenderOES, brightness);
+        }
+    }
+
     private class Renderer implements GLSurfaceView.Renderer {
 
         private int mWidth;
@@ -111,7 +118,6 @@ public class NativeGLSurfaceView extends GLSurfaceView {
             }
         }
 
-        private float alpha = 1f;
         @Override
         public void onDrawFrame(GL10 gl) {
             if (mIsFirstFrame) {  //不能异步进行gl操作，所以只能移到第一帧（或glrender的各种回调中，但这里需要等待onVideoSizeChanged准备好）进行图层创建
@@ -129,9 +135,6 @@ public class NativeGLSurfaceView extends GLSurfaceView {
                 }
             }
             mInputDataSurfaceTexture.updateTexImage();
-            if (mRenderOES != Long.MIN_VALUE) {
-                JniBridge.setBrightness(mRenderOES, alpha += 0.005f);
-            }
             JniBridge.renderLayer(0, mWidth, mHeight);
         }
     }

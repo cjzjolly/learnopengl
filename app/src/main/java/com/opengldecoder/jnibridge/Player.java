@@ -19,7 +19,7 @@ public class Player {
     private void initMediaPlayer(Context context, Surface surface, MediaPlayer.OnVideoSizeChangedListener sizeChangedListener) {
         mMediaPlayer = new MediaPlayer();
         try {
-            AssetFileDescriptor afd = context.getAssets().openFd("cross.mp4");
+            AssetFileDescriptor afd = context.getAssets().openFd("car_race.mp4");
             mMediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
 //            String path = "http://192.168.1.254:8192";
 //            mediaPlayer.setDataSource(path);
