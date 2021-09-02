@@ -35,6 +35,9 @@ public class JniBridge {
     public static native long addRenderForLayer(long layerPointer,
                                                 int renderProgramKind);
 
+    public static native void setRenderAlpha(long renderPointer, float alpha);
+
+
     public static native void renderLayer(int fboPointer, int fboWidth, int fboHeight);
 
 }

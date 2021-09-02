@@ -15,7 +15,7 @@
 #include "android/bitmap.h"
 #include "android/native_window_jni.h"
 #include <sys/time.h>
-#include "OpenGLNativeRender.h"
+#include "OpenGLNativeRenderJNIBridgeDemo.h"
 #include "RenderProgramImage.h"
 #include "RenderProgramConvolution.h"
 #include "RenderProgramOESTexture.h"
@@ -26,7 +26,7 @@ static const char *TAG = "nativeGL";
 #define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, TAG, fmt, ##args)
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
 
-/**安卓JNI接入层**/
+/**安卓JNI接入层  演示版，用于简单演示如何使用 NativeOpenGLRenderer**/
 
 extern "C" {
     /**图层链表结点**/
@@ -198,7 +198,8 @@ extern "C" {
     }
 
     /**为指定图层添加渲染器
-    @param layerPointer 图层的内存地址**/
+    @param layerPointer 图层的内存地址
+     @@param renderProgramKind 渲染器类型**/
     JNIEXPORT jlong JNICALL
     Java_com_opengldecoder_jnibridge_JniBridge_addRenderForLayer(JNIEnv *env, jobject activity,
                                                                  jlong layerPointer,
@@ -246,8 +247,15 @@ extern "C" {
         return (jlong) resultProgram;
     }
 
-    /**todo 渲染图层数据，安卓端使用了OES接入，所以drawType使用DRAW_TEXTURE,渲染图层到系统目标framebuffer
-     * 默认使用0号，也就是系统自身的屏幕FBO**/
+    /**渲染器透明度调整**/
+    JNIEXPORT void JNICALL
+    Java_com_opengldecoder_jnibridge_JniBridge_setRenderAlpha(JNIEnv *env, jobject activity, jlong renderPointer, jfloat alpha) {
+        RenderProgram* program = (RenderProgram*) renderPointer;
+        program->setAlpha(alpha);
+    }
+
+    /**渲染图层数据，安卓端使用了OES接入，所以drawType使用DRAW_TEXTURE,渲染图层到系统目标framebuffer
+     * @param fboPointer 最终输出的载体FrameBuffer，默认使用0号，也就是系统自身的屏幕FBO**/
     JNIEXPORT void JNICALL
     Java_com_opengldecoder_jnibridge_JniBridge_renderLayer(JNIEnv *env, jobject activity, jint fboPointer, jint fboWidth, jint fboHeight) {
         //防止画面残留：
