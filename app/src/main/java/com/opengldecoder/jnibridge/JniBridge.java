@@ -24,9 +24,9 @@ public class JniBridge {
 
     public static native void drawBuffer();
 
-    public static native long addLayer(int texturePointer, int textureWidthAndHeight[], long dataPointer,
-                                       int dataWidthAndHeight[],
-                                       int dataPixelFormat);
+    public static native long addFullContainerLayer(int texturePointer, int textureWidthAndHeight[], long dataPointer,
+                                                    int dataWidthAndHeight[],
+                                                    int dataPixelFormat);
 
     public static native void removeLayer(long layerPointer);
 

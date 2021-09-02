@@ -48,8 +48,11 @@ RenderProgramOESTexture::RenderProgramOESTexture() { //todo 不知道为何编�
 
             void main() {
                 vec2 xy = vec2(fragVTexCoord.s, fragVTexCoord.t);
-                gl_FragColor = vec4(texture2D(oesTexture, xy).rgb, 1.0);
-//                gl_FragColor = vec4(fragVTexCoord, 1.0, 1.0);
+                if (xy.x < 0.9) {
+                    gl_FragColor = vec4(texture2D(oesTexture, xy).rgb, 1.0);
+                } else {
+                    gl_FragColor = vec4(fragVTexCoord, 1.0, 1.0);
+                }
             }
     );
 
@@ -152,7 +155,8 @@ void RenderProgramOESTexture::drawTo(float *cameraMatrix, float *projMatrix, Dra
                 break;
             case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_TEXTURE:
                 glActiveTexture(GL_TEXTURE0); //激活0号纹理
-                glBindTexture(GL_TEXTURE_2D, mTexturePointers[0]); //0号纹理绑定内容
+//                glBindTexture(36197, mInputTexturesArray); //0号纹理绑定内容
+                glBindTexture(GL_TEXTURE_2D, mInputTexturesArray); //0号纹理绑定内容，发现使用GL_TEXTURE_2D也可以绑定OES纹理
                 glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "oesTexture"), 0); //映射到渲染脚本，获取纹理属性的指针
                 resolution[0] = (float) mInputTextureWidth;
                 resolution[1] = (float) mInputTextureHeight;

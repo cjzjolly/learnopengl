@@ -120,12 +120,13 @@ public class NativeGLSurfaceView extends GLSurfaceView {
                         JniBridge.removeLayer(mLayer);
                     }
                     //创建一个图层（由于这个使用场景种没有数组数据，只有OES纹理，所以dataPointer为0）
-                    mLayer = JniBridge.addLayer(mDataInputTexturesPointer[0], new int[]{mVideoWidth, mVideoHeight}, 0, new int[]{0, 0}, GLES30.GL_RGBA);  //依次传入纹理、纹理的宽高、数据地址（如果有）、数据的宽高
+                    mLayer = JniBridge.addFullContainerLayer(mDataInputTexturesPointer[0], new int[]{mVideoWidth, mVideoHeight}, 0, new int[]{0, 0}, GLES30.GL_RGBA);  //依次传入纹理、纹理的宽高、数据地址（如果有）、数据的宽高
                     //添加一个oes渲染器
                     mRender = JniBridge.addRenderForLayer(mLayer, JniBridge.RENDER_PROGRAM_KIND.RENDER_OES_TEXTURE.ordinal()); //传入oes纹理
                     mIsFirstFrame = false;
                 }
             }
+            mInputDataSurfaceTexture.updateTexImage();
             JniBridge.renderLayer(0, mWidth, mHeight);
         }
     }

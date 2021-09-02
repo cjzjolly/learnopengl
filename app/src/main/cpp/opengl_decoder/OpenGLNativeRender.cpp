@@ -148,14 +148,14 @@ extern "C" {
     /**添加一个图层
        @return 返回图层对象的内存地址**/
     JNIEXPORT jlong JNICALL
-    Java_com_opengldecoder_jnibridge_JniBridge_addLayer(JNIEnv *env, jobject activit, jint texturePointer, jintArray textureWidthAndHeight, jlong dataPointer,
-                                                        jintArray dataWidthAndHeight,
-                                                        int dataPixelFormat) {
+    Java_com_opengldecoder_jnibridge_JniBridge_addFullContainerLayer(JNIEnv *env, jobject activit, jint texturePointer, jintArray textureWidthAndHeight, jlong dataPointer,
+                                                                     jintArray dataWidthAndHeight,
+                                                                     int dataPixelFormat) {
         jint *dataWidthAndHeightPointer = env->GetIntArrayElements(dataWidthAndHeight, JNI_FALSE);
         jint *textureWidthAndHeightPointer = env->GetIntArrayElements(textureWidthAndHeight, JNI_FALSE);
         Layer *layer = new Layer(-1, -mOpenGLNativeLib.mRatio, 0, 2, mOpenGLNativeLib.mRatio * 2, mOpenGLNativeLib.mWidth, mOpenGLNativeLib.mHeight); //创建铺满全屏的图层;
         //载入数据：
-        LOGI("cjztest, Java_com_opengldecoder_jnibridge_JniBridge_addLayer containerW:%d, containerH:%d, w:%d, h:%d", mOpenGLNativeLib.mWidth, mOpenGLNativeLib.mHeight, textureWidthAndHeightPointer[0], textureWidthAndHeightPointer[1]);
+        LOGI("cjztest, Java_com_opengldecoder_jnibridge_JniBridge_addFullContainerLayer containerW:%d, containerH:%d, w:%d, h:%d", mOpenGLNativeLib.mWidth, mOpenGLNativeLib.mHeight, textureWidthAndHeightPointer[0], textureWidthAndHeightPointer[1]);
         layer->loadTexture(texturePointer, textureWidthAndHeightPointer[0], textureWidthAndHeightPointer[1]);
         layer->loadData((char *) dataPointer, dataWidthAndHeightPointer[0], dataWidthAndHeightPointer[1], dataPixelFormat, 0);
         if (mLayerList) {
