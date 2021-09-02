@@ -254,6 +254,20 @@ extern "C" {
         program->setAlpha(alpha);
     }
 
+    /**渲染器亮度调整**/
+    JNIEXPORT void JNICALL
+    Java_com_opengldecoder_jnibridge_JniBridge_setBrightness(JNIEnv *env, jobject activity, jlong renderPointer, jfloat brightness) {
+        RenderProgram* program = (RenderProgram*) renderPointer;
+        program->setBrightness(brightness);
+    }
+
+    /**渲染器对比度调整**/
+    JNIEXPORT void JNICALL
+    Java_com_opengldecoder_jnibridge_JniBridge_setContrast(JNIEnv *env, jobject activity, jlong renderPointer, jfloat contrast) {
+        RenderProgram* program = (RenderProgram*) renderPointer;
+        program->setContrast(contrast);
+    }
+
     /**渲染图层数据，安卓端使用了OES接入，所以drawType使用DRAW_TEXTURE,渲染图层到系统目标framebuffer
      * @param fboPointer 最终输出的载体FrameBuffer，默认使用0号，也就是系统自身的屏幕FBO**/
     JNIEXPORT void JNICALL

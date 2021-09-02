@@ -232,7 +232,17 @@ void RenderProgramYUV::loadData(char *data, int width, int height, int pixelForm
     }
 }
 
+//todo
 void RenderProgramYUV::setAlpha(float alpha) {
+
+}
+
+//todo
+void RenderProgramYUV::setBrightness(float brightness) {
+
+}
+
+void RenderProgramYUV::setContrast(float contrast) {
 
 }
 

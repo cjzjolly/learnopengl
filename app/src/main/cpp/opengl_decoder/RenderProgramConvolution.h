@@ -22,6 +22,10 @@ public:
 
     void setAlpha(float alpha);
 
+    void setBrightness(float brightness);
+
+    void setContrast(float contrast);
+
     void loadTexture(Textures textures[]);
 
     void drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH);

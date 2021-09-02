@@ -52,6 +52,13 @@ namespace OPENGL_VIDEO_RENDERER {
         /**透明度调节**/
         virtual void setAlpha(float alpha) = 0;
 
+        /**亮度调节**/
+        virtual void setBrightness(float brightness) = 0;
+
+        /**对比度调节**/
+        virtual void setContrast(float contrast) = 0;
+
+
         /**总的资源清理**/
         virtual void destroy() = 0;
 

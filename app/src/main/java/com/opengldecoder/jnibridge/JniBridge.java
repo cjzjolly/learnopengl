@@ -37,6 +37,12 @@ public class JniBridge {
 
     public static native void setRenderAlpha(long renderPointer, float alpha);
 
+    /**渲染器亮度调整**/
+    public static native void setBrightness(long renderPointer, float brightness);
+
+    /**渲染器对比度调整**/
+    public static native void setContrast(long renderPointer, float contrast);
+
 
     public static native void renderLayer(int fboPointer, int fboWidth, int fboHeight);
 

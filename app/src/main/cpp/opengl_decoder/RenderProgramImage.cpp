@@ -118,6 +118,16 @@ void RenderProgramImage::setAlpha(float alpha) {
     }
 }
 
+//todo
+void RenderProgramImage::setBrightness(float brightness) {
+
+}
+
+//todo
+void RenderProgramImage::setContrast(float contrast) {
+
+}
+
 void RenderProgramImage::loadData(char *data, int width, int height, int pixelFormat, int offset) {
     if (!mIsTexutresInited) {
         glUseProgram(mImageProgram.programHandle);

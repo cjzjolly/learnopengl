@@ -17,7 +17,7 @@ static const char *TAG = "nativeGL";
 #define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, TAG, fmt, ##args)
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
 
-RenderProgramOESTexture::RenderProgramOESTexture() { //todo 不知道为何编译出错
+RenderProgramOESTexture::RenderProgramOESTexture() {
     vertShader = GL_SHADER_STRING(
             \n
             uniform mat4 uMVPMatrix; //旋转平移缩放 总变换矩阵。物体矩阵乘以它即可产生变换
@@ -41,6 +41,7 @@ RenderProgramOESTexture::RenderProgramOESTexture() { //todo 不知道为何编�
             uniform samplerExternalOES oesTexture;//OES形式的纹理输入
             uniform int funChoice;
             uniform float frame;//第几帧
+            uniform float brightness;//亮度
             uniform vec2 resolution;//容器的分辨率
             uniform vec2 videoResolution;//视频自身的分辨率
             varying vec4 fragObjectColor;//接收vertShader处理后的颜色值给片元程序
@@ -48,7 +49,8 @@ RenderProgramOESTexture::RenderProgramOESTexture() { //todo 不知道为何编�
 
             void main() {
                 vec2 xy = vec2(fragVTexCoord.s, fragVTexCoord.t);
-                gl_FragColor = vec4(texture2D(oesTexture, xy).rgb, fragObjectColor.a);
+                vec3 rgb  = texture2D(oesTexture, xy).rgb * brightness;
+                gl_FragColor = vec4(rgb, fragObjectColor.a);
     }
     );
 
@@ -98,6 +100,8 @@ void RenderProgramOESTexture::createRender(float x, float y, float z, float w, f
     mGLFunChoicePointer = glGetUniformLocation(mImageProgram.programHandle, "funChoice");
     //渲染帧计数指针
     mFrameCountPointer = glGetUniformLocation(mImageProgram.programHandle, "frame");
+    //亮度指针
+    mBrightnessPointer = glGetUniformLocation(mImageProgram.programHandle, "brightness");
     //设置分辨率指针，告诉gl脚本现在的分辨率
     mResoulutionPointer = glGetUniformLocation(mImageProgram.programHandle, "resolution");
 }
@@ -108,6 +112,14 @@ void RenderProgramOESTexture::setAlpha(float alpha) {
             mColorBuf[i] = alpha;
         }
     }
+}
+
+void RenderProgramOESTexture::setBrightness(float brightness) {
+    mBrightness = brightness;
+}
+
+void RenderProgramOESTexture::setContrast(float contrast) {
+
 }
 
 void RenderProgramOESTexture::loadData(char *data, int width, int height, int pixelFormat, int offset) {
@@ -127,6 +139,7 @@ void RenderProgramOESTexture::drawTo(float *cameraMatrix, float *projMatrix, Dra
         return;
     }
     glUseProgram(mImageProgram.programHandle);
+    glUniform1f(mBrightnessPointer, mBrightness);
     //设置视窗大小及位置
     glBindFramebuffer(GL_FRAMEBUFFER, outputFBOPointer);
     glViewport(0, 0, mWindowW, mWindowH);
