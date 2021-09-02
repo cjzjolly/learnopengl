@@ -48,12 +48,8 @@ RenderProgramOESTexture::RenderProgramOESTexture() { //todo 不知道为何编�
 
             void main() {
                 vec2 xy = vec2(fragVTexCoord.s, fragVTexCoord.t);
-                if (xy.x < 0.9) {
-                    gl_FragColor = vec4(texture2D(oesTexture, xy).rgb, 1.0);
-                } else {
-                    gl_FragColor = vec4(fragVTexCoord, 1.0, 1.0);
-                }
-            }
+                gl_FragColor = vec4(texture2D(oesTexture, xy).rgb, fragObjectColor.a);
+    }
     );
 
     float tempTexCoord[] =   //纹理内采样坐标,类似于canvas坐标 //这东西有问题，导致两个framebuffer的画面互相取纹理时互为颠倒

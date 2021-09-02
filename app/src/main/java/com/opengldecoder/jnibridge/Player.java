@@ -40,9 +40,4 @@ public class Player {
         });
     }
 
-//    public void playDemoVideo() {
-//        mMediaPlayer.prepareAsync();
-//        mMediaPlayer.start();
-//    }
-
 }

@@ -28,48 +28,6 @@ static const char *TAG = "nativeGL";
 
 /**安卓JNI接入层**/
 
-
-OpenGLNativeRender mOpenGLNativeLib;
-
-// 由于jvm和c++对中文的编码不一样，因此需要转码。 utf8/16转换成gb2312
-char *jstringToChar(JNIEnv *env, jstring jstr) {
-    char *rtn = NULL;
-    jclass clsstring = env->FindClass("java/lang/String");
-    jstring strencode = env->NewStringUTF("GB2312");
-    jmethodID mid = env->GetMethodID(clsstring, "getBytes", "(Ljava/lang/String;)[B");
-    jbyteArray barr = (jbyteArray) env->CallObjectMethod(jstr, mid, strencode);
-    jsize alen = env->GetArrayLength(barr);
-    jbyte *ba = env->GetByteArrayElements(barr, JNI_FALSE);
-    if (alen > 0) {
-        rtn = (char *) malloc(alen + 1);
-        memcpy(rtn, ba, alen);
-        rtn[alen] = 0;
-    }
-    env->ReleaseByteArrayElements(barr, ba, 0);
-    return rtn;
-}
-
-void OpenGLNativeRender::setupGraphics(int w, int h, float *bgColor)//初始化函数
-{
-    glViewport(0, 0, w, h);//设置视口
-    float ratio = (float) h / w;//计算宽长比glViewport
-    mWidth = w;
-    mHeight = h;
-    mRatio = ratio;
-    frustumM(mProjMatrix, 0, -1, 1, -ratio, ratio, 1, 50);//设置投影矩阵
-    setLookAtM(mCameraMatrix, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0);//设置摄像机矩阵
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
-    glClearColor(bgColor[0], bgColor[1], bgColor[2], bgColor[3]);//设置背景颜色
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL); //还可以
-    //开启透明度混合能力
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  //todo 这个混合导致光影效果有点问题，需要处理一下
-    glDisable(GL_DITHER);
-    return;
-}
-
-
 extern "C" {
     /**图层链表结点**/
     struct ListElement {
@@ -85,6 +43,32 @@ extern "C" {
         RENDER_YUV = 1, //YUV数据或纹理渲染
         RENDER_CONVOLUTION = 2, //添加卷积处理
     };
+    float mRatio;
+    int mWidth;
+    int mHeight;
+    float mProjMatrix[16];
+    float mCameraMatrix[16];
+
+    /**openGL初始化**/
+    void setupGraphics(int w, int h)
+    {
+        glViewport(0, 0, w, h);//设置视口
+        float ratio = (float) h / w;//计算宽长比glViewport
+        mWidth = w;
+        mHeight = h;
+        mRatio = ratio;
+        frustumM(mProjMatrix, 0, -1, 1, -ratio, ratio, 1, 50);//设置投影矩阵
+        setLookAtM(mCameraMatrix, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0);//设置摄像机矩阵
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
+        glClearColor(0, 0, 0, 0);//设置背景颜色
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL); //还可以
+        //开启透明度混合能力
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  //todo 这个混合导致光影效果有点问题，需要处理一下
+        glDisable(GL_DITHER);
+        return;
+    }
 
     ///*传入surface进行直接绘制的例子，传入颜色涂满整个surface */
     JNIEXPORT void JNICALL
@@ -129,8 +113,7 @@ extern "C" {
     JNIEXPORT void JNICALL
     Java_com_opengldecoder_jnibridge_JniBridge_nativeGLInit(JNIEnv *env, jobject activity,
                                                             jint viewPortWidth, jint viewPortHeight) {
-        float bgColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
-        mOpenGLNativeLib.setupGraphics(viewPortWidth, viewPortHeight, bgColor);
+        setupGraphics(viewPortWidth, viewPortHeight);
         LOGI("cjztest Java_com_opengldecoder_jnibridge_JniBridge_nativeGLInit, width:%d, height:%d", viewPortWidth, viewPortHeight);
     }
 
@@ -145,7 +128,11 @@ extern "C" {
 //        AndroidBitmap_unlockPixels(env, bmp);
 //    }
 
-    /**添加一个图层
+    /**添加一个占满容器的图层（纹理输入或数据输入二选一，但必须有一种）
+     * @param texturePointer 传入到该图层的纹理输入对象（可选）
+     * @param textureWidthAndHeight 传入到该图层的纹理输入对象的宽和高
+     * @param dataPointer 传入到该图层的数据输入对象（可选）
+     * @param dataWidthAndHeight 传入到该图层的数据输入对象的宽和高
        @return 返回图层对象的内存地址**/
     JNIEXPORT jlong JNICALL
     Java_com_opengldecoder_jnibridge_JniBridge_addFullContainerLayer(JNIEnv *env, jobject activit, jint texturePointer, jintArray textureWidthAndHeight, jlong dataPointer,
@@ -153,9 +140,9 @@ extern "C" {
                                                                      int dataPixelFormat) {
         jint *dataWidthAndHeightPointer = env->GetIntArrayElements(dataWidthAndHeight, JNI_FALSE);
         jint *textureWidthAndHeightPointer = env->GetIntArrayElements(textureWidthAndHeight, JNI_FALSE);
-        Layer *layer = new Layer(-1, -mOpenGLNativeLib.mRatio, 0, 2, mOpenGLNativeLib.mRatio * 2, mOpenGLNativeLib.mWidth, mOpenGLNativeLib.mHeight); //创建铺满全屏的图层;
+        Layer *layer = new Layer(-1, -mRatio, 0, 2, mRatio * 2, mWidth, mHeight); //创建铺满全屏的图层;
         //载入数据：
-        LOGI("cjztest, Java_com_opengldecoder_jnibridge_JniBridge_addFullContainerLayer containerW:%d, containerH:%d, w:%d, h:%d", mOpenGLNativeLib.mWidth, mOpenGLNativeLib.mHeight, textureWidthAndHeightPointer[0], textureWidthAndHeightPointer[1]);
+        LOGI("cjztest, Java_com_opengldecoder_jnibridge_JniBridge_addFullContainerLayer containerW:%d, containerH:%d, w:%d, h:%d", mWidth, mHeight, textureWidthAndHeightPointer[0], textureWidthAndHeightPointer[1]);
         layer->loadTexture(texturePointer, textureWidthAndHeightPointer[0], textureWidthAndHeightPointer[1]);
         layer->loadData((char *) dataPointer, dataWidthAndHeightPointer[0], dataWidthAndHeightPointer[1], dataPixelFormat, 0);
         if (mLayerList) {
@@ -177,7 +164,6 @@ extern "C" {
     }
 
 
-    //todo 删除一个图层
     /**@param layerPointer 要删除的图层的内存地址**/
     JNIEXPORT void JNICALL
     Java_com_opengldecoder_jnibridge_JniBridge_removeLayer(JNIEnv *env, jobject activity, jlong layerPointer) {
@@ -226,10 +212,10 @@ extern "C" {
             //创建OES纹理渲染器
             case RENDER_OES_TEXTURE: {
                 RenderProgramOESTexture *renderProgramOesTexture = new RenderProgramOESTexture();
-                renderProgramOesTexture->createRender(-1, -mOpenGLNativeLib.mRatio, 0, 2,
-                                                      mOpenGLNativeLib.mRatio * 2,
-                                                      mOpenGLNativeLib.mWidth,
-                                                      mOpenGLNativeLib.mHeight);
+                renderProgramOesTexture->createRender(-1, -mRatio, 0, 2,
+                                                      mRatio * 2,
+                                                      mWidth,
+                                                      mHeight);
                 layer->addRenderProgram(renderProgramOesTexture);
                 resultProgram = renderProgramOesTexture;
                 break;
@@ -242,15 +228,15 @@ extern "C" {
             case RENDER_CONVOLUTION: {
                 float kernel[] = {
                         1.0, 1.0, 1.0,
-                        1.0, -7.0, 1.0,
+                        1.0, -4.0, 1.0,
                         1.0, 1.0, 1.0
                 };
                 RenderProgramConvolution *renderProgramConvolution = new RenderProgramConvolution(
                         kernel);
-                renderProgramConvolution->createRender(-1, -mOpenGLNativeLib.mRatio, 0, 2,
-                                                       mOpenGLNativeLib.mRatio * 2,
-                                                       mOpenGLNativeLib.mWidth,
-                                                       mOpenGLNativeLib.mHeight);
+                renderProgramConvolution->createRender(-1, -mRatio, 0, 2,
+                                                       mRatio * 2,
+                                                       mWidth,
+                                                       mHeight);
                 renderProgramConvolution->setAlpha(0.8);  //todo cjzmark 测试透明度用
                 layer->addRenderProgram(renderProgramConvolution);
                 resultProgram = renderProgramConvolution;
@@ -271,15 +257,10 @@ extern "C" {
         if (mLayerList) {
             struct ListElement* cursor = mLayerList;
             while (cursor) {
-                cursor->layer->drawTo(mOpenGLNativeLib.mCameraMatrix, mOpenGLNativeLib.mProjMatrix, fboPointer, fboWidth, fboHeight, Layer::DRAW_TEXTURE);
+                cursor->layer->drawTo(mCameraMatrix, mProjMatrix, fboPointer, fboWidth, fboHeight, Layer::DRAW_TEXTURE);
                 cursor = cursor->next;
             }
         }
-//        //cjztest jni 连通性测试，通过 start
-//        //        LOGI("cjztest Java_com_opengldecoder_jnibridge_JniBridge_renderLayer");
-//        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-//        glClearColor(1, 0, 0, 0.5);
-//        //cjztest jni 连通性测试 end
         return;
     }
 

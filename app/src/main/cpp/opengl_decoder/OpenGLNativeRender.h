@@ -8,15 +8,6 @@
 #include "Layer.h"
 
 class OpenGLNativeRender {
-public:
-    void setupGraphics(int w, int h, float *bgColor);
-    void drawRGBA(char *buf, int w, int h);
-    float mRatio;
-    int mWidth;
-    int mHeight;
-    float mProjMatrix[16];
-    float mCameraMatrix[16];
-private:
 
 };
 

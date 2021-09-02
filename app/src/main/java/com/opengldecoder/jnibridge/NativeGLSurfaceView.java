@@ -2,7 +2,6 @@ package com.opengldecoder.jnibridge;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.opengl.GLES11Ext;
@@ -12,8 +11,6 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Surface;
 
-import com.example.learnopengl.R;
-
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -22,7 +19,8 @@ public class NativeGLSurfaceView extends GLSurfaceView {
     private Renderer mRenderer;
     /**图层native指针**/
     private long mLayer = Long.MIN_VALUE;
-    private long mRender = Long.MIN_VALUE;
+    private long mRenderOES = Long.MIN_VALUE;
+    private long mRenderConvolutionDemo = Long.MIN_VALUE;
     //Android画面数据输入Surface
     private Surface mDataInputSurface = null;
     //Android画面数据输入纹理
@@ -79,6 +77,7 @@ public class NativeGLSurfaceView extends GLSurfaceView {
                 this.mHeight = height;
                 Log.i("cjztest", String.format("NativeGlSurfaceView.onSurfaceChanged:width:%d, height:%d", mWidth, mHeight));
                 JniBridge.nativeGLInit(width, height);
+                //创建一个OES纹理和相关配套对象
                 if (mDataInputSurface == null) {
                     //创建OES纹理
                     mDataInputTexturesPointer = new int[1];
@@ -96,7 +95,8 @@ public class NativeGLSurfaceView extends GLSurfaceView {
                     mInputDataSurfaceTexture = new SurfaceTexture(mDataInputTexturesPointer[0]);
                     mDataInputSurface = new Surface(mInputDataSurfaceTexture);
                 }
-                Player mPlayer = new Player(getContext(), getSurface(), new MediaPlayer.OnVideoSizeChangedListener() {
+                //创建一个demo播放器
+                Player demoPlayer = new Player(getContext(), getSurface(), new MediaPlayer.OnVideoSizeChangedListener() {
                     @Override
                     public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
                         /**设置OES图层内容得大小**/
@@ -122,7 +122,8 @@ public class NativeGLSurfaceView extends GLSurfaceView {
                     //创建一个图层（由于这个使用场景种没有数组数据，只有OES纹理，所以dataPointer为0）
                     mLayer = JniBridge.addFullContainerLayer(mDataInputTexturesPointer[0], new int[]{mVideoWidth, mVideoHeight}, 0, new int[]{0, 0}, GLES30.GL_RGBA);  //依次传入纹理、纹理的宽高、数据地址（如果有）、数据的宽高
                     //添加一个oes渲染器
-                    mRender = JniBridge.addRenderForLayer(mLayer, JniBridge.RENDER_PROGRAM_KIND.RENDER_OES_TEXTURE.ordinal()); //传入oes纹理
+                    mRenderOES = JniBridge.addRenderForLayer(mLayer, JniBridge.RENDER_PROGRAM_KIND.RENDER_OES_TEXTURE.ordinal()); //添加oes纹理
+                    mRenderConvolutionDemo = JniBridge.addRenderForLayer(mLayer, JniBridge.RENDER_PROGRAM_KIND.RENDER_CONVOLUTION.ordinal()); //添加卷积图像处理demo
                     mIsFirstFrame = false;
                 }
             }

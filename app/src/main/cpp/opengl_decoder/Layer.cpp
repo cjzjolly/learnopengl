@@ -273,7 +273,9 @@ void Layer::drawLayerToFrameBuffer(float *cameraMatrix, float *projMatrix, GLuin
     }
 }
 
-/**逐步加工绘制**/  //todo 修改一下，如果data更新了才调用第一个渲染器loadData刷新纹理，节约CPU资源
+/**逐步加工绘制
+ * @param cameraMatrix 摄像机矩阵，确定观察者的位置、观察画面的旋转程度和观察方向
+ * @param projMatrix 投影矩阵，决定3d物体通过怎样的系数投影到屏幕**/  //todo 修改一下，如果data更新了才调用第一个渲染器loadData刷新纹理，节约CPU资源
 void
 Layer::drawTo(float *cameraMatrix, float *projMatrix, GLuint outputFBOPointer, int fboW, int fboH, DrawType drawType) {
     //清理双Framebuffer残留的内容
