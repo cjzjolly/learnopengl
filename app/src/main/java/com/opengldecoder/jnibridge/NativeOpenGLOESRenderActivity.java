@@ -27,7 +27,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         public void onProgressChanged(SeekBar seekBar, int progress, boolean b) {
             switch (seekBar.getId()) {
                 case R.id.seekBar_brightness:
-                    mNativeGLSurfaceView.setRenderBrightness((float) progress / 100f);
+                    mNativeGLSurfaceView.setRenderBrightness((float) progress / 100f - 1f);
                     break;
                 case R.id.seekBar_channel_red:
                     rgb[0] = (float) progress / 100f;
@@ -78,7 +78,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         mSeekBarChannelGreen.setProgress(100);
         mSeekBarChannelBlue.setMax(100);
         mSeekBarChannelBlue.setProgress(100);
-        mSeekBarBrightness.setMax(1000);
+        mSeekBarBrightness.setMax(200);
         mSeekBarBrightness.setProgress(100);
         mSeekBarBrightness.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarChannelRed.setOnSeekBarChangeListener(onSeekBarChangeListener);

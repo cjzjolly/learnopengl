@@ -55,7 +55,7 @@ private:
     float mTexCoor[2 * 4];   //纹理内采样坐标,类似于canvas坐标 //这东西有问题，导致两个framebuffer的画面互相取纹理时互为颠倒
     float mVertxData[3 * 4];
     float mColorBuf[4 * 4];
-    float mBrightness = 1.0;
+    float mBrightness = 0.0;
     float mRedWeight = 1.0;
     float mGreenWeight = 1.0;
     float mBlueWeight = 1.0;

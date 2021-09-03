@@ -50,7 +50,7 @@ RenderProgramOESTexture::RenderProgramOESTexture() {
 
             void main() {
                 vec2 xy = vec2(fragVTexCoord.s, fragVTexCoord.t);
-                vec3 rgb  = texture2D(oesTexture, xy).rgb * rgbWeight * brightness;
+                vec3 rgb  = texture2D(oesTexture, xy).rgb * rgbWeight + brightness;
                 gl_FragColor = vec4(rgb, fragObjectColor.a);
     }
     );
