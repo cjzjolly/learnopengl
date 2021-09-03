@@ -26,6 +26,7 @@ public class NativeGLSurfaceView extends GLSurfaceView {
     //Android画面数据输入纹理
     private int[] mDataInputTexturesPointer = null;
     private SurfaceTexture mInputDataSurfaceTexture;
+    private Player mDemoPlayer;
 
 
     public NativeGLSurfaceView(Context context) {
@@ -43,7 +44,6 @@ public class NativeGLSurfaceView extends GLSurfaceView {
         mRenderer = new Renderer();//创建Renderer类的对象
         this.setRenderer(mRenderer);    //设置渲染器
         this.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-//        mTestBmp = BitmapFactory.decodeResource(getResources(), R.drawable.test_pic);
     }
 
     public Surface getSurface() {
@@ -75,6 +75,38 @@ public class NativeGLSurfaceView extends GLSurfaceView {
             mVideoWidth = 0;
             mVideoHeight = 0;
             mIsFirstFrame = true;
+            //创建一个OES纹理和相关配套对象
+            if (mDataInputSurface == null) {
+                //创建OES纹理
+                mDataInputTexturesPointer = new int[1];
+                GLES30.glGenTextures(1, mDataInputTexturesPointer, 0);
+                GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, mDataInputTexturesPointer[0]);
+                //设置放大缩小。设置边缘测量
+                GLES30.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                        GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_LINEAR);
+                GLES30.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                        GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
+                GLES30.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                        GL10.GL_TEXTURE_WRAP_S, GL10.GL_CLAMP_TO_EDGE);
+                GLES30.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+                        GL10.GL_TEXTURE_WRAP_T, GL10.GL_CLAMP_TO_EDGE);
+                mInputDataSurfaceTexture = new SurfaceTexture(mDataInputTexturesPointer[0]);
+                mDataInputSurface = new Surface(mInputDataSurfaceTexture);
+            }
+            //创建一个demo播放器
+            if (mDemoPlayer == null) {
+                mDemoPlayer = new Player(getContext(), getSurface(), new MediaPlayer.OnVideoSizeChangedListener() {
+                    @Override
+                    public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
+                        /**设置OES图层内容得大小**/
+                        if ((width != mVideoWidth || height != mVideoHeight) && width > 0 && height > 0) {
+                            Log.i("cjztest", String.format("onSurfaceChanged: w:%d, h:%d", width, height));
+                            mVideoWidth = width;
+                            mVideoHeight = height;
+                        }
+                    }
+                });
+            }
         }
 
         @Override
@@ -84,37 +116,7 @@ public class NativeGLSurfaceView extends GLSurfaceView {
                 this.mHeight = height;
                 Log.i("cjztest", String.format("NativeGlSurfaceView.onSurfaceChanged:width:%d, height:%d", mWidth, mHeight));
                 JniBridge.nativeGLInit(width, height);
-                //创建一个OES纹理和相关配套对象
-                if (mDataInputSurface == null) {
-                    //创建OES纹理
-                    mDataInputTexturesPointer = new int[1];
-                    GLES30.glGenTextures(1, mDataInputTexturesPointer, 0);
-                    GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, mDataInputTexturesPointer[0]);
-                    //设置放大缩小。设置边缘测量
-                    GLES30.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                            GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_LINEAR);
-                    GLES30.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                            GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
-                    GLES30.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                            GL10.GL_TEXTURE_WRAP_S, GL10.GL_CLAMP_TO_EDGE);
-                    GLES30.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
-                            GL10.GL_TEXTURE_WRAP_T, GL10.GL_CLAMP_TO_EDGE);
-                    mInputDataSurfaceTexture = new SurfaceTexture(mDataInputTexturesPointer[0]);
-                    mDataInputSurface = new Surface(mInputDataSurfaceTexture);
-                }
-                //创建一个demo播放器
-                Player demoPlayer = new Player(getContext(), getSurface(), new MediaPlayer.OnVideoSizeChangedListener() {
-                    @Override
-                    public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
-                        /**设置OES图层内容得大小**/
-                        if ((width != mVideoWidth || height != mVideoHeight) && width > 0 && height > 0) {
-                            Log.i("cjztest", String.format("onSurfaceChanged: w:%d, h:%d", width, height));
-                            mVideoWidth = width;
-                            mVideoHeight = height;
-                            mIsFirstFrame = true;
-                        }
-                    }
-                });
+                mIsFirstFrame = true;
             }
         }
 
