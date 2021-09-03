@@ -57,7 +57,7 @@ extern "C" {
         mWidth = w;
         mHeight = h;
         mRatio = ratio;
-        frustumM(mProjMatrix, 0, -1, 1, -ratio, ratio, 1, 50);//设置投影矩阵
+        frustumM(mProjMatrix, 0, -1, 1, -ratio, ratio, 1, 550);//设置投影矩阵
         setLookAtM(mCameraMatrix, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0);//设置摄像机矩阵
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); //清理屏幕
         glClearColor(0, 0, 0, 0);//设置背景颜色
@@ -218,6 +218,7 @@ extern "C" {
                                                       mWidth,
                                                       mHeight);
                 layer->addRenderProgram(renderProgramOesTexture);
+                layer->rotate(180, 0, 0, 1); //todo oes纹理传进来之后旋转了180度，这里用于暂时摆正
                 resultProgram = renderProgramOesTexture;
                 break;
             }
@@ -229,7 +230,7 @@ extern "C" {
             case RENDER_CONVOLUTION: {
                 float kernel[] = {
                         1.0, 1.0, 1.0,
-                        1.0, -4.0, 1.0,
+                        1.0, -7.0, 1.0,
                         1.0, 1.0, 1.0
                 };
                 RenderProgramConvolution *renderProgramConvolution = new RenderProgramConvolution(
@@ -238,7 +239,6 @@ extern "C" {
                                                        mRatio * 2,
                                                        mWidth,
                                                        mHeight);
-                renderProgramConvolution->setAlpha(0.8);  //todo cjzmark 测试透明度用
                 layer->addRenderProgram(renderProgramConvolution);
                 resultProgram = renderProgramConvolution;
                 break;
@@ -291,6 +291,12 @@ extern "C" {
             }
         }
         return;
+    }
+
+    JNIEXPORT void JNICALL
+    Java_com_opengldecoder_jnibridge_JniBridge_layerScale(JNIEnv *env, jobject activity, jlong layerPointer, jfloat scaleX, jfloat scaleY) {
+        Layer* layer = (Layer*) layerPointer;
+        layer->scale(scaleX, scaleY, 1.0);
     }
 
 }

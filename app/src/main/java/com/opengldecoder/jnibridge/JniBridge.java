@@ -48,4 +48,6 @@ public class JniBridge {
 
     public static native void renderLayer(int fboPointer, int fboWidth, int fboHeight);
 
+    public static native void layerScale(long layerPointer, float scaleX, float scaleY);
+
 }
