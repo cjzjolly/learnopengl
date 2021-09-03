@@ -128,6 +128,11 @@ void RenderProgramImage::setContrast(float contrast) {
 
 }
 
+//todo
+void RenderProgramImage::setWhiteBalance(float redWeight, float greenWeight, float blueWeight) {
+
+}
+
 void RenderProgramImage::loadData(char *data, int width, int height, int pixelFormat, int offset) {
     if (!mIsTexutresInited) {
         glUseProgram(mImageProgram.programHandle);

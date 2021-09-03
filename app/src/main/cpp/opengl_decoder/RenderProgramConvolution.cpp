@@ -173,6 +173,11 @@ void RenderProgramConvolution::setContrast(float contrast) {
 
 }
 
+//todo
+void RenderProgramConvolution::setWhiteBalance(float redWeight, float greenWeight, float blueWeight) {
+
+}
+
 /**@param texturePointers 传入需要渲染处理的纹理，可以为上一次处理的结果，例如处理完后的FBOTexture **/
 void RenderProgramConvolution::loadTexture(Textures textures[]) {
     mInputTextures = textures[0].texturePointers;

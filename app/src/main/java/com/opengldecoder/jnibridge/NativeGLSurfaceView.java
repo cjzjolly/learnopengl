@@ -58,6 +58,13 @@ public class NativeGLSurfaceView extends GLSurfaceView {
         }
     }
 
+    /**白平衡调整**/
+    public void setRenderWhiteBalance (float rWeight, float gWeight, float bWeight) {
+        if (mRenderOES != Long.MIN_VALUE) {
+            JniBridge.setWhiteBalance(mRenderOES, rWeight, gWeight, bWeight);
+        }
+    }
+
     private class Renderer implements GLSurfaceView.Renderer {
 
         private int mWidth;

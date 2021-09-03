@@ -242,7 +242,13 @@ void RenderProgramYUV::setBrightness(float brightness) {
 
 }
 
+//todo
 void RenderProgramYUV::setContrast(float contrast) {
+
+}
+
+//todo
+void RenderProgramYUV::setWhiteBalance(float redWeight, float greenWeight, float blueWeight) {
 
 }
 

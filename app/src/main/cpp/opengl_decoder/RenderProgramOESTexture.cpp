@@ -42,6 +42,7 @@ RenderProgramOESTexture::RenderProgramOESTexture() {
             uniform int funChoice;
             uniform float frame;//第几帧
             uniform float brightness;//亮度
+            uniform vec3 rgbWeight; //白平衡
             uniform vec2 resolution;//容器的分辨率
             uniform vec2 videoResolution;//视频自身的分辨率
             varying vec4 fragObjectColor;//接收vertShader处理后的颜色值给片元程序
@@ -49,7 +50,7 @@ RenderProgramOESTexture::RenderProgramOESTexture() {
 
             void main() {
                 vec2 xy = vec2(fragVTexCoord.s, fragVTexCoord.t);
-                vec3 rgb  = texture2D(oesTexture, xy).rgb * brightness;
+                vec3 rgb  = texture2D(oesTexture, xy).rgb * rgbWeight * brightness;
                 gl_FragColor = vec4(rgb, fragObjectColor.a);
     }
     );
@@ -102,6 +103,8 @@ void RenderProgramOESTexture::createRender(float x, float y, float z, float w, f
     mFrameCountPointer = glGetUniformLocation(mImageProgram.programHandle, "frame");
     //亮度指针
     mBrightnessPointer = glGetUniformLocation(mImageProgram.programHandle, "brightness");
+    //白平衡指针
+    mRGBWeightPointer = glGetUniformLocation(mImageProgram.programHandle, "rgbWeight");
     //设置分辨率指针，告诉gl脚本现在的分辨率
     mResoulutionPointer = glGetUniformLocation(mImageProgram.programHandle, "resolution");
 }
@@ -118,8 +121,16 @@ void RenderProgramOESTexture::setBrightness(float brightness) {
     mBrightness = brightness;
 }
 
+//todo
 void RenderProgramOESTexture::setContrast(float contrast) {
 
+}
+
+//todo
+void RenderProgramOESTexture::setWhiteBalance(float redWeight, float greenWeight, float blueWeight) {
+    mRedWeight = redWeight;
+    mGreenWeight = greenWeight;
+    mBlueWeight = blueWeight;
 }
 
 void RenderProgramOESTexture::loadData(char *data, int width, int height, int pixelFormat, int offset) {
@@ -140,6 +151,8 @@ void RenderProgramOESTexture::drawTo(float *cameraMatrix, float *projMatrix, Dra
     }
     glUseProgram(mImageProgram.programHandle);
     glUniform1f(mBrightnessPointer, mBrightness);
+    float whiteBalanceWeight[3] = {mRedWeight, mGreenWeight, mBlueWeight};
+    glUniform3fv(mRGBWeightPointer, 1, whiteBalanceWeight);
     //设置视窗大小及位置
     glBindFramebuffer(GL_FRAMEBUFFER, outputFBOPointer);
     glViewport(0, 0, mWindowW, mWindowH);

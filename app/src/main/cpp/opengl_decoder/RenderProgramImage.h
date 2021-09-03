@@ -22,6 +22,8 @@ public:
 
     void setContrast(float contrast);
 
+    void setWhiteBalance(float redWeight, float greenWeight, float blueWeight);
+
     void loadTexture(Textures textures[]);
 
     void drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH);

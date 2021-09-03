@@ -43,6 +43,8 @@ public class JniBridge {
     /**渲染器对比度调整**/
     public static native void setContrast(long renderPointer, float contrast);
 
+    /**白平衡调整**/
+    public static native void setWhiteBalance(long renderPointer, float redWeight, float greenWeight, float blueWeight);
 
     public static native void renderLayer(int fboPointer, int fboWidth, int fboHeight);
 

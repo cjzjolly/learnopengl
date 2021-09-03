@@ -22,6 +22,8 @@ public:
 
     void setContrast(float contrast);
 
+    void setWhiteBalance(float redWeight, float greenWeight, float blueWeight);
+
     void loadTexture(Textures textures[]);
 
     void drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH);
@@ -41,6 +43,7 @@ private:
     GLint mGLFunChoicePointer;
     GLint mFrameCountPointer;
     GLint mBrightnessPointer;
+    GLint mRGBWeightPointer;
     GLint mResoulutionPointer;
     int mWindowW, mWindowH;
     bool mIsDestroyed = false;
@@ -53,6 +56,9 @@ private:
     float mVertxData[3 * 4];
     float mColorBuf[4 * 4];
     float mBrightness = 1.0;
+    float mRedWeight = 1.0;
+    float mGreenWeight = 1.0;
+    float mBlueWeight = 1.0;
 
     int mDataWidth;
     int mDataHeight;

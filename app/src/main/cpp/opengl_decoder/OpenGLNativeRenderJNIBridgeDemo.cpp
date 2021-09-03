@@ -268,6 +268,13 @@ extern "C" {
         program->setContrast(contrast);
     }
 
+    /**渲染器白平衡调整**/
+    JNIEXPORT void JNICALL
+    Java_com_opengldecoder_jnibridge_JniBridge_setWhiteBalance(JNIEnv *env, jobject activity, jlong renderPointer, jfloat redWeight, jfloat greenWeight, jfloat blueWeight) {
+        RenderProgram* program = (RenderProgram*) renderPointer;
+        program->setWhiteBalance(redWeight, greenWeight, blueWeight);
+    }
+
     /**渲染图层数据，安卓端使用了OES接入，所以drawType使用DRAW_TEXTURE,渲染图层到系统目标framebuffer
      * @param fboPointer 最终输出的载体FrameBuffer，默认使用0号，也就是系统自身的屏幕FBO**/
     JNIEXPORT void JNICALL

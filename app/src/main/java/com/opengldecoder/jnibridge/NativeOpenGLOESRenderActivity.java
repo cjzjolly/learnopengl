@@ -17,6 +17,43 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
 
     private NativeGLSurfaceView mNativeGLSurfaceView = null;
     private SeekBar mSeekBarBrightness = null;
+    private SeekBar mSeekBarChannelRed = null;
+    private SeekBar mSeekBarChannelGreen = null;
+    private SeekBar mSeekBarChannelBlue = null;
+
+    private float rgb[] = {1f, 1f, 1f};
+    private SeekBar.OnSeekBarChangeListener onSeekBarChangeListener = new SeekBar.OnSeekBarChangeListener() {
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress, boolean b) {
+            switch (seekBar.getId()) {
+                case R.id.seekBar_brightness:
+                    mNativeGLSurfaceView.setRenderBrightness((float) progress / 100f);
+                    break;
+                case R.id.seekBar_channel_red:
+                    rgb[0] = (float) progress / 100f;
+                    mNativeGLSurfaceView.setRenderWhiteBalance(rgb[0], rgb[1], rgb[2]);
+                    break;
+                case R.id.seekBar_channel_green:
+                    rgb[1] = (float) progress / 100f;
+                    mNativeGLSurfaceView.setRenderWhiteBalance(rgb[0], rgb[1], rgb[2]);
+                    break;
+                case R.id.seekBar_channel_blue:
+                    rgb[2] = (float) progress / 100f;
+                    mNativeGLSurfaceView.setRenderWhiteBalance(rgb[0], rgb[1], rgb[2]);
+                    break;
+            }
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+
+        }
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,24 +69,22 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         setContentView(R.layout.native_oes_render_test);
         mNativeGLSurfaceView = findViewById(R.id.ngls);
         mSeekBarBrightness = findViewById(R.id.seekBar_brightness);
+        mSeekBarChannelRed = findViewById(R.id.seekBar_channel_red);
+        mSeekBarChannelGreen = findViewById(R.id.seekBar_channel_green);
+        mSeekBarChannelBlue = findViewById(R.id.seekBar_channel_blue);
+        mSeekBarChannelRed.setMax(100);
+        mSeekBarChannelRed.setProgress(100);
+        mSeekBarChannelGreen.setMax(100);
+        mSeekBarChannelGreen.setProgress(100);
+        mSeekBarChannelBlue.setMax(100);
+        mSeekBarChannelBlue.setProgress(100);
         mSeekBarBrightness.setMax(1000);
         mSeekBarBrightness.setProgress(100);
-        mSeekBarBrightness.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean b) {
-                mNativeGLSurfaceView.setRenderBrightness((float) progress / 100f);
-            }
+        mSeekBarBrightness.setOnSeekBarChangeListener(onSeekBarChangeListener);
+        mSeekBarChannelRed.setOnSeekBarChangeListener(onSeekBarChangeListener);
+        mSeekBarChannelGreen.setOnSeekBarChangeListener(onSeekBarChangeListener);
+        mSeekBarChannelBlue.setOnSeekBarChangeListener(onSeekBarChangeListener);
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
     }
 
     protected void requestPermission(String permissions[]) {

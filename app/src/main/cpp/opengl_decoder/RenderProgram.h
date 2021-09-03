@@ -58,6 +58,9 @@ namespace OPENGL_VIDEO_RENDERER {
         /**对比度调节**/
         virtual void setContrast(float contrast) = 0;
 
+        /**白平衡调节**/
+        virtual void setWhiteBalance(float redWeight, float greenWeight, float blueWeight) = 0;
+
 
         /**总的资源清理**/
         virtual void destroy() = 0;
