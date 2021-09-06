@@ -6,11 +6,12 @@
 #include "RenderProgram.h"
 
 using namespace OPENGL_VIDEO_RENDERER;
-class RenderProgramOESTexture : public RenderProgram {
+class RenderProgramNoiseReduction : public RenderProgram {
 public:
-    RenderProgramOESTexture();
 
-    ~RenderProgramOESTexture();
+    RenderProgramNoiseReduction();
+
+    ~RenderProgramNoiseReduction();
 
     void createRender(float x, float y, float z, float w, float h, int windowW, int windowH);
 
@@ -34,6 +35,8 @@ private:
     /**绑定纹理**/
     GLuint mTexturePointers[1];
     GLuint mGenTextureId = 0xFFFFFFFF;
+    GLuint mGenYTextureId = -1;
+    GLuint mGenUVTextureId = -1;
     GLuint mInputTexturesArray;
     GLslHandle mImageProgram;
     GLint mObjectPositionPointer;
@@ -42,11 +45,7 @@ private:
     GLint muMVPMatrixPointer;
     GLint mGLFunChoicePointer;
     GLint mFrameCountPointer;
-    GLint mBrightnessPointer;
-    GLint mContrastPointer;
-    GLint mRGBWeightPointer;
     GLint mResoulutionPointer;
-    GLfloat mframeCount = 0.0;
     int mWindowW, mWindowH;
     bool mIsDestroyed = false;
 
@@ -57,11 +56,6 @@ private:
     float mTexCoor[2 * 4];   //纹理内采样坐标,类似于canvas坐标 //这东西有问题，导致两个framebuffer的画面互相取纹理时互为颠倒
     float mVertxData[3 * 4];
     float mColorBuf[4 * 4];
-    float mBrightness = 0.0;
-    float mContrast = 0.0;
-    float mRedWeight = 1.0;
-    float mGreenWeight = 1.0;
-    float mBlueWeight = 1.0;
 
     int mDataWidth;
     int mDataHeight;

@@ -19,6 +19,7 @@
 #include "RenderProgramImage.h"
 #include "RenderProgramConvolution.h"
 #include "RenderProgramOESTexture.h"
+#include "RenderProgramNoiseReduction.h"
 
 
 static const char *TAG = "nativeGL";
@@ -42,6 +43,7 @@ extern "C" {
         RENDER_OES_TEXTURE = 0, //OES纹理渲染
         RENDER_YUV = 1, //YUV数据或纹理渲染
         RENDER_CONVOLUTION = 2, //添加卷积处理
+        NOISE_REDUCTION = 3, //添加噪声消除处理
     };
     float mRatio;
     int mWidth;
@@ -197,15 +199,13 @@ extern "C" {
         return;
     }
 
-    /**为指定图层添加渲染器
+    /**创建渲染器
     @param layerPointer 图层的内存地址
      @@param renderProgramKind 渲染器类型**/
     JNIEXPORT jlong JNICALL
-    Java_com_opengldecoder_jnibridge_JniBridge_addRenderForLayer(JNIEnv *env, jobject activity,
-                                                                 jlong layerPointer,
-                                                                 int renderProgramKind) {
+    Java_com_opengldecoder_jnibridge_JniBridge_makeRender(JNIEnv *env, jobject activity,
+                                                          int renderProgramKind) {
 
-        Layer *layer = (Layer *) layerPointer;
         RenderProgram *resultProgram = nullptr;
         switch (renderProgramKind) {
             default:
@@ -217,9 +217,16 @@ extern "C" {
                                                       mRatio * 2,
                                                       mWidth,
                                                       mHeight);
-                layer->addRenderProgram(renderProgramOesTexture);
-                layer->rotate(180, 0, 0, 1); //todo oes纹理传进来之后旋转了180度，这里用于暂时摆正
                 resultProgram = renderProgramOesTexture;
+                break;
+            }
+            case NOISE_REDUCTION: {
+                RenderProgramNoiseReduction *renderProgramNoiseReduction = new RenderProgramNoiseReduction();
+                renderProgramNoiseReduction->createRender(-1, -mRatio, 0, 2,
+                                                      mRatio * 2,
+                                                      mWidth,
+                                                      mHeight);
+                resultProgram = renderProgramNoiseReduction;
                 break;
             }
             case RENDER_YUV: {
@@ -239,12 +246,33 @@ extern "C" {
                                                        mRatio * 2,
                                                        mWidth,
                                                        mHeight);
-                layer->addRenderProgram(renderProgramConvolution);
                 resultProgram = renderProgramConvolution;
                 break;
             }
         }
         return (jlong) resultProgram;
+    }
+
+
+    /**为指定图层添加渲染器
+    @param layerPointer 图层的内存地址
+    @@param renderProgramKind 渲染器类型**/
+    JNIEXPORT void JNICALL
+    Java_com_opengldecoder_jnibridge_JniBridge_addRenderToLayer(JNIEnv *env, jobject activity, jlong layerPointer, jlong renderPointer) {
+        Layer* layer = (Layer*) layerPointer;
+        RenderProgram* renderProgram = (RenderProgram*) renderPointer;
+        layer->addRenderProgram(renderProgram);
+        //layer->rotate(180, 0, 0, 1); //todo oes纹理传进来之后旋转了180度，这里用于暂时摆正
+    }
+
+    /**为指定图层删除渲染器
+    @param layerPointer 图层的内存地址**/
+    JNIEXPORT void JNICALL
+    Java_com_opengldecoder_jnibridge_JniBridge_removeRenderForLayer(JNIEnv *env, jobject activity,
+                                                                 jlong layerPointer, jlong renderPointer) {
+        Layer *layer = (Layer *) layerPointer;
+        RenderProgram *renderProgram = (RenderProgram *) renderPointer;
+        layer->removeRenderProgram(renderProgram);
     }
 
     /**渲染器透明度调整**/

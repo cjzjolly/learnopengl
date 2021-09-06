@@ -14,6 +14,7 @@ public class JniBridge {
         RENDER_OES_TEXTURE, //OES纹理渲染
         RENDER_YUV, //YUV数据或纹理渲染
         RENDER_CONVOLUTION, //添加卷积处理
+        NOISE_REDUCTION, //添加噪声处理
     }
 
     public static native void nativeGLInit(int viewPortWidth, int viewPortHeight);
@@ -30,10 +31,13 @@ public class JniBridge {
 
     public static native void removeLayer(long layerPointer);
 
-    /**为指定图层添加渲染器
-     @param layerPointer 图层的内存地址**/
-    public static native long addRenderForLayer(long layerPointer,
-                                                int renderProgramKind);
+    /**创建渲染器
+     @param renderProgramKind 渲染器类型，参考RENDER_PROGRAM_KIND**/
+    public static native long makeRender(int renderProgramKind);
+
+    public static native void addRenderToLayer(long layerPointer, long renderPointer);
+
+    public static native void removeRenderForLayer(long layerPointer, long renderPointer);
 
     public static native void setRenderAlpha(long renderPointer, float alpha);
 

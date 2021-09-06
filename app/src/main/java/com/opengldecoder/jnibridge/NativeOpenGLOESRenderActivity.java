@@ -8,6 +8,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.SeekBar;
 
 import com.example.learnopengl.R;
@@ -21,6 +23,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
     private SeekBar mSeekBarChannelRed = null;
     private SeekBar mSeekBarChannelGreen = null;
     private SeekBar mSeekBarChannelBlue = null;
+    private CheckBox mCheckBox;
 
     private float rgb[] = {1f, 1f, 1f};
     private SeekBar.OnSeekBarChangeListener onSeekBarChangeListener = new SeekBar.OnSeekBarChangeListener() {
@@ -78,6 +81,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         mSeekBarChannelRed = findViewById(R.id.seekBar_channel_red);
         mSeekBarChannelGreen = findViewById(R.id.seekBar_channel_green);
         mSeekBarChannelBlue = findViewById(R.id.seekBar_channel_blue);
+        mCheckBox = findViewById(R.id.cb_denoise);
         mSeekBarChannelRed.setMax(100);
         mSeekBarChannelRed.setProgress(100);
         mSeekBarChannelGreen.setMax(100);
@@ -93,7 +97,12 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         mSeekBarChannelRed.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarChannelGreen.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarChannelBlue.setOnSeekBarChangeListener(onSeekBarChangeListener);
-
+        mCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                mNativeGLSurfaceView.setRenderNoiseReductionOnOff(b);
+            }
+        });
     }
 
     protected void requestPermission(String permissions[]) {

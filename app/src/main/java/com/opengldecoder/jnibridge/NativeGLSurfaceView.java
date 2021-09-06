@@ -20,6 +20,7 @@ public class NativeGLSurfaceView extends GLSurfaceView {
     /**图层native指针**/
     private long mLayer = Long.MIN_VALUE;
     private long mRenderOES = Long.MIN_VALUE;
+    private long mRenderNoiseReduction = Long.MIN_VALUE;
     private long mRenderConvolutionDemo = Long.MIN_VALUE;
     //Android画面数据输入Surface
     private Surface mDataInputSurface = null;
@@ -70,6 +71,23 @@ public class NativeGLSurfaceView extends GLSurfaceView {
     public void setRenderWhiteBalance (float rWeight, float gWeight, float bWeight) {
         if (mRenderOES != Long.MIN_VALUE) {
             JniBridge.setWhiteBalance(mRenderOES, rWeight, gWeight, bWeight);
+        }
+    }
+
+    /**降噪渲染器开关**/
+    public void setRenderNoiseReductionOnOff (boolean sw) {
+        if (sw) {
+            if (mLayer != Long.MIN_VALUE) {
+                if (mRenderNoiseReduction != Long.MIN_VALUE) {
+                    JniBridge.addRenderToLayer(mLayer, mRenderNoiseReduction);
+                }
+            }
+        } else {
+            if (mLayer != Long.MIN_VALUE) {
+                if (mRenderNoiseReduction != Long.MIN_VALUE) {
+                    JniBridge.removeRenderForLayer(mLayer, mRenderNoiseReduction);
+                }
+            }
         }
     }
 
@@ -146,8 +164,10 @@ public class NativeGLSurfaceView extends GLSurfaceView {
                     //创建一个图层（由于这个使用场景种没有数组数据，只有OES纹理，所以dataPointer为0）
                     mLayer = JniBridge.addFullContainerLayer(mDataInputTexturesPointer[0], new int[]{mVideoWidth, mVideoHeight}, 0, new int[]{0, 0}, GLES30.GL_RGBA);  //依次传入纹理、纹理的宽高、数据地址（如果有）、数据的宽高
                     //添加一个oes渲染器
-                    mRenderOES = JniBridge.addRenderForLayer(mLayer, JniBridge.RENDER_PROGRAM_KIND.RENDER_OES_TEXTURE.ordinal()); //添加oes纹理
-                    //mRenderConvolutionDemo = JniBridge.addRenderForLayer(mLayer, JniBridge.RENDER_PROGRAM_KIND.RENDER_CONVOLUTION.ordinal()); //添加卷积图像处理demo
+                    mRenderOES = JniBridge.makeRender(JniBridge.RENDER_PROGRAM_KIND.RENDER_OES_TEXTURE.ordinal()); //添加oes纹理
+//                    mRenderConvolutionDemo = JniBridge.addRenderForLayer(mLayer, JniBridge.RENDER_PROGRAM_KIND.RENDER_CONVOLUTION.ordinal()); //添加卷积图像处理demo
+                    mRenderNoiseReduction = JniBridge.makeRender(JniBridge.RENDER_PROGRAM_KIND.NOISE_REDUCTION.ordinal()); //添加降噪渲染器
+                    JniBridge.addRenderToLayer(mLayer, mRenderOES);
                     mIsFirstFrame = false;
                 }
             }

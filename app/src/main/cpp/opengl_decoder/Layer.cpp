@@ -190,6 +190,10 @@ void Layer::addRenderProgram(RenderProgram *program) {
     mRenderProgramList.push_back(program);
 }
 
+void Layer::removeRenderProgram(RenderProgram *program) {
+    mRenderProgramList.remove(program);
+}
+
 /**给每个模板传入渲染数据**/  //todo 修改一下，如果data更新了才调用第一个渲染器loadData刷新纹理，节约CPU资源    加一个needRefresh标志
 void Layer::loadData(char *data, int width, int height, int pixelFormat, int offset) {
     mRenderSrcData.data = data;

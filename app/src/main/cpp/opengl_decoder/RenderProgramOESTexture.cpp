@@ -49,12 +49,23 @@ RenderProgramOESTexture::RenderProgramOESTexture() {
             varying vec4 fragObjectColor;//接收vertShader处理后的颜色值给片元程序
             varying vec2 fragVTexCoord;//接收vertShader处理后的纹理内坐标给片元程序
 
+            float fakeRandom(vec2 st) {
+                return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123 * frame / 1000.0);
+            }
+
+            //添加噪声进行测试
+            vec3 getNoise(vec2 st) {
+                float rnd = fakeRandom(st);
+                return vec3(rnd);
+            }
+
             void main() {
                 vec2 xy = vec2(fragVTexCoord.s, fragVTexCoord.t);
                 vec3 rgbWithBrightness = texture2D(oesTexture, xy).rgb * rgbWeight + brightness; //亮度调节
                 vec3 rgbWithContrast = rgbWithBrightness + (rgbWithBrightness - 0.5) * contrast / 1.0;  //对比度调整 参考https://blog.csdn.net/yuhengyue/article/details/103856476
-                gl_FragColor = vec4(rgbWithContrast, fragObjectColor.a);
-
+                //gl_FragColor = vec4(rgbWithContrast, fragObjectColor.a);
+                //cjztest 噪声测试
+                gl_FragColor = vec4(getNoise(fragVTexCoord) * rgbWithContrast.rgb, 1.0);
             }
     );
 
@@ -161,6 +172,7 @@ void RenderProgramOESTexture::drawTo(float *cameraMatrix, float *projMatrix, Dra
     glBindFramebuffer(GL_FRAMEBUFFER, outputFBOPointer);
     glViewport(0, 0, mWindowW, mWindowH);
     glUniform1i(mGLFunChoicePointer, 1);
+    glUniform1f(mFrameCountPointer, mframeCount++);
     //传入位置信息
     locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
     //开始渲染：

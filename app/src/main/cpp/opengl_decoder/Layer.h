@@ -29,6 +29,9 @@ public:
     /**渲染程序模板表，可以添加多个渲染模板到表中实现图像流水线式加工**/
     void addRenderProgram(RenderProgram *program);
 
+    /**删除涂层中指定的渲染程序**/
+    void removeRenderProgram(RenderProgram *program);
+
     /**传入数据源**/
     /**更新显存中对应纹理地址的图像数据
  **/
