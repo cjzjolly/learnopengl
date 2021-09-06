@@ -43,6 +43,7 @@ private:
     GLint mGLFunChoicePointer;
     GLint mFrameCountPointer;
     GLint mBrightnessPointer;
+    GLint mContrastPointer;
     GLint mRGBWeightPointer;
     GLint mResoulutionPointer;
     int mWindowW, mWindowH;
@@ -56,6 +57,7 @@ private:
     float mVertxData[3 * 4];
     float mColorBuf[4 * 4];
     float mBrightness = 0.0;
+    float mContrast = 0.0;
     float mRedWeight = 1.0;
     float mGreenWeight = 1.0;
     float mBlueWeight = 1.0;

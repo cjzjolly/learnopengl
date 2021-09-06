@@ -58,6 +58,14 @@ public class NativeGLSurfaceView extends GLSurfaceView {
         }
     }
 
+    /**对比度调整**/
+    public void setRenderContrast (float contrast) {
+        if (mRenderOES != Long.MIN_VALUE) {
+            JniBridge.setContrast(mRenderOES, contrast);
+        }
+    }
+
+
     /**白平衡调整**/
     public void setRenderWhiteBalance (float rWeight, float gWeight, float bWeight) {
         if (mRenderOES != Long.MIN_VALUE) {

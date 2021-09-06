@@ -23,6 +23,16 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="对比度调节"/>
+
+    <SeekBar
+        android:id="@+id/seekBar_contrast"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:text="白平衡"/>
 
     <LinearLayout

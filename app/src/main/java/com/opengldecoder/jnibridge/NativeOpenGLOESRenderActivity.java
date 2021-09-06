@@ -17,6 +17,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
 
     private NativeGLSurfaceView mNativeGLSurfaceView = null;
     private SeekBar mSeekBarBrightness = null;
+    private SeekBar mSeekBarContrast = null;
     private SeekBar mSeekBarChannelRed = null;
     private SeekBar mSeekBarChannelGreen = null;
     private SeekBar mSeekBarChannelBlue = null;
@@ -29,6 +30,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
                 case R.id.seekBar_brightness:
                     mNativeGLSurfaceView.setRenderBrightness((float) progress / 100f - 1f);
                     break;
+
                 case R.id.seekBar_channel_red:
                     rgb[0] = (float) progress / 100f;
                     mNativeGLSurfaceView.setRenderWhiteBalance(rgb[0], rgb[1], rgb[2]);
@@ -40,6 +42,9 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
                 case R.id.seekBar_channel_blue:
                     rgb[2] = (float) progress / 100f;
                     mNativeGLSurfaceView.setRenderWhiteBalance(rgb[0], rgb[1], rgb[2]);
+                    break;
+                case R.id.seekBar_contrast:
+                    mNativeGLSurfaceView.setRenderContrast((float) progress / 100f);
                     break;
             }
         }
@@ -69,6 +74,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         setContentView(R.layout.native_oes_render_test);
         mNativeGLSurfaceView = findViewById(R.id.ngls);
         mSeekBarBrightness = findViewById(R.id.seekBar_brightness);
+        mSeekBarContrast = findViewById(R.id.seekBar_contrast);
         mSeekBarChannelRed = findViewById(R.id.seekBar_channel_red);
         mSeekBarChannelGreen = findViewById(R.id.seekBar_channel_green);
         mSeekBarChannelBlue = findViewById(R.id.seekBar_channel_blue);
@@ -80,7 +86,10 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         mSeekBarChannelBlue.setProgress(100);
         mSeekBarBrightness.setMax(200);
         mSeekBarBrightness.setProgress(100);
+        mSeekBarContrast.setMax(100);
+        mSeekBarContrast.setProgress(0);
         mSeekBarBrightness.setOnSeekBarChangeListener(onSeekBarChangeListener);
+        mSeekBarContrast.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarChannelRed.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarChannelGreen.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarChannelBlue.setOnSeekBarChangeListener(onSeekBarChangeListener);

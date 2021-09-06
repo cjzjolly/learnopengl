@@ -42,6 +42,7 @@ RenderProgramOESTexture::RenderProgramOESTexture() {
             uniform int funChoice;
             uniform float frame;//第几帧
             uniform float brightness;//亮度
+            uniform float contrast;//对比度
             uniform vec3 rgbWeight; //白平衡
             uniform vec2 resolution;//容器的分辨率
             uniform vec2 videoResolution;//视频自身的分辨率
@@ -50,9 +51,11 @@ RenderProgramOESTexture::RenderProgramOESTexture() {
 
             void main() {
                 vec2 xy = vec2(fragVTexCoord.s, fragVTexCoord.t);
-                vec3 rgb  = texture2D(oesTexture, xy).rgb * rgbWeight + brightness;
-                gl_FragColor = vec4(rgb, fragObjectColor.a);
-    }
+                vec3 rgbWithBrightness = texture2D(oesTexture, xy).rgb * rgbWeight + brightness; //亮度调节
+                vec3 rgbWithContrast = rgbWithBrightness + (rgbWithBrightness - 0.5) * contrast / 1.0;  //对比度调整 参考https://blog.csdn.net/yuhengyue/article/details/103856476
+                gl_FragColor = vec4(rgbWithContrast, fragObjectColor.a);
+
+            }
     );
 
     float tempTexCoord[] =   //纹理内采样坐标,类似于canvas坐标 //这东西有问题，导致两个framebuffer的画面互相取纹理时互为颠倒
@@ -103,6 +106,8 @@ void RenderProgramOESTexture::createRender(float x, float y, float z, float w, f
     mFrameCountPointer = glGetUniformLocation(mImageProgram.programHandle, "frame");
     //亮度指针
     mBrightnessPointer = glGetUniformLocation(mImageProgram.programHandle, "brightness");
+    //对比度指针
+    mContrastPointer = glGetUniformLocation(mImageProgram.programHandle, "contrast");
     //白平衡指针
     mRGBWeightPointer = glGetUniformLocation(mImageProgram.programHandle, "rgbWeight");
     //设置分辨率指针，告诉gl脚本现在的分辨率
@@ -121,12 +126,10 @@ void RenderProgramOESTexture::setBrightness(float brightness) {
     mBrightness = brightness;
 }
 
-//todo
 void RenderProgramOESTexture::setContrast(float contrast) {
-
+    mContrast = contrast;
 }
 
-//todo
 void RenderProgramOESTexture::setWhiteBalance(float redWeight, float greenWeight, float blueWeight) {
     mRedWeight = redWeight;
     mGreenWeight = greenWeight;
@@ -134,7 +137,7 @@ void RenderProgramOESTexture::setWhiteBalance(float redWeight, float greenWeight
 }
 
 void RenderProgramOESTexture::loadData(char *data, int width, int height, int pixelFormat, int offset) {
-
+    //不用实现
 }
 
 /**@param texturePointers 传入需要渲染处理的纹理，可以为上一次处理的结果，例如处理完后的FBOTexture **/
@@ -151,6 +154,7 @@ void RenderProgramOESTexture::drawTo(float *cameraMatrix, float *projMatrix, Dra
     }
     glUseProgram(mImageProgram.programHandle);
     glUniform1f(mBrightnessPointer, mBrightness);
+    glUniform1f(mContrastPointer, mContrast);
     float whiteBalanceWeight[3] = {mRedWeight, mGreenWeight, mBlueWeight};
     glUniform3fv(mRGBWeightPointer, 1, whiteBalanceWeight);
     //设置视窗大小及位置
