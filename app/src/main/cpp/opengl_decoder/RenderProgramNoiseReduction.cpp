@@ -53,53 +53,137 @@ RenderProgramNoiseReduction::RenderProgramNoiseReduction() {
                 int i;
                 int j;
                 //放到3×3的矩阵中方便处理
-                float textureChannelRedArr[9];
-                float textureChannelGreenArr[9];
-                float textureChannelBlueArr[9];
+                vec3 textureChannelArr[9];
                 for (i = 0; i < 3; i ++) {
                     for (j = 0; j < 3; j ++) {
                         vec2 stPos = vec2(st.s + float(i - 1)  * xUnit, st.t + float(j - 1) * yUnit);
-                        textureChannelRedArr[i * 3 + j] = texture(sTexture, stPos).r;
-                        textureChannelGreenArr[i * 3 + j] = texture(sTexture, stPos).g;
-                        textureChannelBlueArr[i * 3 + j] = texture(sTexture, stPos).b;
+                        textureChannelArr[i * 3 + j] = texture(sTexture, stPos).rgb;
                     }
                 }
                 //找到中值(todo 还没优化)：
-                for (i = 0; i < 9; i ++) {
-                    for (j = 0; j < i; j++) {
-                        if (textureChannelRedArr[i] > textureChannelRedArr[j]) {
-                            float temp = textureChannelRedArr[i];
-                            textureChannelRedArr[i] = textureChannelRedArr[j];
-                            textureChannelRedArr[j] = temp;
+                for (i = 1; i < 9; i ++) {
+                    bool flag = true;
+                    for (j = 0; j < 9 - i; j++) {
+                        float totalI = textureChannelArr[i].r + textureChannelArr[i].g + textureChannelArr[i].b;
+                        float totalJ = textureChannelArr[j].r + textureChannelArr[j].g + textureChannelArr[j].b;
+                        if (totalI > totalJ) {
+                            vec3 temp = textureChannelArr[i];
+                            textureChannelArr[i] = textureChannelArr[j];
+                            textureChannelArr[j] = temp;
+                            flag = false;
                         }
                     }
-                }
-                for (i = 0; i < 9; i ++) {
-                    for (j = 0; j < i; j++) {
-                        if (textureChannelGreenArr[i] > textureChannelGreenArr[j]) {
-                            float temp = textureChannelGreenArr[i];
-                            textureChannelGreenArr[i] = textureChannelGreenArr[j];
-                            textureChannelGreenArr[j] = temp;
-                        }
-                    }
-                }
-                for (i = 0; i < 9; i ++) {
-                    for (j = 0; j < i; j++) {
-                        if (textureChannelBlueArr[i] > textureChannelBlueArr[j]) {
-                            float temp = textureChannelBlueArr[i];
-                            textureChannelBlueArr[i] = textureChannelBlueArr[j];
-                            textureChannelBlueArr[j] = temp;
-                        }
+                    if (flag) {
+                        break;
                     }
                 }
 //                //赋值颜色
-                fragColor = vec4(textureChannelRedArr[0], textureChannelGreenArr[0], textureChannelBlueArr[0], 1.0);
+                fragColor = vec4((textureChannelArr[0] + textureChannelArr[1]) / 2.0, 1.0);
+            }
+
+            void blur(vec2 st) {
+                float xUnit = 1.0 / resolution[0];
+                float yUnit = 1.0 / resolution[1];
+                int i;
+                int j;
+                //放到3×3的矩阵中方便处理
+                vec3 textureChannelArr[9];
+                float kernel[9];
+                kernel[0] = 1.0; kernel[1] = 2.0; kernel[2] = 1.0;
+                kernel[3] = 2.0; kernel[4] = 4.0; kernel[5] = 2.0;
+                kernel[6] = 1.0; kernel[7] = 2.0; kernel[8] = 1.0;
+                for (i = 0; i < 3; i ++) {
+                    for (j = 0; j < 3; j ++) {
+                        vec2 stPos = vec2(st.s + float(i - 1)  * xUnit, st.t + float(j - 1) * yUnit);
+                        textureChannelArr[i * 3 + j] = texture(sTexture, stPos).rgb;
+                    }
+                }
+                vec3 color;
+                for (i = 0; i < 9; i ++) {
+                    color = color + textureChannelArr[i] * kernel[i];
+                }
+                color = color / 16.0;
+                fragColor = vec4(color, 1.0);
+            }
+
+            void blur2(vec2 st) {
+                float xUnit = 1.0 / resolution[0];
+                float yUnit = 1.0 / resolution[1];
+                int i;
+                int j;
+                //放到3×3的矩阵中方便处理
+                vec3 textureChannelArr[9];
+                for (i = 0; i < 3; i ++) {
+                    for (j = 0; j < 3; j ++) {
+                        vec2 stPos = vec2(st.s + float(i - 1)  * xUnit, st.t + float(j - 1) * yUnit);
+                        textureChannelArr[i * 3 + j] = texture(sTexture, stPos).rgb;
+                    }
+                }
+                vec3 color;
+                for (i = 0; i < 9; i ++) {
+                    color = color + textureChannelArr[i];
+                }
+                color = color / 9.0;
+                fragColor = vec4(color, 1.0);
+//            fragColor = vec4(fragVTexCoord, 1.0, 1.0);
+            }
+
+            void blur3(vec2 st) {
+                float xUnit = 1.0 / resolution[0];
+                float yUnit = 1.0 / resolution[1];
+                int i;
+                int j;
+                float minRGB[3];
+                float maxRGB[3];
+                int minRGBIndex[3];
+                int maxRGBIndex[3];
+                minRGB[0] = 1.0;
+                minRGB[1] = 1.0;
+                minRGB[2] = 1.0;
+                //放到3×3的矩阵中方便处理
+                vec3 textureChannelArr[9];
+                for (i = 0; i < 3; i ++) {
+                    for (j = 0; j < 3; j ++) {
+                        vec2 stPos = vec2(st.s + float(i - 1)  * xUnit, st.t + float(j - 1) * yUnit);
+                        textureChannelArr[i * 3 + j] = texture(sTexture, stPos).rgb;
+                    }
+                }
+                for (i = 0; i < 9; i ++) {
+                    if (textureChannelArr[i].r > maxRGB[0]) {
+                        maxRGB[0] = textureChannelArr[i].r;
+                        maxRGBIndex[0] = i;
+                    }
+                    if (textureChannelArr[i].g > maxRGB[1]) {
+                        maxRGB[1] = textureChannelArr[i].g;
+                        maxRGBIndex[1] = i;
+                    }
+                    if (textureChannelArr[i].b > maxRGB[2]) {
+                        maxRGB[2] = textureChannelArr[i].b;
+                        maxRGBIndex[2] = i;
+                    }
+                }
+                vec3 color;
+                for (i = 0; i < 9; i ++) {
+                    if (i != maxRGBIndex[0]) {
+                        color.r = color.r + textureChannelArr[i].r;
+                    }
+                    if (i != maxRGBIndex[1]) {
+                        color.g = color.g + textureChannelArr[i].g;
+                    }
+                    if (i != maxRGBIndex[2]) {
+                        color.b = color.b + textureChannelArr[i].b;
+                    }
+                }
+                color = color / 8.0;
+                fragColor = vec4(color, 1.0);
+                //fragColor = vec4(fragVTexCoord, 1.0, 1.0);
             }
 
             void main() {
 //                vec4 color = texture(sTexture, fragVTexCoord);
 //                fragColor = vec4(fragVTexCoord, 1.0, 1.0); //cjztest
                 statisticalMedianFilter(fragVTexCoord);
+//                blur3(fragVTexCoord);
             }
     );
     float tempTexCoord[] =   //纹理内采样坐标,类似于canvas坐标

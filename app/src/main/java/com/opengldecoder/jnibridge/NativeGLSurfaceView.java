@@ -168,6 +168,7 @@ public class NativeGLSurfaceView extends GLSurfaceView {
 //                    mRenderConvolutionDemo = JniBridge.addRenderForLayer(mLayer, JniBridge.RENDER_PROGRAM_KIND.RENDER_CONVOLUTION.ordinal()); //添加卷积图像处理demo
                     mRenderNoiseReduction = JniBridge.makeRender(JniBridge.RENDER_PROGRAM_KIND.NOISE_REDUCTION.ordinal()); //添加降噪渲染器
                     JniBridge.addRenderToLayer(mLayer, mRenderOES);
+                    JniBridge.addRenderToLayer(mLayer, mRenderNoiseReduction);
                     mIsFirstFrame = false;
                 }
             }

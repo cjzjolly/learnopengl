@@ -60,12 +60,12 @@ RenderProgramOESTexture::RenderProgramOESTexture() {
             }
 
             void main() {
-                vec2 xy = vec2(fragVTexCoord.s, fragVTexCoord.t);
+                vec2 xy = vec2(fragVTexCoord.s, 1.0 - fragVTexCoord.t);
                 vec3 rgbWithBrightness = texture2D(oesTexture, xy).rgb * rgbWeight + brightness; //亮度调节
                 vec3 rgbWithContrast = rgbWithBrightness + (rgbWithBrightness - 0.5) * contrast / 1.0;  //对比度调整 参考https://blog.csdn.net/yuhengyue/article/details/103856476
-                //gl_FragColor = vec4(rgbWithContrast, fragObjectColor.a);
+                gl_FragColor = vec4(rgbWithContrast, fragObjectColor.a);
                 //cjztest 噪声测试
-                gl_FragColor = vec4(getNoise(fragVTexCoord) * rgbWithContrast.rgb, 1.0);
+//                gl_FragColor = vec4(getNoise(fragVTexCoord) + rgbWithContrast.rgb, 1.0);
             }
     );
 
