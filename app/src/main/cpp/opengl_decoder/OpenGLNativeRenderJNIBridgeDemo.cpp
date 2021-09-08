@@ -324,7 +324,7 @@ extern "C" {
     JNIEXPORT void JNICALL
     Java_com_opengldecoder_jnibridge_JniBridge_layerScale(JNIEnv *env, jobject activity, jlong layerPointer, jfloat scaleX, jfloat scaleY) {
         Layer* layer = (Layer*) layerPointer;
-        layer->scale(scaleX, scaleY, 1.0);
+        layer->userSetScale(scaleX, scaleY, 1.0);
     }
 
 }

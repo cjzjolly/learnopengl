@@ -91,6 +91,11 @@ public class NativeGLSurfaceView extends GLSurfaceView {
         }
     }
 
+    /**长宽缩放**/
+    public void setScale(float sx, float sy) {
+        JniBridge.layerScale(mLayer, sx, sy);
+    }
+
     private class Renderer implements GLSurfaceView.Renderer {
 
         private int mWidth;

@@ -46,6 +46,8 @@ add_library( # Sets the name of the library.
         RenderProgramOESTexture.cpp
         RenderProgramNoiseReduction.h
         RenderProgramNoiseReduction.cpp
+        RenderProgramDebackground.h
+        RenderProgramDebackground.cpp
         Layer.cpp
              )
 

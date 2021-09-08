@@ -23,10 +23,15 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
     private SeekBar mSeekBarChannelRed = null;
     private SeekBar mSeekBarChannelGreen = null;
     private SeekBar mSeekBarChannelBlue = null;
+    private SeekBar mSeekBarScaleX = null;
+    private SeekBar mSeekBarScaleY = null;
     private CheckBox mCheckBox;
 
     private float rgb[] = {1f, 1f, 1f};
     private SeekBar.OnSeekBarChangeListener onSeekBarChangeListener = new SeekBar.OnSeekBarChangeListener() {
+        float scaleX = 1f;
+        float scaleY = 1f;
+
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean b) {
             switch (seekBar.getId()) {
@@ -48,6 +53,14 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
                     break;
                 case R.id.seekBar_contrast:
                     mNativeGLSurfaceView.setRenderContrast((float) progress / 100f);
+                    break;
+                case R.id.seekBar_scale_x:
+                    scaleX = (float) progress / 100f;
+                    mNativeGLSurfaceView.setScale(scaleX, scaleY);
+                    break;
+                case R.id.seekBar_scale_y:
+                    scaleY = (float) progress / 100f;
+                    mNativeGLSurfaceView.setScale(scaleX, scaleY);
                     break;
             }
         }
@@ -81,6 +94,8 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         mSeekBarChannelRed = findViewById(R.id.seekBar_channel_red);
         mSeekBarChannelGreen = findViewById(R.id.seekBar_channel_green);
         mSeekBarChannelBlue = findViewById(R.id.seekBar_channel_blue);
+        mSeekBarScaleX = findViewById(R.id.seekBar_scale_x);
+        mSeekBarScaleY = findViewById(R.id.seekBar_scale_y);
         mCheckBox = findViewById(R.id.cb_denoise);
         mSeekBarChannelRed.setMax(100);
         mSeekBarChannelRed.setProgress(100);
@@ -92,11 +107,17 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         mSeekBarBrightness.setProgress(100);
         mSeekBarContrast.setMax(100);
         mSeekBarContrast.setProgress(0);
+        mSeekBarScaleX.setMax(200);
+        mSeekBarScaleX.setProgress(100);
+        mSeekBarScaleY.setMax(200);
+        mSeekBarScaleY.setProgress(100);
         mSeekBarBrightness.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarContrast.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarChannelRed.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarChannelGreen.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarChannelBlue.setOnSeekBarChangeListener(onSeekBarChangeListener);
+        mSeekBarScaleX.setOnSeekBarChangeListener(onSeekBarChangeListener);
+        mSeekBarScaleY.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
