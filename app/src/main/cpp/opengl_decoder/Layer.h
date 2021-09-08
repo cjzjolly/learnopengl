@@ -49,6 +49,8 @@ public:
     /**顶点变换矩阵 间接 缩放量，不允许用户直接操作顶点变换矩阵**/
     void setUserScale(float sx, float sy, float sz);
 
+    void setUserTransLate(float dx, float dy, float dz);
+
     void setUserRotate(float degree, float vecX, float vecY, float vecZ);
 
 private:

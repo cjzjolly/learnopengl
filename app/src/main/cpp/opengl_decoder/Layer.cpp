@@ -52,6 +52,13 @@ void Layer::setUserScale(float sx, float sy, float sz) {
     mUserObjectMatrix[10] = sz;
 }
 
+/**用户直接设定位置偏移量**/
+void Layer::setUserTransLate(float dx, float dy, float dz) { //由于opengl的矩阵旋转过，所以原本改3、7、11的矩阵位置变成12、13、14
+    mUserObjectMatrix[12] = dx;
+    mUserObjectMatrix[13] = dy;
+    mUserObjectMatrix[14] = dz;
+}
+
 /**用户直接设定旋转量**/
 void Layer::setUserRotate(float degree, float vecX, float vecY, float vecZ) {
     setIdentityM(mUserObjectRotateMatrix, 0); //先复原

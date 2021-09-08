@@ -328,6 +328,12 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL
+    Java_com_opengldecoder_jnibridge_JniBridge_layerTranslate(JNIEnv *env, jobject activity, jlong layerPointer, jfloat dx, jfloat dy) {
+        Layer* layer = (Layer*) layerPointer;
+        layer->setUserTransLate(dx, dy, 0.0);
+    }
+
+    JNIEXPORT void JNICALL
     Java_com_opengldecoder_jnibridge_JniBridge_layerRotate(JNIEnv *env, jobject activity, jlong layerPointer, jfloat angle) {
         Layer* layer = (Layer*) layerPointer;
         layer->setUserRotate(angle, 0, 0, 1);

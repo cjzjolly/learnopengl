@@ -9,6 +9,7 @@ import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.Surface;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -28,6 +29,8 @@ public class NativeGLSurfaceView extends GLSurfaceView {
     private int[] mDataInputTexturesPointer = null;
     private SurfaceTexture mInputDataSurfaceTexture;
     private Player mDemoPlayer;
+    private float mdx, mdy;
+    private float mPrevX, mPrevY;
 
 
     public NativeGLSurfaceView(Context context) {
@@ -93,12 +96,41 @@ public class NativeGLSurfaceView extends GLSurfaceView {
 
     /**长宽缩放**/
     public void setScale(float sx, float sy) {
-        JniBridge.layerScale(mLayer, sx, sy);
+        if (mLayer != Long.MIN_VALUE) {
+            JniBridge.layerScale(mLayer, sx, sy);
+        }
+    }
+
+    /**移动**/
+    public void setTrans(float x, float y) {
+        if (mLayer != Long.MIN_VALUE) {
+            JniBridge.layerTranslate(mLayer, x, y);
+        }
     }
 
     /**旋转**/
     public void setRotate(float angle) {
-        JniBridge.layerRotate(mLayer, angle);
+        if (mLayer != Long.MIN_VALUE) {
+            JniBridge.layerRotate(mLayer, angle);
+        }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                mPrevX = event.getX();
+                mPrevY = event.getY();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                mdx += (float) (event.getX() - mPrevX) / getWidth();
+                mdy -= (float) (event.getY() - mPrevY) / getHeight();
+                setTrans(mdx, mdy);
+                mPrevX = event.getX();
+                mPrevY = event.getY();
+                break;
+        }
+        return true;
     }
 
     private class Renderer implements GLSurfaceView.Renderer {

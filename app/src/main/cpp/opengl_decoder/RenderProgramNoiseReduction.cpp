@@ -86,7 +86,7 @@ RenderProgramNoiseReduction::RenderProgramNoiseReduction() {
                 float yUnit = 1.0 / resolution[1];
                 int i;
                 int j;
-                //放到3×3的矩阵中方便处理
+                //放到矩阵中方便处理
                 vec3 textureChannelArr[9];
                 float kernel[9];
                 kernel[0] = 1.0; kernel[1] = 2.0; kernel[2] = 1.0;
@@ -111,7 +111,7 @@ RenderProgramNoiseReduction::RenderProgramNoiseReduction() {
                 float yUnit = 1.0 / resolution[1];
                 int i;
                 int j;
-                //放到3×3的矩阵中方便处理
+                //放到矩阵中方便处理
                 vec3 textureChannelArr[9];
                 for (i = 0; i < 3; i ++) {
                     for (j = 0; j < 3; j ++) {
