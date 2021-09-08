@@ -324,7 +324,13 @@ extern "C" {
     JNIEXPORT void JNICALL
     Java_com_opengldecoder_jnibridge_JniBridge_layerScale(JNIEnv *env, jobject activity, jlong layerPointer, jfloat scaleX, jfloat scaleY) {
         Layer* layer = (Layer*) layerPointer;
-        layer->userSetScale(scaleX, scaleY, 1.0);
+        layer->setUserScale(scaleX, scaleY, 1.0);
+    }
+
+    JNIEXPORT void JNICALL
+    Java_com_opengldecoder_jnibridge_JniBridge_layerRotate(JNIEnv *env, jobject activity, jlong layerPointer, jfloat angle) {
+        Layer* layer = (Layer*) layerPointer;
+        layer->setUserRotate(angle, 0, 0, 1);
     }
 
 }

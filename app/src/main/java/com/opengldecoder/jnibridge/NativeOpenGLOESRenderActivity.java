@@ -25,6 +25,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
     private SeekBar mSeekBarChannelBlue = null;
     private SeekBar mSeekBarScaleX = null;
     private SeekBar mSeekBarScaleY = null;
+    private SeekBar mSeekBarRotate = null;
     private CheckBox mCheckBox;
 
     private float rgb[] = {1f, 1f, 1f};
@@ -62,6 +63,9 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
                     scaleY = (float) progress / 100f;
                     mNativeGLSurfaceView.setScale(scaleX, scaleY);
                     break;
+                case R.id.seekBar_rotate:
+                    mNativeGLSurfaceView.setRotate(progress);
+                    break;
             }
         }
 
@@ -96,6 +100,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         mSeekBarChannelBlue = findViewById(R.id.seekBar_channel_blue);
         mSeekBarScaleX = findViewById(R.id.seekBar_scale_x);
         mSeekBarScaleY = findViewById(R.id.seekBar_scale_y);
+        mSeekBarRotate = findViewById(R.id.seekBar_rotate);
         mCheckBox = findViewById(R.id.cb_denoise);
         mSeekBarChannelRed.setMax(100);
         mSeekBarChannelRed.setProgress(100);
@@ -111,6 +116,8 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         mSeekBarScaleX.setProgress(100);
         mSeekBarScaleY.setMax(200);
         mSeekBarScaleY.setProgress(100);
+        mSeekBarRotate.setMax(360);
+        mSeekBarRotate.setProgress(0);
         mSeekBarBrightness.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarContrast.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarChannelRed.setOnSeekBarChangeListener(onSeekBarChangeListener);
@@ -118,6 +125,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         mSeekBarChannelBlue.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarScaleX.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarScaleY.setOnSeekBarChangeListener(onSeekBarChangeListener);
+        mSeekBarRotate.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {

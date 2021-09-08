@@ -96,6 +96,11 @@ public class NativeGLSurfaceView extends GLSurfaceView {
         JniBridge.layerScale(mLayer, sx, sy);
     }
 
+    /**旋转**/
+    public void setRotate(float angle) {
+        JniBridge.layerRotate(mLayer, angle);
+    }
+
     private class Renderer implements GLSurfaceView.Renderer {
 
         private int mWidth;

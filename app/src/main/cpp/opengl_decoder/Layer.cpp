@@ -30,17 +30,11 @@ void Layer::initObjMatrix() {
     //创建单位矩阵
     setIdentityM(mObjectMatrix, 0);
     setIdentityM(mUserObjectMatrix, 0);
+    setIdentityM(mUserObjectRotateMatrix, 0);
 }
 
 void Layer::scale(float sx, float sy, float sz) {
     scaleM(mObjectMatrix, 0, sx, sy, sz);
-}
-
-/**用户直接设定缩放量**/
-void Layer::userSetScale(float sx, float sy, float sz) {
-    mUserObjectMatrix[0] = sx;
-    mUserObjectMatrix[5] = sy;
-    mUserObjectMatrix[10] = sz;
 }
 
 void Layer::translate(float dx, float dy, float dz) {
@@ -51,8 +45,22 @@ void Layer::rotate(int degree, float roundX, float roundY, float roundZ) {
     rotateM(mObjectMatrix, 0, degree, roundX, roundY, roundZ);
 }
 
+/**用户直接设定缩放量**/
+void Layer::setUserScale(float sx, float sy, float sz) {
+    mUserObjectMatrix[0] = sx;
+    mUserObjectMatrix[5] = sy;
+    mUserObjectMatrix[10] = sz;
+}
+
+/**用户直接设定旋转量**/
+void Layer::setUserRotate(float degree, float vecX, float vecY, float vecZ) {
+    setIdentityM(mUserObjectRotateMatrix, 0); //先复原
+    rotateM(mUserObjectRotateMatrix, 0, degree, vecX, vecY, vecZ);
+}
+
 void Layer::locationTrans(float cameraMatrix[], float projMatrix[], int muMVPMatrixPointer) {
     multiplyMM(mMVPMatrix, 0, mUserObjectMatrix, 0, mObjectMatrix, 0);
+    multiplyMM(mMVPMatrix, 0, mUserObjectRotateMatrix, 0, mMVPMatrix, 0);
     multiplyMM(mMVPMatrix, 0, cameraMatrix, 0, mMVPMatrix, 0);         //将摄像机矩阵乘以物体矩阵
     multiplyMM(mMVPMatrix, 0, projMatrix, 0, mMVPMatrix, 0);         //将投影矩阵乘以上一步的结果矩阵
     glUniformMatrix4fv(muMVPMatrixPointer, 1, false, mMVPMatrix);        //将最终变换关系传入渲染管线

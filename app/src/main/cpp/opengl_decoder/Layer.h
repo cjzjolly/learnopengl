@@ -47,7 +47,9 @@ public:
     void destroy();
 
     /**顶点变换矩阵 间接 缩放量，不允许用户直接操作顶点变换矩阵**/
-    void userSetScale(float sx, float sy, float sz);
+    void setUserScale(float sx, float sy, float sz);
+
+    void setUserRotate(float degree, float vecX, float vecY, float vecZ);
 
 private:
     void createFrameBuffer();
@@ -93,6 +95,7 @@ private:
 
     float mObjectMatrix[16];    //具体物体的3D变换矩阵，包括旋转、平移、缩放
     float mUserObjectMatrix[16];    //用户自定义的3D变换矩阵，包括旋转、平移、缩放
+    float mUserObjectRotateMatrix[16];    //用户自定义的3D变换矩阵，包括旋转、平移、缩放
     float mMVPMatrix[16];//创建用来存放最终变换矩阵的数组
     float mTexCoor[2 * 4];   //纹理内采样坐标,类似于canvas坐标 //这东西有问题，导致两个framebuffer的画面互相取纹理时互为颠倒
     float mVertxData[3 * 4];
