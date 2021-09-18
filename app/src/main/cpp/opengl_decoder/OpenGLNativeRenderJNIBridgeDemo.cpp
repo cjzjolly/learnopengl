@@ -20,6 +20,7 @@
 #include "RenderProgramConvolution.h"
 #include "RenderProgramOESTexture.h"
 #include "RenderProgramNoiseReduction.h"
+#include "RenderProgramFilter.h"
 
 
 static const char *TAG = "nativeGL";

@@ -102,7 +102,7 @@ void RenderProgramOESTexture::createRender(float x, float y, float z, float w, f
             x, y + h, z,
     };
     memcpy(mVertxData, vertxData, sizeof(vertxData));
-    mImageProgram = createProgram(vertShader + 1, fragShader + 1);  //cjztest 测试原因屏蔽：屏蔽了依然出现花屏
+    mImageProgram = createProgram(vertShader + 1, fragShader + 1);
     //获取程序中顶点位置属性引用"指针"
     mObjectPositionPointer = glGetAttribLocation(mImageProgram.programHandle, "objectPosition");
     //纹理采样坐标
@@ -214,7 +214,6 @@ void RenderProgramOESTexture::destroy() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, 0);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 0, 0, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, nullptr);
-        glDeleteTextures(1, mTexturePointers); //销毁纹理,gen和delete要成对出现
         //删除不用的shaderprogram
         destroyProgram(mImageProgram);
     }
