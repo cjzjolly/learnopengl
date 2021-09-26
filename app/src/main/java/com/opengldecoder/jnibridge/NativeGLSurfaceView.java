@@ -12,6 +12,8 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
 
+import java.nio.ByteBuffer;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -23,6 +25,8 @@ public class NativeGLSurfaceView extends GLSurfaceView {
     private long mRenderOES = Long.MIN_VALUE;
     private long mRenderNoiseReduction = Long.MIN_VALUE;
     private long mRenderConvolutionDemo = Long.MIN_VALUE;
+    private long mRenderLut = Long.MIN_VALUE;
+
     //Android画面数据输入Surface
     private Surface mDataInputSurface = null;
     //Android画面数据输入纹理
@@ -112,6 +116,16 @@ public class NativeGLSurfaceView extends GLSurfaceView {
     public void setRotate(float angle) {
         if (mLayer != Long.MIN_VALUE) {
             JniBridge.layerRotate(mLayer, angle);
+        }
+    }
+
+    /**加载滤镜**/
+    public void setLut(Bitmap lutBMP) {
+        if (mLayer != Long.MIN_VALUE && mRenderLut != Long.MIN_VALUE) {
+            byte b[] = new byte[lutBMP.getByteCount()];
+            ByteBuffer bb = ByteBuffer.wrap(b);
+            lutBMP.copyPixelsToBuffer(bb);
+            JniBridge.renderLutTextureLoad(mRenderLut, b, lutBMP.getWidth(), lutBMP.getHeight(), lutBMP.getWidth());
         }
     }
 
@@ -207,10 +221,14 @@ public class NativeGLSurfaceView extends GLSurfaceView {
                     mLayer = JniBridge.addFullContainerLayer(mDataInputTexturesPointer[0], new int[]{mVideoWidth, mVideoHeight}, 0, new int[]{0, 0}, GLES30.GL_RGBA);  //依次传入纹理、纹理的宽高、数据地址（如果有）、数据的宽高
                     //添加一个oes渲染器
                     mRenderOES = JniBridge.makeRender(JniBridge.RENDER_PROGRAM_KIND.RENDER_OES_TEXTURE.ordinal()); //添加oes纹理
+
 //                    mRenderConvolutionDemo = JniBridge.addRenderForLayer(mLayer, JniBridge.RENDER_PROGRAM_KIND.RENDER_CONVOLUTION.ordinal()); //添加卷积图像处理demo
                     mRenderNoiseReduction = JniBridge.makeRender(JniBridge.RENDER_PROGRAM_KIND.NOISE_REDUCTION.ordinal()); //添加降噪渲染器
+                    mRenderLut = JniBridge.makeRender(JniBridge.RENDER_PROGRAM_KIND.RENDER_LUT.ordinal()); //添加Lut渲染器
+
                     JniBridge.addRenderToLayer(mLayer, mRenderOES);
                     JniBridge.addRenderToLayer(mLayer, mRenderNoiseReduction);
+                    JniBridge.addRenderToLayer(mLayer, mRenderLut);
                     mIsFirstFrame = false;
                 }
             }

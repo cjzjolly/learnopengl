@@ -38,7 +38,7 @@ private:
     GLuint mLutTexutresPointers[1];
 
     GLuint mGenTextureId = 0xFFFFFFFF;
-    GLuint mInputTexturesArray;
+    GLuint mInputTexturesArrayPointer;
     GLslHandle mImageProgram;
     GLint mObjectPositionPointer;
     GLint mVTexCoordPointer;

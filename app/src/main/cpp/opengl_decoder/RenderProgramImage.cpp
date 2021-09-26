@@ -194,7 +194,7 @@ void RenderProgramImage::drawTo(float *cameraMatrix, float *projMatrix, DrawType
                 break;
             case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_TEXTURE:
                 glActiveTexture(GL_TEXTURE0); //激活0号纹理
-                glBindTexture(GL_TEXTURE_2D, mTexturePointers[0]); //0号纹理绑定内容
+                glBindTexture(GL_TEXTURE_2D, mInputTexturesArray); //0号纹理绑定内容
                 glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "sTexture"), 0); //映射到渲染脚本，获取纹理属性的指针
                 resolution[0] = (float) mInputTextureWidth;
                 resolution[1] = (float) mInputTextureHeight;

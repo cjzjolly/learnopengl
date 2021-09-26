@@ -15,6 +15,7 @@ public class JniBridge {
         RENDER_YUV, //YUV数据或纹理渲染
         RENDER_CONVOLUTION, //添加卷积处理
         NOISE_REDUCTION, //添加噪声处理
+        RENDER_LUT, //添加滤镜处理渲染器
     }
 
     public static native void nativeGLInit(int viewPortWidth, int viewPortHeight);
@@ -58,4 +59,7 @@ public class JniBridge {
 
     public static native void layerRotate(long layerPointer, float angle);
 
+
+    /******************************************特定图层非通用功能设置区*************************************************/
+    public static native void renderLutTextureLoad(long lutRenderPointer, byte lutPixels[], int w, int h, int unitLen);
 }

@@ -45,6 +45,8 @@ extern "C" {
         RENDER_YUV = 1, //YUV数据或纹理渲染
         RENDER_CONVOLUTION = 2, //添加卷积处理
         NOISE_REDUCTION = 3, //添加噪声消除处理
+        RENDER_LUT = 4, //添加滤镜处理渲染器
+
     };
     float mRatio;
     int mWidth;
@@ -250,6 +252,15 @@ extern "C" {
                 resultProgram = renderProgramConvolution;
                 break;
             }
+            //创建滤镜渲染器:
+            case RENDER_LUT: {
+                RenderProgramFilter *renderProgramFilter = new RenderProgramFilter();
+                renderProgramFilter->createRender(-1, -mRatio, 0, 2,
+                                                  mRatio * 2,
+                                                  mWidth,
+                                                  mHeight);
+                resultProgram = renderProgramFilter;
+            }
         }
         return (jlong) resultProgram;
     }
@@ -338,6 +349,15 @@ extern "C" {
     Java_com_opengldecoder_jnibridge_JniBridge_layerRotate(JNIEnv *env, jobject activity, jlong layerPointer, jfloat angle) {
         Layer* layer = (Layer*) layerPointer;
         layer->setUserRotate(angle, 0, 0, 1);
+    }
+
+    /******************************************特定图层非通用功能设置区*************************************************/
+    JNIEXPORT void JNICALL
+    Java_com_opengldecoder_jnibridge_JniBridge_renderLutTextureLoad(JNIEnv *env, jobject activity,  jlong lutRenderPointer, jbyteArray lutPixels, jint w, jint h, jint unitLen) {
+        jbyte *lutPixelsPointer = env->GetByteArrayElements(lutPixels, JNI_FALSE);
+        RenderProgramFilter* renderProgramFilter = (RenderProgramFilter*) lutRenderPointer;
+        renderProgramFilter->setLut((char*) lutPixelsPointer, w, h, unitLen);
+        env->ReleaseByteArrayElements(lutPixels, lutPixelsPointer, JNI_FALSE);
     }
 
 }

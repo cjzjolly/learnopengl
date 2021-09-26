@@ -3,6 +3,7 @@ package com.opengldecoder.jnibridge;
 import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
@@ -132,6 +133,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
                 mNativeGLSurfaceView.setRenderNoiseReductionOnOff(b);
             }
         });
+        mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.drawable.lut_nuanse));
     }
 
     protected void requestPermission(String permissions[]) {
