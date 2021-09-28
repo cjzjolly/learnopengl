@@ -126,6 +126,7 @@ public class NativeGLSurfaceView extends GLSurfaceView {
             ByteBuffer bb = ByteBuffer.wrap(b);
             lutBMP.copyPixelsToBuffer(bb);
             JniBridge.renderLutTextureLoad(mRenderLut, b, lutBMP.getWidth(), lutBMP.getHeight(), lutBMP.getWidth());
+            Log.i("cjztest", "lut pixels size:" + lutBMP.getByteCount());
         }
     }
 

@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
@@ -133,7 +134,9 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
                 mNativeGLSurfaceView.setRenderNoiseReductionOnOff(b);
             }
         });
-        mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.drawable.lut_nuanse));
+        new Handler().postDelayed(() -> {
+            mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_nuanse));
+        }, 200);
     }
 
     protected void requestPermission(String permissions[]) {
