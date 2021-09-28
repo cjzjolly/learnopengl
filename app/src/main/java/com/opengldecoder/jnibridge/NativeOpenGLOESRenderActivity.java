@@ -135,7 +135,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
             }
         });
         new Handler().postDelayed(() -> {
-            mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_nuanse));
+            mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_menglongf));
         }, 200);
     }
 

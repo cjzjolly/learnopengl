@@ -46,6 +46,7 @@ RenderProgramFilter::RenderProgramFilter() {
             precision highp sampler2DArray;
             uniform sampler2D sTexture;//图像纹理输入
             uniform sampler2DArray lutTexture;//滤镜纹理输入
+            uniform float pageSize;
             uniform float frame;//第几帧
             uniform vec2 resolution;//分辨率
             in vec4 fragObjectColor;//接收vertShader处理后的颜色值给片元程序
@@ -59,7 +60,7 @@ RenderProgramFilter::RenderProgramFilter() {
                 srcColor.g = clamp(srcColor.g, 0.01, 0.99);
                 srcColor.b = clamp(srcColor.b, 0.01, 0.99);
                 if (fragVTexCoord.x >= 0.5) {
-                    fragColor = texture(lutTexture, vec3(srcColor.b, srcColor.g, srcColor.r * 63.0));
+                    fragColor = texture(lutTexture, vec3(srcColor.b, srcColor.g, srcColor.r * (pageSize - 1.0)));
                 } else {
                     fragColor = srcColor;
                 }
@@ -225,7 +226,7 @@ void RenderProgramFilter::drawTo(float *cameraMatrix, float *projMatrix, DrawTyp
                 break;
         }
 
-
+        int longLen = mLutWidth > mLutHeight ? mLutWidth : mLutHeight;
         if (mTestPixels) {
             //todo 如果之前有lut纹理，先销毁再加载
             glGenTextures(1, mLutTexutresPointers);
@@ -236,7 +237,6 @@ void RenderProgramFilter::drawTo(float *cameraMatrix, float *projMatrix, DrawTyp
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-            int longLen = mLutWidth > mLutHeight ? mLutWidth : mLutHeight;
             glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, mLutUnitLen, mLutUnitLen, longLen / mLutUnitLen, 0, GL_RGBA, GL_UNSIGNED_BYTE, mTestPixels);
             free(mTestPixels);
             mTestPixels = nullptr;
@@ -244,6 +244,7 @@ void RenderProgramFilter::drawTo(float *cameraMatrix, float *projMatrix, DrawTyp
         glActiveTexture(GL_TEXTURE1); //激活1号纹理
         glBindTexture(GL_TEXTURE_2D_ARRAY, mLutTexutresPointers[0]);
         glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "lutTexture"), 1); //映射到渲染脚本，获取纹理属性的指针
+        glUniform1f(glGetUniformLocation(mImageProgram.programHandle, "pageSize"), longLen / mLutUnitLen); //映射到渲染脚本，获取纹理属性的指针
 
 
 
