@@ -65,4 +65,10 @@ private:
 
     bool mIsTexutresInited = false;
 
+    char* mLutPixels = nullptr;
+    int mLutWidth;
+    int mLutHeight;
+    int mLutUnitLen;
+    bool mHadLoadLut = false;
+
 };

@@ -18,12 +18,6 @@ static const char *TAG = "nativeGL";
 #define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, TAG, fmt, ##args)
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
 
-char* mLutPixels = nullptr;
-int mLutWidth;
-int mLutHeight;
-int mLutUnitLen;
-bool mHadLoadLut = false;
-
 RenderProgramFilter::RenderProgramFilter() {
     vertShader = GL_SHADER_STRING(
             $#version 300 es\n
