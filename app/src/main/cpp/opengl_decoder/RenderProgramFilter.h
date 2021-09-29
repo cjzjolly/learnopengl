@@ -26,7 +26,7 @@ public:
 
     void loadTexture(Textures textures[]);
 
-    void setLut(char *lutPixels, int lutWidth, int lutHeight, int unitLength);
+    void loadLut(char *lutPixels, int lutWidth, int lutHeight, int unitLength);
 
     void drawTo(float *cameraMatrix, float *projMatrix, DrawType drawType, int outputFBOPointer, int fboW, int fboH);
 

@@ -147,5 +147,18 @@
             android:text="开启卷积降噪"
             android:checked="true"/>
 
+        <CheckBox
+            android:id="@+id/cb_lut"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="开启滤镜"
+            android:checked="false"/>
+
+        <ListView
+            android:id="@+id/lv_lut_list"
+            android:layout_width="match_parent"
+            android:layout_height="400dp">
+
+        </ListView>
     </LinearLayout>
 </ScrollView>

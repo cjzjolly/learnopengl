@@ -10,9 +10,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.ListView;
 import android.widget.SeekBar;
+import android.widget.Toast;
 
 import com.example.learnopengl.R;
 import com.ffmpeg.FFMpegUtil;
@@ -29,6 +33,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
     private SeekBar mSeekBarScaleY = null;
     private SeekBar mSeekBarRotate = null;
     private CheckBox mCheckBox;
+    private ListView mLutList;
 
     private float rgb[] = {1f, 1f, 1f};
     private SeekBar.OnSeekBarChangeListener onSeekBarChangeListener = new SeekBar.OnSeekBarChangeListener() {
@@ -134,9 +139,37 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
                 mNativeGLSurfaceView.setRenderNoiseReductionOnOff(b);
             }
         });
+        mLutList = findViewById(R.id.lv_lut_list);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new String[] {
+                "黑色", "反差暖", "朦胧", "暖色", "鲜明"
+        });
+        mLutList.setAdapter(adapter);
+        mLutList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                switch (position) {
+                    case 0:
+                        mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_hei_se));
+                        break;
+                    case 1:
+                        mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_fan_cha_nuan));
+                        break;
+                    case 2:
+                        mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_menglongf));
+                        break;
+                    case 3:
+                        mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_nuanse));
+                        break;
+                    case 4:
+                        mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_xianming));
+                        break;
+                }
+            }
+        });
+
         new Handler().postDelayed(() -> {
             mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_menglongf));
-        }, 200);
+        }, 800);
     }
 
     protected void requestPermission(String permissions[]) {

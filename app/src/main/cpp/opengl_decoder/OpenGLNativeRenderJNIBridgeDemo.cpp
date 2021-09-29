@@ -356,7 +356,7 @@ extern "C" {
     Java_com_opengldecoder_jnibridge_JniBridge_renderLutTextureLoad(JNIEnv *env, jobject activity,  jlong lutRenderPointer, jbyteArray lutPixels, jint w, jint h, jint unitLen) {
         jbyte *lutPixelsPointer = env->GetByteArrayElements(lutPixels, JNI_FALSE);
         RenderProgramFilter* renderProgramFilter = (RenderProgramFilter*) lutRenderPointer;
-        renderProgramFilter->setLut((char*) lutPixelsPointer, w, h, unitLen);
+        renderProgramFilter->loadLut((char*) lutPixelsPointer, w, h, unitLen);
         env->ReleaseByteArrayElements(lutPixels, lutPixelsPointer, JNI_FALSE);
     }
 

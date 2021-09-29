@@ -18,10 +18,11 @@ static const char *TAG = "nativeGL";
 #define LOGD(fmt, args...) __android_log_print(ANDROID_LOG_DEBUG, TAG, fmt, ##args)
 #define LOGE(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, TAG, fmt, ##args)
 
-char* mTestPixels = nullptr;
+char* mLutPixels = nullptr;
 int mLutWidth;
 int mLutHeight;
 int mLutUnitLen;
+bool mHadLoadLut = false;
 
 RenderProgramFilter::RenderProgramFilter() {
     vertShader = GL_SHADER_STRING(
@@ -55,19 +56,11 @@ RenderProgramFilter::RenderProgramFilter() {
 
             void main() {
                 vec4 srcColor = texture(sTexture, fragVTexCoord);
-//                vec4 lutColor = texture(lutTexture, srcColor.rgb);
                 srcColor.r = clamp(srcColor.r, 0.01, 0.99);
                 srcColor.g = clamp(srcColor.g, 0.01, 0.99);
                 srcColor.b = clamp(srcColor.b, 0.01, 0.99);
-                if (fragVTexCoord.x >= 0.5) {
-                    fragColor = texture(lutTexture, vec3(srcColor.b, srcColor.g, srcColor.r * (pageSize - 1.0)));
-                } else {
-                    fragColor = srcColor;
-                }
-//                fragColor = lutColor;
-//                fragColor = texture(lutTexture, vec3(fragVTexCoord.x, 1.0 - fragVTexCoord.y, 61.2));
-//                fragColor = vec4(lutColor.rgb, 1.0);
-//                fragColor = vec4(0.5, srcColor.g, srcColor.b, 1.0);
+                fragColor = texture(lutTexture, vec3(srcColor.b, srcColor.g, srcColor.r * (pageSize - 1.0)));
+
             }
     );
 
@@ -169,16 +162,13 @@ void RenderProgramFilter::loadTexture(Textures textures[]) {
     mInputTextureHeight = textures[0].height;
 }
 
-
-
-
 /**设置LUT滤镜**/
-void RenderProgramFilter::setLut(char* lutPixels, int lutWidth, int lutHeight, int unitLength) {
+void RenderProgramFilter::loadLut(char* lutPixels, int lutWidth, int lutHeight, int unitLength) { //纹理更新只能在GL线程里面操作，所以这里只能先保存一下数据
     mLutWidth = lutWidth;
     mLutHeight = lutHeight;
     mLutUnitLen = unitLength;
-    mTestPixels = (char*) malloc(mLutWidth * mLutHeight * 4);
-    memcpy(mTestPixels, lutPixels,  mLutWidth * mLutHeight * 4);
+    mLutPixels = (char*) malloc(mLutWidth * mLutHeight * 4);
+    memcpy(mLutPixels, lutPixels, mLutWidth * mLutHeight * 4);
 }
 
 
@@ -227,8 +217,13 @@ void RenderProgramFilter::drawTo(float *cameraMatrix, float *projMatrix, DrawTyp
         }
 
         int longLen = mLutWidth > mLutHeight ? mLutWidth : mLutHeight;
-        if (mTestPixels) {
-            //todo 如果之前有lut纹理，先销毁再加载
+        if (mLutPixels) {
+            if (mHadLoadLut) {
+                glBindTexture(GL_TEXTURE_2D_ARRAY, mLutTexutresPointers[0]);
+                glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, 0, 0, 0, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                             nullptr);
+                glDeleteTextures(1, mLutTexutresPointers);
+            }
             glGenTextures(1, mLutTexutresPointers);
             glBindTexture(GL_TEXTURE_2D_ARRAY, mLutTexutresPointers[0]);
             glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -236,19 +231,16 @@ void RenderProgramFilter::drawTo(float *cameraMatrix, float *projMatrix, DrawTyp
             glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-            glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, mLutUnitLen, mLutUnitLen, longLen / mLutUnitLen, 0, GL_RGBA, GL_UNSIGNED_BYTE, mTestPixels);
-            free(mTestPixels);
-            mTestPixels = nullptr;
+            glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, mLutUnitLen, mLutUnitLen, longLen / mLutUnitLen, 0, GL_RGBA, GL_UNSIGNED_BYTE, mLutPixels);
+            //lut数据加载完毕，清理内存
+            free(mLutPixels);
+            mLutPixels = nullptr;
+            mHadLoadLut = true;
         }
         glActiveTexture(GL_TEXTURE1); //激活1号纹理
         glBindTexture(GL_TEXTURE_2D_ARRAY, mLutTexutresPointers[0]);
         glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "lutTexture"), 1); //映射到渲染脚本，获取纹理属性的指针
         glUniform1f(glGetUniformLocation(mImageProgram.programHandle, "pageSize"), longLen / mLutUnitLen); //映射到渲染脚本，获取纹理属性的指针
-
-
-
-
         glDrawArrays(GL_TRIANGLE_STRIP, 0, /*mPointBufferPos / 3*/ 4); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
         glDisableVertexAttribArray(mObjectPositionPointer);
         glDisableVertexAttribArray(mObjectVertColorArrayPointer);
