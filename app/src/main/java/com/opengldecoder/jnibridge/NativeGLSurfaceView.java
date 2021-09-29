@@ -60,14 +60,14 @@ public class NativeGLSurfaceView extends GLSurfaceView {
     }
 
     /**亮度调整**/
-    public void setRenderBrightness (float brightness) {
+    public void setRenderBrightness(float brightness) {
         if (mRenderOES != Long.MIN_VALUE) {
             JniBridge.setBrightness(mRenderOES, brightness);
         }
     }
 
     /**对比度调整**/
-    public void setRenderContrast (float contrast) {
+    public void setRenderContrast(float contrast) {
         if (mRenderOES != Long.MIN_VALUE) {
             JniBridge.setContrast(mRenderOES, contrast);
         }
@@ -75,25 +75,32 @@ public class NativeGLSurfaceView extends GLSurfaceView {
 
 
     /**白平衡调整**/
-    public void setRenderWhiteBalance (float rWeight, float gWeight, float bWeight) {
+    public void setRenderWhiteBalance(float rWeight, float gWeight, float bWeight) {
         if (mRenderOES != Long.MIN_VALUE) {
             JniBridge.setWhiteBalance(mRenderOES, rWeight, gWeight, bWeight);
         }
     }
 
     /**降噪渲染器开关**/
-    public void setRenderNoiseReductionOnOff (boolean sw) {
-        if (sw) {
-            if (mLayer != Long.MIN_VALUE) {
-                if (mRenderNoiseReduction != Long.MIN_VALUE) {
+    public void setRenderNoiseReductionOnOff(boolean sw) {
+        if (mLayer != Long.MIN_VALUE) {
+            if (mRenderNoiseReduction != Long.MIN_VALUE) {
+                if (sw) {
                     JniBridge.addRenderToLayer(mLayer, mRenderNoiseReduction);
-                }
-            }
-        } else {
-            if (mLayer != Long.MIN_VALUE) {
-                if (mRenderNoiseReduction != Long.MIN_VALUE) {
+                } else {
                     JniBridge.removeRenderForLayer(mLayer, mRenderNoiseReduction);
                 }
+            }
+        }
+    }
+
+    /**滤镜开关**/
+    public void setRenderLutOnOff(boolean sw) {
+        if (mLayer != Long.MIN_VALUE && mRenderLut != Long.MIN_VALUE) {
+            if (sw) {
+                JniBridge.addRenderToLayer(mLayer, mRenderLut);
+            } else {
+                JniBridge.removeRenderForLayer(mLayer, mRenderLut);
             }
         }
     }
@@ -229,7 +236,6 @@ public class NativeGLSurfaceView extends GLSurfaceView {
 
                     JniBridge.addRenderToLayer(mLayer, mRenderOES);
                     JniBridge.addRenderToLayer(mLayer, mRenderNoiseReduction);
-                    JniBridge.addRenderToLayer(mLayer, mRenderLut);
                     mIsFirstFrame = false;
                 }
             }

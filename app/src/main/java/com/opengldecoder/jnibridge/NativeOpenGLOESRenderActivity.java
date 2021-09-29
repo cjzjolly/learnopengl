@@ -86,6 +86,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
 
         }
     };
+    private CheckBox mLutCheckBox;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,9 +140,16 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
                 mNativeGLSurfaceView.setRenderNoiseReductionOnOff(b);
             }
         });
+        mLutCheckBox = findViewById(R.id.cb_lut);
         mLutList = findViewById(R.id.lv_lut_list);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new String[] {
                 "黑色", "反差暖", "朦胧", "暖色", "鲜明"
+        });
+        mLutCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mNativeGLSurfaceView.setRenderLutOnOff(isChecked);
+            }
         });
         mLutList.setAdapter(adapter);
         mLutList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -167,9 +175,9 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
             }
         });
 
-        new Handler().postDelayed(() -> {
-            mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_menglongf));
-        }, 800);
+//        new Handler().postDelayed(() -> {
+//            mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_menglongf));
+//        }, 800);
     }
 
     protected void requestPermission(String permissions[]) {

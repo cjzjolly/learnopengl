@@ -237,10 +237,12 @@ void RenderProgramFilter::drawTo(float *cameraMatrix, float *projMatrix, DrawTyp
             mLutPixels = nullptr;
             mHadLoadLut = true;
         }
-        glActiveTexture(GL_TEXTURE1); //激活1号纹理
-        glBindTexture(GL_TEXTURE_2D_ARRAY, mLutTexutresPointers[0]);
-        glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "lutTexture"), 1); //映射到渲染脚本，获取纹理属性的指针
-        glUniform1f(glGetUniformLocation(mImageProgram.programHandle, "pageSize"), longLen / mLutUnitLen); //映射到渲染脚本，获取纹理属性的指针
+        if (mHadLoadLut) {
+            glActiveTexture(GL_TEXTURE1); //激活1号纹理
+            glBindTexture(GL_TEXTURE_2D_ARRAY, mLutTexutresPointers[0]);
+            glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "lutTexture"), 1); //映射到渲染脚本，获取纹理属性的指针
+            glUniform1f(glGetUniformLocation(mImageProgram.programHandle, "pageSize"), longLen / mLutUnitLen); //映射到渲染脚本，获取纹理属性的指针
+        }
         glDrawArrays(GL_TRIANGLE_STRIP, 0, /*mPointBufferPos / 3*/ 4); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
         glDisableVertexAttribArray(mObjectPositionPointer);
         glDisableVertexAttribArray(mObjectVertColorArrayPointer);
@@ -251,10 +253,13 @@ void RenderProgramFilter::drawTo(float *cameraMatrix, float *projMatrix, DrawTyp
 void RenderProgramFilter::destroy() {
     if (!mIsDestroyed) {
         //释放纹理所占用的显存
-        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, 0);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 0, 0, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, nullptr);
-        glDeleteTextures(1, mTexturePointers); //销毁纹理,gen和delete要成对出现
+        glDeleteTextures(1, mTexturePointers);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, mLutTexutresPointers[0]);
+        glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, 0, 0, 0, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                     nullptr);
+        glDeleteTextures(1, mLutTexutresPointers);
         //删除不用的shaderprogram
         destroyProgram(mImageProgram);
     }
