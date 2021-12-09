@@ -3,16 +3,13 @@ package com.cjztest.glShaderEffect;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.os.Build;
-import android.util.Log;
 import android.view.MotionEvent;
 
 import androidx.annotation.RequiresApi;
 
 import com.example.learnopengl.R;
 
-import java.util.Arrays;
-
-public class EffectLayerTest implements GLRenderer.onDrawListener {
+public class EffectLayerTestYuv implements GLRenderer.onDrawListener {
     private Context mContext;
     private int mWidth;
     private int mHeight;

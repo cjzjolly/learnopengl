@@ -7,8 +7,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 
-import com.cjztest.glShaderEffect.EffectLayerTest;
-import com.cjztest.glShaderEffect.PanelView;
 import com.ffmpeg.FFMpegUtil;
 
 public class MainActivity extends Activity implements View.OnClickListener {

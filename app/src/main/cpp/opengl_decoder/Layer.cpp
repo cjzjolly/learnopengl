@@ -3,6 +3,7 @@
 //
 
 #include <GLES3/gl3.h>
+#include <android/log.h>
 #include "Layer.h"
 #include "RenderProgram.h"
 #include "shaderUtil.h"
@@ -265,8 +266,12 @@ void Layer::drawLayerToFrameBuffer(float *cameraMatrix, float *projMatrix, GLuin
         float heightPercentage = (float) mRenderSrcTexture.height / (float) mWindowH;
         if (widthPercentage > heightPercentage) {
             scale(1.0, ratio * ((float) mRenderSrcTexture.height / mRenderSrcTexture.width), 1.0);
+            //另外几种成功的算法：
+//            scale(1.0, ((float) (mRenderSrcTexture.width * (mWindowH / mRenderSrcTexture.height)) / (float) mWindowW) * ratio, 1.0);
+//            scale(1.0, ((float) mWindowW / mWindowH) * ((float) mRenderSrcTexture.height / mRenderSrcTexture.width) * (1 / ratio), 1.0);
+//            scale(1.0, ((float) mRenderSrcTexture.height / mWindowH) * ((float) mWindowW / mRenderSrcTexture.width) * (ratio), 1.0);
         } else {
-            scale(ratio * ((float) mRenderSrcTexture.width / mRenderSrcTexture.height), 1.0, 1.0);
+            scale(ratio * ((float) mRenderSrcTexture.width / mRenderSrcTexture.height), 1.0, 1.0);  //比例式 ： 容器w * 纹理
         }
     }
     //物体坐标*缩放平移旋转矩阵->应用按图片比例缩放效果
