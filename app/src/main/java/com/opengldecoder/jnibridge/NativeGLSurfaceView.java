@@ -26,6 +26,7 @@ public class NativeGLSurfaceView extends GLSurfaceView {
     private long mRenderNoiseReduction = Long.MIN_VALUE;
     private long mRenderConvolutionDemo = Long.MIN_VALUE;
     private long mRenderLut = Long.MIN_VALUE;
+    private long mRenderDeBackground = Long.MIN_VALUE;
 
     //Android画面数据输入Surface
     private Surface mDataInputSurface = null;
@@ -101,6 +102,17 @@ public class NativeGLSurfaceView extends GLSurfaceView {
                 JniBridge.addRenderToLayer(mLayer, mRenderLut);
             } else {
                 JniBridge.removeRenderForLayer(mLayer, mRenderLut);
+            }
+        }
+    }
+
+    /**背景去除程序开关**/
+    public void setRenderDeBackgroundOnOff(boolean sw) {
+        if (mLayer != Long.MIN_VALUE && mRenderDeBackground != Long.MIN_VALUE) {
+            if (sw) {
+                JniBridge.addRenderToLayer(mLayer, mRenderDeBackground);
+            } else {
+                JniBridge.removeRenderForLayer(mLayer, mRenderDeBackground);
             }
         }
     }
@@ -233,6 +245,7 @@ public class NativeGLSurfaceView extends GLSurfaceView {
 //                    mRenderConvolutionDemo = JniBridge.addRenderForLayer(mLayer, JniBridge.RENDER_PROGRAM_KIND.RENDER_CONVOLUTION.ordinal()); //添加卷积图像处理demo
                     mRenderNoiseReduction = JniBridge.makeRender(JniBridge.RENDER_PROGRAM_KIND.NOISE_REDUCTION.ordinal()); //添加降噪渲染器
                     mRenderLut = JniBridge.makeRender(JniBridge.RENDER_PROGRAM_KIND.RENDER_LUT.ordinal()); //添加Lut渲染器
+                    mRenderDeBackground = JniBridge.makeRender(JniBridge.RENDER_PROGRAM_KIND.DE_BACKGROUND.ordinal()); //创建背景去除渲染程序
 
                     JniBridge.addRenderToLayer(mLayer, mRenderOES);
                     JniBridge.addRenderToLayer(mLayer, mRenderNoiseReduction);

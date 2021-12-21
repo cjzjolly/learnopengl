@@ -39,6 +39,11 @@ RenderProgramDebackground::RenderProgramDebackground() {
             $#version 300 es\n
             precision highp float;
             uniform sampler2D sTexture;//纹理输入
+            uniform sampler2D sTextureReplace;//需要替换的背景颜色输入
+            uniform int sTextureReplaceLen; //替换颜色表的长度
+            uniform sampler2D sTextureCover;//被替换的位置使用该纹理对应采样坐标位置像素替换
+
+
             uniform int funChoice;
             uniform float frame;//第几帧
             uniform vec2 resolution;//分辨率
@@ -47,7 +52,28 @@ RenderProgramDebackground::RenderProgramDebackground() {
             out vec4 fragColor;//输出到的片元颜色
 
             void main() {
-
+                //todo 模式1 输入传入的纹理的颜色如果为指定的替换颜色，则fragColor采样为为纹理2对应位置的像素
+                //todo 模式2 传入的纹理采样过程中对比背景纹理，如果像素颜色一样，替换为纹理2
+                //原纹理颜色获取
+                vec4 color = texture(sTexture, fragVTexCoord);  //采样纹理中对应坐标颜色，进行纹理渲染
+                vec4 color2 = vec4(color.r, color.g, color.b, color.a);
+                //根据颜色替换表替换颜色
+                bool haveReplaceColorInTexture = false;
+                for (int i = 0; i < sTextureReplaceLen; i++) {
+                    vec2 loc = vec2(i / sTextureReplaceLen, 0.0);
+                    vec4 replaceColor = texture(sTextureReplace, loc);
+                    //cjztest
+                    fragColor = replaceColor;
+//                    if (color2.b == replaceColor.b) {
+//                        haveReplaceColorInTexture = true;
+//                        break;
+//                    }
+                }
+//                if (haveReplaceColorInTexture) {
+//                    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+//                } else {
+//                    fragColor = color2;
+//                }
             }
     );
     float tempTexCoord[] =   //纹理内采样坐标,类似于canvas坐标
@@ -65,6 +91,7 @@ RenderProgramDebackground::RenderProgramDebackground() {
             1.0, 1.0, 1.0, 1.0
     };
     memcpy(mColorBuf, tempColorBuf, sizeof(tempColorBuf));
+    mTextureReplaceColorTable[0] = -1;
 }
 
 RenderProgramDebackground::~RenderProgramDebackground() {
@@ -137,7 +164,6 @@ void RenderProgramDebackground::drawTo(float *cameraMatrix, float *projMatrix, D
     //设置视窗大小及位置
     glBindFramebuffer(GL_FRAMEBUFFER, outputFBOPointer);
     glViewport(0, 0, mWindowW, mWindowH);
-    glUniform1i(mGLFunChoicePointer, 1);
     //传入位置信息
     locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
     //开始渲染：
@@ -157,12 +183,45 @@ void RenderProgramDebackground::drawTo(float *cameraMatrix, float *projMatrix, D
             case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_DATA:
                 break;
             case OPENGL_VIDEO_RENDERER::RenderProgram::DRAW_TEXTURE:
+                //输入纹理
                 glActiveTexture(GL_TEXTURE0); //激活0号纹理
                 glBindTexture(GL_TEXTURE_2D, mInputTexturesArray);
-                glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "sTexture"), 0); //映射到渲染脚本，获取纹理属性的指针
+                glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "sTexture"),
+                            0); //映射到渲染脚本，获取纹理属性的指针
                 resolution[0] = (float) mInputTextureWidth;
                 resolution[1] = (float) mInputTextureHeight;
                 glUniform2fv(mResoulutionPointer, 1, resolution);
+
+
+
+
+
+                //输入替换颜色表:
+                    //如果还没创建颜色替换纹理：
+                if (mTextureReplaceColorTable[0] == -1) {
+                    int cjztestColorTable[255];
+                    for (int i = 0; i < 256; i++) {
+                        cjztestColorTable[i] = (int) (0xFF000000 | (i));
+                    }
+                    glGenTextures(1, mTextureReplaceColorTable);
+                    glBindTexture(GL_TEXTURE_2D, mTextureReplaceColorTable[0]);
+                    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                    //创建一个占用指定空间的纹理，但暂时不复制数据进去，等PBO进行数据传输，取代glTexImage2D，利用DMA提高数据拷贝速度
+                    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, cjztestColorTable); //因为这里使用了双字节，所以纹理大小对比使用单字节的Y通道纹理，宽度首先要缩小一般，而uv层高度本来就只有y层一般，所以高度也除以2
+                }
+                glActiveTexture(GL_TEXTURE1); //激活1号纹理
+                glBindTexture(GL_TEXTURE_2D, mTextureReplaceColorTable[0]);
+                glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "sTextureReplace"),
+                            1); //映射到渲染脚本，获取纹理属性的指针
+                glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "sTextureReplaceLen"),
+                            1); //输入替换纹理的长度
+
+
+
+
                 break;
         }
         glDrawArrays(GL_TRIANGLE_STRIP, 0, /*mPointBufferPos / 3*/ 4); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）

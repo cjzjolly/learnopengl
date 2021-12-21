@@ -16,6 +16,7 @@ public class JniBridge {
         RENDER_CONVOLUTION, //添加卷积处理
         NOISE_REDUCTION, //添加噪声处理
         RENDER_LUT, //添加滤镜处理渲染器
+        DE_BACKGROUND, //去除背景
     }
 
     public static native void nativeGLInit(int viewPortWidth, int viewPortHeight);

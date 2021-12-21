@@ -148,6 +148,22 @@
             android:checked="true"/>
 
         <CheckBox
+            android:id="@+id/cb_deBackground"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="开启背景去除"
+            android:checked="false"/>
+
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="开启去除黑边（使用动态视频内容模糊背景） //todo 还没做的"
+            android:checked="false"/>
+
+
+<!--        滤镜组件-->
+
+        <CheckBox
             android:id="@+id/cb_lut"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

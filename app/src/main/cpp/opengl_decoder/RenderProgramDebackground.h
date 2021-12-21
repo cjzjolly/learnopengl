@@ -41,6 +41,7 @@ private:
     GLuint mGenYTextureId = -1;
     GLuint mGenUVTextureId = -1;
     GLuint mInputTexturesArray;
+    GLuint mTextureReplaceColorTable[1]; //替换颜色纹理
     GLslHandle mImageProgram;
     GLint mObjectPositionPointer;
     GLint mVTexCoordPointer;

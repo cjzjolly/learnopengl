@@ -4,10 +4,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
-import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -16,10 +14,8 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.SeekBar;
-import android.widget.Toast;
 
 import com.example.learnopengl.R;
-import com.ffmpeg.FFMpegUtil;
 
 public class NativeOpenGLOESRenderActivity extends Activity implements View.OnClickListener {
 
@@ -32,7 +28,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
     private SeekBar mSeekBarScaleX = null;
     private SeekBar mSeekBarScaleY = null;
     private SeekBar mSeekBarRotate = null;
-    private CheckBox mCheckBox;
+    private CheckBox mCheckBoxDeNoise;
     private ListView mLutList;
 
     private float rgb[] = {1f, 1f, 1f};
@@ -87,6 +83,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         }
     };
     private CheckBox mLutCheckBox;
+    private CheckBox mCheckBoxDeBackGround;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,7 +106,8 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         mSeekBarScaleX = findViewById(R.id.seekBar_scale_x);
         mSeekBarScaleY = findViewById(R.id.seekBar_scale_y);
         mSeekBarRotate = findViewById(R.id.seekBar_rotate);
-        mCheckBox = findViewById(R.id.cb_denoise);
+        mCheckBoxDeNoise = findViewById(R.id.cb_denoise);
+        mCheckBoxDeBackGround = findViewById(R.id.cb_deBackground);
         mSeekBarChannelRed.setMax(100);
         mSeekBarChannelRed.setProgress(100);
         mSeekBarChannelGreen.setMax(100);
@@ -134,7 +132,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         mSeekBarScaleX.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarScaleY.setOnSeekBarChangeListener(onSeekBarChangeListener);
         mSeekBarRotate.setOnSeekBarChangeListener(onSeekBarChangeListener);
-        mCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        mCheckBoxDeNoise.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 mNativeGLSurfaceView.setRenderNoiseReductionOnOff(b);
@@ -172,6 +170,12 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
                         mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_xianming));
                         break;
                 }
+            }
+        });
+        mCheckBoxDeBackGround.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mNativeGLSurfaceView.setRenderDeBackgroundOnOff(isChecked);
             }
         });
 

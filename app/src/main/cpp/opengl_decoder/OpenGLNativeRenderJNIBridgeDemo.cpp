@@ -20,6 +20,8 @@
 #include "RenderProgramConvolution.h"
 #include "RenderProgramOESTexture.h"
 #include "RenderProgramNoiseReduction.h"
+//cjztest 为了测试而添加，记得去除
+#include "RenderProgramDebackground.h"
 #include "RenderProgramFilter.h"
 
 
@@ -46,6 +48,7 @@ extern "C" {
         RENDER_CONVOLUTION = 2, //添加卷积处理
         NOISE_REDUCTION = 3, //添加噪声消除处理
         RENDER_LUT = 4, //添加滤镜处理渲染器
+        DE_BACKGROUND = 5, //去除背景
 
     };
     float mRatio;
@@ -260,6 +263,16 @@ extern "C" {
                                                   mWidth,
                                                   mHeight);
                 resultProgram = renderProgramFilter;
+                break;
+            }
+            //tddo 去除背景:
+            case DE_BACKGROUND: {
+                RenderProgramDebackground *renderProgramDebackground = new RenderProgramDebackground();
+                renderProgramDebackground->createRender(-1, -mRatio, 0, 2,
+                                                        mRatio * 2,
+                                                        mWidth,
+                                                        mHeight);
+                resultProgram = renderProgramDebackground;
             }
         }
         return (jlong) resultProgram;
