@@ -5,6 +5,7 @@ uniform int frame;//第几帧
 uniform int funChoice; //功能代码块选择
 uniform float effectR; //作用半径
 uniform vec2 targetXY; //作用位置，使用纹理分辨率坐标
+uniform vec2 prevTargetXY; //上一次的作用位置。
 uniform vec2 resolution;//纹理分辨率
 in vec4 fragObjectColor;//接收vertShader处理后的颜色值给片元程序
 in vec2 fragVTexCoord;//接收vertShader处理后的纹理内坐标给片元程序
@@ -41,17 +42,29 @@ vec2 inflate(vec2 uv, vec2 center, float range, float strength) {
     return center + newDist * dir;
 }
 
-vec2 pinch(vec2 uv, vec2 targetPoint, vec2 vector, float range)
+vec2 pinch(vec2 uv, vec2 targetPoint, vec2 prevTargetXY, float range)
 {
-    vec2 center = targetPoint + vector;
-    float dist = distance(uv, targetPoint);
-    vec2 point = targetPoint +  smoothstep(0., 1., dist / range) * vector;
-    return uv - center + point;
+    float dist = distance(uv, prevTargetXY);
+    vec2 point = prevTargetXY +  smoothstep(0., 1., dist / range) * (targetPoint - prevTargetXY);  //(targetPoint - prevTargetXY)前后两次触摸点之间的x,y距离
+    return uv - targetPoint + point;
 }
+
+//vec2 pinch(vec2 uv, vec2 targetPoint, vec2 prevTargetXY, float range)
+//{
+//    float dist = distance(uv, targetPoint);  //目标点和当前采样点的距离
+//    float distBetweenTwoPoint = distance(targetPoint, prevTargetXY);
+//    float dist3 = distance(uv, prevTargetXY);
+//    vec2 point = targetPoint +  smoothstep(0.0, 1.0, dist / range) * prevTargetXY;
+//    return uv - distBetweenTwoPoint * (dist / dist3) * smoothstep(0., 1., dist / range);
+//    //1、算采样点uv和tagetPoint、prevTargetXy构成的线段的夹角。用于确定挤压的方向和挤压的强大
+//    //2
+//}
 
 void main() {
     vec2 targetXYToOne = targetXY / resolution; //归1化处理
+    vec2 prevTargetXYToOne = prevTargetXY / resolution; //归1化处理
     targetXYToOne.y = 1.0 - targetXYToOne.y;
+    prevTargetXYToOne.y = 1.0 - prevTargetXYToOne.y;
 //    vec2 texCoord = vec2(fragVTexCoord.y, fragVTexCoord.x);
     vec2 texCoord = fragVTexCoord;
     switch (funChoice) {
@@ -92,7 +105,8 @@ void main() {
             fragColor = color;
             break;
         case 6: //挤压
-            newST = pinch(texCoord, targetXYToOne, vec2(0.1, 0.2), effectR);
+//            newST = pinch(texCoord, targetXYToOne, vec2(0.1, 0.2), effectR);
+            newST = pinch(texCoord, targetXYToOne, prevTargetXYToOne, effectR);
             color = texture(sTexture, newST);//采样纹理中对应坐标颜色，进行纹理渲染
             color.a = color.a * fragObjectColor.a;//利用顶点透明度信息控制纹理透明度
             fragColor = color;

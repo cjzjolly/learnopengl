@@ -46,6 +46,7 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
     private int mFrameBufferHeight;
     private int mGLFrameEffectRPointer;
     private int mGLFrameTargetXYPointer;
+    private int mGLFramePrevTargetXYPointer;
 
     /**是否每次渲染到frameBuffer前都清理**/
     private boolean mFrameBufferClean = false;
@@ -58,6 +59,8 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
     private int mGLFrameObjectPositionPointer;
     private float mEventX;
     private float mEventY;
+    private float mPrevEventX;
+    private float mPrevEventY;
     private int mCurrentAction;
     private int[] mFrameBufferPointerArray;
     private int[] mFrameBufferTexturePointerArray;
@@ -165,6 +168,8 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
         mGLFrameEffectRPointer = GLES30.glGetUniformLocation(mFrameBufferDrawProgram, "effectR");
         //作用位置
         mGLFrameTargetXYPointer = GLES30.glGetUniformLocation(mFrameBufferDrawProgram, "targetXY");
+        //上一次的作用位置
+        mGLFramePrevTargetXYPointer = GLES30.glGetUniformLocation(mFrameBufferDrawProgram, "prevTargetXY");
         //纹理采样坐标
         mGLFrameVTexCoordPointer = GLES30.glGetAttribLocation(mFrameBufferDrawProgram, "vTexCoord");
         //获取程序中顶点颜色属性引用"指针"
@@ -353,8 +358,14 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
                         GLES30.glUniform1i(mGLFrameBufferProgramFunChoicePointer, -1); //什么都不绘制，保留痕迹
                         break;
                 }
-                //传入触摸坐标
+                //传入当前触摸坐标
                 GLES30.glUniform2fv(mGLFrameTargetXYPointer, 1, new float[]{mEventX, mEventY}, 0);
+                //传入上次触摸坐标
+                if (mPrevEventX != Float.MIN_VALUE || mPrevEventY != Float.MIN_VALUE) {
+                    GLES30.glUniform2fv(mGLFramePrevTargetXYPointer, 1, new float[]{mPrevEventX, mPrevEventY}, 0);
+                }
+                mPrevEventX = mEventX;
+                mPrevEventY = mEventY;
                 GLES30.glUniform1f(mGLFrameEffectRPointer, 0.2f); //设置作用半径
             }
         }
