@@ -278,31 +278,60 @@ void Layer::drawLayerToFrameBuffer(float *cameraMatrix, float *projMatrix, GLuin
     locationTrans(cameraMatrix, projMatrix, muMVPMatrixPointer);
     //还原缩放现场
     memcpy(mObjectMatrix, objMatrixClone, sizeof(mObjectMatrix));
-    /**实现两个Framebuffer的画面叠加，这里解释一下：
-     * 如果是偶数个渲染器，那么在交替渲染之后，那么第0个FBO的画面是上一个画面，第1个FBO为最新画面，所以要先绘制第0个FBO内容再叠加第一个
-     * 否则则是交替后，第1个渲染器是上个画面，第0个FBO是上一个画面，叠加顺序则要进行更改**/
-    for(int i = 0; i < 2; i ++) {
-        glActiveTexture(GL_TEXTURE0);
-        if (mRenderProgramList.size() % 2 == 0) {
-            glBindTexture(GL_TEXTURE_2D, mFrameBufferTexturePointerArray[i]);
-        } else {
-            glBindTexture(GL_TEXTURE_2D, mFrameBufferTexturePointerArray[1 - i]);
-        }
-        glUniform1i(glGetUniformLocation(mLayerProgram.programHandle, "textureFBO"), 0); //获取纹理属性的指针
-        //将顶点位置数据送入渲染管线
-        glVertexAttribPointer(mObjectPositionPointer, 3, GL_FLOAT, false, 0, mVertxData); //三维向量，size为2
-        //将顶点颜色数据送入渲染管线
-        glVertexAttribPointer(mObjectVertColorArrayPointer, 4, GL_FLOAT, false, 0, mColorBuf);
-        //将顶点纹理坐标数据传送进渲染管线
-        glVertexAttribPointer(mVTexCoordPointer, 2, GL_FLOAT, false, 0, mTexCoor);  //二维向量，size为2
-        glEnableVertexAttribArray(mObjectPositionPointer); //启用顶点属性
-        glEnableVertexAttribArray(mObjectVertColorArrayPointer);  //启用颜色属性
-        glEnableVertexAttribArray(mVTexCoordPointer);  //启用纹理采样定位坐标
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
-        glDisableVertexAttribArray(mObjectPositionPointer);
-        glDisableVertexAttribArray(mObjectVertColorArrayPointer);
-        glDisableVertexAttribArray(mVTexCoordPointer);
+//    /**实现两个Framebuffer的画面叠加，这里解释一下：
+//     * 如果是偶数个渲染器，那么在交替渲染之后，那么第0个FBO的画面是上一个画面，第1个FBO为最新画面，所以要先绘制第0个FBO内容再叠加第一个
+//     * 否则则是交替后，第1个渲染器是上个画面，第0个FBO是上一个画面，叠加顺序则要进行更改**/
+//    for(int i = 0; i < 2; i ++) {
+//        glActiveTexture(GL_TEXTURE0);
+//        if (mRenderProgramList.size() % 2 == 0) {
+//            setUserScale(0.5, 0.5, 0);
+//            setUserTransLate(-0.5, 0, 0);
+//            glBindTexture(GL_TEXTURE_2D, mFrameBufferTexturePointerArray[i]);
+//        } else {
+//            setUserScale(0.5, 0.5, 0);
+//            setUserTransLate(0.5, 0, 0);
+//            glBindTexture(GL_TEXTURE_2D, mFrameBufferTexturePointerArray[1 - i]);
+//        }
+//        glUniform1i(glGetUniformLocation(mLayerProgram.programHandle, "textureFBO"), 0); //获取纹理属性的指针
+//        //将顶点位置数据送入渲染管线
+//        glVertexAttribPointer(mObjectPositionPointer, 3, GL_FLOAT, false, 0, mVertxData); //三维向量，size为2
+//        //将顶点颜色数据送入渲染管线
+//        glVertexAttribPointer(mObjectVertColorArrayPointer, 4, GL_FLOAT, false, 0, mColorBuf);
+//        //将顶点纹理坐标数据传送进渲染管线
+//        glVertexAttribPointer(mVTexCoordPointer, 2, GL_FLOAT, false, 0, mTexCoor);  //二维向量，size为2
+//        glEnableVertexAttribArray(mObjectPositionPointer); //启用顶点属性
+//        glEnableVertexAttribArray(mObjectVertColorArrayPointer);  //启用颜色属性
+//        glEnableVertexAttribArray(mVTexCoordPointer);  //启用纹理采样定位坐标
+//        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+//        glDisableVertexAttribArray(mObjectPositionPointer);
+//        glDisableVertexAttribArray(mObjectVertColorArrayPointer);
+//        glDisableVertexAttribArray(mVTexCoordPointer);
+//    }
+    /**如果是偶数个fragShaderProgram，则最终画面落于FBO_1。否则奇数时落于FBO_0，并不需要把两个FBO分两次叠加起来**/
+    glActiveTexture(GL_TEXTURE0);
+    if (mRenderProgramList.size() % 2 == 0) {
+        //setUserScale(0.5, 0.5, 0); //测试代码
+        //setUserTransLate(-0.5, 0, 0); //测试代码
+        glBindTexture(GL_TEXTURE_2D, mFrameBufferTexturePointerArray[1]);
+    } else {
+        //setUserScale(0.5, 0.5, 0); //测试代码
+        //setUserTransLate(0.5, 0, 0); //测试代码
+        glBindTexture(GL_TEXTURE_2D, mFrameBufferTexturePointerArray[0]);
     }
+    glUniform1i(glGetUniformLocation(mLayerProgram.programHandle, "textureFBO"), 0); //获取纹理属性的索引，给索引对应变量赋当前ActiveTexture的索引
+    //将顶点位置数据送入渲染管线
+    glVertexAttribPointer(mObjectPositionPointer, 3, GL_FLOAT, false, 0, mVertxData); //三维向量，size为2
+    //将顶点颜色数据送入渲染管线
+    glVertexAttribPointer(mObjectVertColorArrayPointer, 4, GL_FLOAT, false, 0, mColorBuf);
+    //将顶点纹理坐标数据传送进渲染管线
+    glVertexAttribPointer(mVTexCoordPointer, 2, GL_FLOAT, false, 0, mTexCoor);  //二维向量，size为2
+    glEnableVertexAttribArray(mObjectPositionPointer); //启用顶点属性
+    glEnableVertexAttribArray(mObjectVertColorArrayPointer);  //启用颜色属性
+    glEnableVertexAttribArray(mVTexCoordPointer);  //启用纹理采样定位坐标
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+    glDisableVertexAttribArray(mObjectPositionPointer);
+    glDisableVertexAttribArray(mObjectVertColorArrayPointer);
+    glDisableVertexAttribArray(mVTexCoordPointer);
 }
 
 /**逐步加工绘制

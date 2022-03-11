@@ -8,6 +8,7 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
 
+import com.book.Sample5_2.Sample5_2_Activity;
 import com.opengldecoder.jnibridge.NativeOpenGLOESRenderActivity;
 
 public class MainPage extends Activity {
@@ -18,6 +19,13 @@ public class MainPage extends Activity {
         linearLayout.setOrientation(LinearLayout.VERTICAL);
         setContentView(linearLayout);
         Button button = new Button(this);
+        button.setText("透视投影矩阵Demo");
+        button.setOnClickListener(v -> {
+            Intent intent = new Intent(this, Sample5_2_Activity.class);
+            startActivity(intent);
+        });
+        linearLayout.addView(button);
+        button = new Button(this);
         button.setText("shader特效demo");
         button.setOnClickListener(v -> {
             Intent intent = new Intent(this, com.cjztest.glShaderEffect.MainActivity.class);
