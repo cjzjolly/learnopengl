@@ -28,6 +28,8 @@ add_library( # Sets the name of the library.
              # file are automatically included.
         matrix.h
         matrix.c
+        GLWhiteBoardJNIBridge.h
+        GLWhiteBoardJNIBridge.cpp
         )
 
 # Searches for a specified prebuilt library and stores the path as a
