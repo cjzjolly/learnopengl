@@ -22,6 +22,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -save-temps=obj")
 
 ADD_SUBDIRECTORY(src/main/cpp/opengl_decoder)
 ADD_SUBDIRECTORY(src/main/cpp/ffmpeg)
+ADD_SUBDIRECTORY(src/main/cpp/gl_whiteboard)
 
 #add_library(log-lib)
 

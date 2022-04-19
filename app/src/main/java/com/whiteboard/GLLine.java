@@ -1,4 +1,4 @@
 package com.whiteboard;
 
-public class Renderer {
+public class GLLine {
 }
