@@ -46,4 +46,19 @@ extern "C" {
         glDisable(GL_DITHER);
         return;
     }
+
+    /**根据触摸信息绘制线条*/
+    JNIEXPORT void JNICALL
+    Java_com_whiteboard_JniBridge_touchAndDraw(JNIEnv *env, jobject activity,
+                                               jfloat x, jfloat y, jint action) {
+
+    }
+
+    /**安卓系统初始化EGL等，但分情况，安卓系统在有GLSurfaceview的情况下不需要进行EGL相关操作**/
+    JNIEXPORT void JNICALL
+    Java_com_whiteboard_JniBridge_nativeGLInit(JNIEnv *env, jobject activity,
+                                                            jint viewPortWidth, jint viewPortHeight) {
+        setupGraphics(viewPortWidth, viewPortHeight);
+        LOGI("cjztest Java_com_opengldecoder_jnibridge_JniBridge_nativeGLInit, width:%d, height:%d", viewPortWidth, viewPortHeight);
+    }
 }
