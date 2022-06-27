@@ -1,4 +1,4 @@
-package com.whiteboard;
+package com.glwhiteboard;
 
 import android.app.Activity;
 import android.os.Bundle;

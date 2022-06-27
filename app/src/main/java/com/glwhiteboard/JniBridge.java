@@ -1,4 +1,4 @@
-package com.whiteboard;
+package com.glwhiteboard;
 
 public class JniBridge {
     static {

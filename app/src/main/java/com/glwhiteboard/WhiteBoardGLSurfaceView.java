@@ -1,7 +1,6 @@
-package com.whiteboard;
+package com.glwhiteboard;
 
 import android.content.Context;
-import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;

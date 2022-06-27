@@ -1,10 +1,8 @@
-package com.whiteboard;
+package com.glwhiteboard;
 
-import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.SurfaceView;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
