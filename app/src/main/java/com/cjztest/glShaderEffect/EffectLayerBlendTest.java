@@ -37,6 +37,8 @@ public class EffectLayerBlendTest implements GLRenderer.onDrawListener {
         mBaseProgramPointer = glBaseProgramPointer;
         this.mRatio = (float) windowHeight / windowWidth;
         this.mContext = context;
+        mImage = new GLImage(mBaseProgramPointer, -1, -mRatio, 0, 2 / 2f, mRatio * 2 / 2f, BitmapFactory.decodeResource(context.getResources(), R.drawable.test_pic), 1f);
+        mRenderLight = new GLFragEffectLightPot(mBaseProgramPointer, -1, -mRatio, 0,2, mRatio * 2, windowWidth, windowHeight, context);
         mFBEDC = new GLFrameBufferEffectDrawCircle(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, windowWidth, windowHeight, context, BitmapFactory.decodeResource(context.getResources(), R.drawable.test_pic_second));
     }
 
