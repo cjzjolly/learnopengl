@@ -44,6 +44,18 @@
             android:id="@+id/btn_squash"
             android:text="挤压"/>
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btn_save"
+            android:text="保存"/>
     </LinearLayout>
+
+    <ImageView
+        android:id="@+id/iv_save_bmp"
+        android:layout_gravity="bottom|right"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:scaleType="fitXY"/>
 
 </FrameLayout>

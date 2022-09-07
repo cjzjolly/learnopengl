@@ -2,8 +2,10 @@ package com.cjztest.glShaderEffect;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLES30;
 import android.opengl.GLUtils;
+import android.os.Build;
 import android.util.Log;
 import android.view.MotionEvent;
 
@@ -16,6 +18,8 @@ import java.util.Map;
 import static com.cjztest.glShaderEffect.ShaderUtil.checkGlError;
 import static com.cjztest.glShaderEffect.ShaderUtil.destroyShader;
 import static com.cjztest.glShaderEffect.ShaderUtil.loadShader;
+
+import androidx.annotation.RequiresApi;
 
 /**FBO使用Demo**/
 public class GLFrameBufferEffectPingPongSave extends GLLine {
@@ -64,7 +68,11 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
     private int mCurrentAction;
     private int[] mFrameBufferPointerArray;
     private int[] mFrameBufferTexturePointerArray;
+    private int[] mPixelBuffferPointerArray;
     private int[] mRenderBufferPointerArray;
+    /**保存下来的图片**/
+    private Bitmap mSaveBmp = null;
+
 
     /**PS工具选择**/
     public enum PSFunciton {
@@ -74,8 +82,11 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
         PS_BE_BIGGER, //膨胀形变
         PS_BE_SMALLER, //膨胀形变
         PS_SQUASH, //挤压形变
+        SAVE //保存画面
     }
     private PSFunciton mCurrentPSFuntion = PSFunciton.NONE;
+    private long mCurrentPSFuntionCreateTime = 0;
+    private long mPrevPSFuntionCreateTime = 0;
 
 
     public GLFrameBufferEffectPingPongSave(int baseProgramPointer, float x, float y, float z, float w, float h, int windowW, int windowH, Context context, Bitmap bitmap) {
@@ -216,6 +227,12 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
         mFrameBufferTexturePointerArray = new int[frameBufferCount];
         GLES30.glGenTextures(mFrameBufferTexturePointerArray.length, mFrameBufferTexturePointerArray, 0);
 
+        //生成PixelBufferObject纹理pointer（因为只要取走纹理中的数据，不用更新，所以一个PBO够了）
+        mPixelBuffferPointerArray = new int[1];
+        GLES30.glGenBuffers(1, mPixelBuffferPointerArray, 0);
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, mPixelBuffferPointerArray[0]);
+        GLES30.glBufferData(GLES30.GL_PIXEL_PACK_BUFFER, mFrameBufferWidth * mFrameBufferHeight * 4,  null, GLES30.GL_STREAM_DRAW);
+
         //遍历framebuffer并初始化
         for (int i = 0; i < frameBufferCount; i++) {
             //绑定帧缓冲，遍历两个framebuffer分别初始化
@@ -266,6 +283,28 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
         }
         //绑回系统默认framebuffer，否则会显示不出东西
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);//绑定帧缓冲id
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void saveImgByPBO() {
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, mPixelBuffferPointerArray[0]);
+        GLES30.glReadPixels(0, 0, mFrameBufferWidth, mFrameBufferHeight, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, 0);
+        //将OpenGL缓存区映射到客户端内存
+        ByteBuffer byteBuffer = (ByteBuffer) GLES30.glMapBufferRange(GLES30.GL_PIXEL_PACK_BUFFER, 0, mFrameBufferWidth * mFrameBufferHeight * 4, GLES30.GL_MAP_READ_BIT);
+        if (byteBuffer != null) {
+            mSaveBmp = Bitmap.createBitmap(mFrameBufferWidth, mFrameBufferHeight, Bitmap.Config.ARGB_8888);
+            mSaveBmp.copyPixelsFromBuffer(byteBuffer);
+        } else {
+            Log.e("cjztest", "保存图像失败");
+        }
+        //取消内存映射
+        GLES30.glUnmapBuffer(GLES30.GL_PIXEL_PACK_BUFFER);
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, 0);
+    }
+
+
+    public Bitmap getSaveBmp() {
+        return mSaveBmp;
     }
 
     /**绘制画面到framebuffer**/
@@ -329,6 +368,11 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
             GLES30.glDisableVertexAttribArray(mGLFrameObjectVertColorArrayPointer);
             GLES30.glDisableVertexAttribArray(mGLFrameVTexCoordPointer);
             if (mFrameCount > 1) {
+                if (mCurrentPSFuntion == PSFunciton.SAVE
+                        && mCurrentPSFuntionCreateTime != mPrevPSFuntionCreateTime)
+                {
+                    saveImgByPBO();
+                }
                 switch (mCurrentAction) { //响应触摸事件
                     case MotionEvent.ACTION_DOWN:
                         break;
@@ -367,6 +411,8 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
                 mPrevEventX = mEventX;
                 mPrevEventY = mEventY;
                 GLES30.glUniform1f(mGLFrameEffectRPointer, 0.2f); //设置作用半径
+                //上次记录的功能应用时间
+                mPrevPSFuntionCreateTime = mCurrentPSFuntionCreateTime;
             }
         }
         //绑会系统默认framebuffer，否则会显示不出东西
@@ -443,6 +489,9 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
         GLES30.glDeleteTextures(mFrameBufferTexturePointerArray.length, mFrameBufferTexturePointerArray, 0);
         GLES30.glDeleteRenderbuffers(mRenderBufferPointerArray.length, mRenderBufferPointerArray, 0);
         GLES30.glDeleteFramebuffers(mFrameBufferPointerArray.length, mFrameBufferPointerArray, 0);
+        //解除PBO绑定
+        GLES30.glBindBuffer(GLES30.GL_PIXEL_PACK_BUFFER, 0);
+        GLES30.glDeleteFramebuffers(1, mPixelBuffferPointerArray, 0);
     }
 
     public void destroy() {
@@ -468,6 +517,7 @@ public class GLFrameBufferEffectPingPongSave extends GLLine {
 
     public void setPSFunciton(PSFunciton psFunciton) {
         this.mCurrentPSFuntion = psFunciton;
+        this.mCurrentPSFuntionCreateTime = System.currentTimeMillis(); //这次功能选择的时间
     }
 
     public PSFunciton getPSFunciton() {

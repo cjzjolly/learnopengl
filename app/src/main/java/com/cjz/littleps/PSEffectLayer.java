@@ -22,6 +22,11 @@ public class PSEffectLayer implements GLRenderer.onDrawListener {
     private int mWidth;
     private int mHeight;
     private float mRatio;
+
+    public GLFrameBufferEffectPingPongSave getFBEDC() {
+        return mFBEDC;
+    }
+
     private GLFrameBufferEffectPingPongSave mFBEDC;
     private int mBaseProgramPointer;
 
