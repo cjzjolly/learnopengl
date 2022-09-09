@@ -7,7 +7,7 @@ import androidx.annotation.Nullable;
 
 import com.example.learnopengl.R;
 
-/**基于PBO的图片打开与处理的Demo**/
+/**todo 基于FBO的图片打开与处理的Demo**/
 public class PboPicProcess extends Activity {
 
     @Override
