@@ -20,6 +20,7 @@
 #include "RenderProgramConvolution.h"
 #include "RenderProgramOESTexture.h"
 #include "RenderProgramNoiseReduction.h"
+#include "RenderProgramBlurBackground.h"
 //cjztest 为了测试而添加，记得去除
 #include "RenderProgramDebackground.h"
 #include "RenderProgramFilter.h"
@@ -49,6 +50,7 @@ extern "C" {
         NOISE_REDUCTION = 3, //添加噪声消除处理
         RENDER_LUT = 4, //添加滤镜处理渲染器
         DE_BACKGROUND = 5, //去除背景
+        BLUR_BACKGROUND = 6, //叠加一层视频内容到视频内容的背后，但让其模糊化
 
     };
     float mRatio;
@@ -146,6 +148,7 @@ extern "C" {
     Java_com_opengldecoder_jnibridge_JniBridge_addFullContainerLayer(JNIEnv *env, jobject activit, jint texturePointer, jintArray textureWidthAndHeight, jlong dataPointer,
                                                                      jintArray dataWidthAndHeight,
                                                                      int dataPixelFormat) {
+        //todo 需要解决视频画面拉伸失真的问题
         jint *dataWidthAndHeightPointer = env->GetIntArrayElements(dataWidthAndHeight, JNI_FALSE);
         jint *textureWidthAndHeightPointer = env->GetIntArrayElements(textureWidthAndHeight, JNI_FALSE);
         Layer *layer = new Layer(-1, -mRatio, 0, 2, mRatio * 2, mWidth, mHeight); //创建铺满全屏的图层;
@@ -265,7 +268,7 @@ extern "C" {
                 resultProgram = renderProgramFilter;
                 break;
             }
-            //tddo 去除背景:
+            //todo 去除背景:
             case DE_BACKGROUND: {
                 RenderProgramDebackground *renderProgramDebackground = new RenderProgramDebackground();
                 renderProgramDebackground->createRender(-1, -mRatio, 0, 2,
@@ -273,6 +276,17 @@ extern "C" {
                                                         mWidth,
                                                         mHeight);
                 resultProgram = renderProgramDebackground;
+                break;
+            }
+            //todo 加动态模糊背景
+            case BLUR_BACKGROUND: {
+                RenderProgramBlurBackground *renderProgramBlurBackground = new RenderProgramBlurBackground();
+                renderProgramBlurBackground->createRender(-1, -mRatio, 0, 2,
+                                                        mRatio * 2,
+                                                        mWidth,
+                                                        mHeight);
+                resultProgram = renderProgramBlurBackground;
+                break;
             }
         }
         return (jlong) resultProgram;

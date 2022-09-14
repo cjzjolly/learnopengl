@@ -27,6 +27,7 @@ public class NativeGLSurfaceView extends GLSurfaceView {
     private long mRenderConvolutionDemo = Long.MIN_VALUE;
     private long mRenderLut = Long.MIN_VALUE;
     private long mRenderDeBackground = Long.MIN_VALUE;
+    private long mRenderBlurBackground = Long.MIN_VALUE;
 
     //Android画面数据输入Surface
     private Surface mDataInputSurface = null;
@@ -113,6 +114,17 @@ public class NativeGLSurfaceView extends GLSurfaceView {
                 JniBridge.addRenderToLayer(mLayer, mRenderDeBackground);
             } else {
                 JniBridge.removeRenderForLayer(mLayer, mRenderDeBackground);
+            }
+        }
+    }
+
+    /**背景根据视频内容动态模糊的渲染程序  开关**/
+    public void setRenderBlurBackgroundOnOff(boolean sw) {
+        if (mLayer != Long.MIN_VALUE && mRenderBlurBackground != Long.MIN_VALUE) {
+            if (sw) {
+                JniBridge.addRenderToLayer(mLayer, mRenderBlurBackground);
+            } else {
+                JniBridge.removeRenderForLayer(mLayer, mRenderBlurBackground);
             }
         }
     }
@@ -246,13 +258,15 @@ public class NativeGLSurfaceView extends GLSurfaceView {
                     mRenderNoiseReduction = JniBridge.makeRender(JniBridge.RENDER_PROGRAM_KIND.NOISE_REDUCTION.ordinal()); //添加降噪渲染器
                     mRenderLut = JniBridge.makeRender(JniBridge.RENDER_PROGRAM_KIND.RENDER_LUT.ordinal()); //添加Lut渲染器
                     mRenderDeBackground = JniBridge.makeRender(JniBridge.RENDER_PROGRAM_KIND.DE_BACKGROUND.ordinal()); //创建背景去除渲染程序
-
+                    mRenderBlurBackground = JniBridge.makeRender(JniBridge.RENDER_PROGRAM_KIND.BLUR_BACKGROUND.ordinal()); //创景视频图层背景动态模糊背景程序
+                    //默认为视频图层的渲染流水线，添加两个渲染器（RenderOES纹理自身一个、降噪流水线一个），以展示渲染流水线的能力
                     JniBridge.addRenderToLayer(mLayer, mRenderOES);
                     JniBridge.addRenderToLayer(mLayer, mRenderNoiseReduction);
                     mIsFirstFrame = false;
                 }
             }
             mInputDataSurfaceTexture.updateTexImage();
+            GLES30.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);//设置屏幕背景色RGBA
             JniBridge.renderLayer(0, mWidth, mHeight);
         }
     }

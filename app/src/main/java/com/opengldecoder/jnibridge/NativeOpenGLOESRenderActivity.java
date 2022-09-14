@@ -84,6 +84,7 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
     };
     private CheckBox mLutCheckBox;
     private CheckBox mCheckBoxDeBackGround;
+    private CheckBox mCheckBoxBlurBackGround;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -182,6 +183,15 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
 //        new Handler().postDelayed(() -> {
 //            mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_menglongf));
 //        }, 800);
+
+        //动态模糊背景:
+        mCheckBoxBlurBackGround = findViewById(R.id.cb_blur_bg);
+        mCheckBoxBlurBackGround.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mNativeGLSurfaceView.setRenderBlurBackgroundOnOff(isChecked);
+            }
+        });
     }
 
     protected void requestPermission(String permissions[]) {

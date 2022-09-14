@@ -17,6 +17,7 @@ public class JniBridge {
         NOISE_REDUCTION, //添加噪声处理
         RENDER_LUT, //添加滤镜处理渲染器
         DE_BACKGROUND, //去除背景
+        BLUR_BACKGROUND, //叠加一层视频内容到视频内容的背后，但让其模糊化
     }
 
     public static native void nativeGLInit(int viewPortWidth, int viewPortHeight);

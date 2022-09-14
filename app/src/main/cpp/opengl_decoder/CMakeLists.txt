@@ -48,6 +48,8 @@ add_library( # Sets the name of the library.
         RenderProgramNoiseReduction.cpp
         RenderProgramDebackground.h
         RenderProgramDebackground.cpp
+        RenderProgramBlurBackground.h
+        RenderProgramBlurBackground.cpp
         RenderProgramFilter.h
         RenderProgramFilter.cpp
         Layer.cpp
