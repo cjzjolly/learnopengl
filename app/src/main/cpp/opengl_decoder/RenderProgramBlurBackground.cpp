@@ -44,13 +44,31 @@ RenderProgramBlurBackground::RenderProgramBlurBackground() {
             out vec4 fragColor;//输出到的片元颜色
 
             void main() {
-                vec4 color = texture(sTexture, fragVTexCoord);  //采样纹理中对应坐标颜色，进行纹理渲染
-                //fragColor = color * vec4(fragVTexCoord, 1.0, 1.0); //just a test
-                fragColor = vec4(1.0, 0.0, 1.0, 1.0);//just a test
-                if (color.b > 0.5) {
-                    fragColor = color;
+                vec4 colorAvg = vec4(0.0, 0.0, 0.0, 0.0);
+                vec4 colorAvg2 = vec4(0.0, 0.0, 0.0, 0.0);
+                vec2 vt = fragVTexCoord;
+                float start = 0.001;
+                float end = 0.1;
+                float step = 0.005;
+                float count = (end - start) / step;
+                //trick:中间挖孔，以缩小的方式放入原视频
+                if (vt[0] > 0.25 && vt[0] < 0.75 && vt[1] > 0.25 && vt[1] < 0.75) {
+                    fragColor = texture(sTexture, (vt - 0.25) * 2.0);
+                    return;
                 }
-            }
+                //均值模糊：
+                for (float i = start; i < end; i += step) {
+                    vec4 color = texture(sTexture, vec2(vt[0] + i, vt[1]));
+                    vec4 color2 = texture(sTexture, vec2(vt[0], vt[1] + i));
+                    colorAvg = colorAvg + color;
+                    colorAvg2 = colorAvg2 + color;
+                }
+                colorAvg = colorAvg / count;
+                colorAvg2 = colorAvg2 / count;
+                colorAvg.a = 1.0;
+                colorAvg2.a = 1.0;
+                fragColor = (colorAvg + colorAvg2) / 2.0;
+    }
     );
     float tempTexCoord[] =   //纹理内采样坐标,类似于canvas坐标
             {
@@ -78,14 +96,15 @@ void RenderProgramBlurBackground::createRender(float x, float y, float z, float 
     mWindowH = windowH;
     initObjMatrix(); //使物体矩阵初始化为单位矩阵，否则接下来的矩阵操作因为都是乘以0而无效
     //缩小本渲染，实现画面叠加后的画中画效果
-    h *= 0.5f;
-    w *= 0.5f;
+//    h *= 0.5f;
+//    w *= 0.5f;
     float vertxData[] = {
             x + w, y, z,
             x, y, z,
             x + w, y + h, z,
             x, y + h, z,
     };
+//    translate(0.5f, 0.5f, 0);
     memcpy(mVertxData, vertxData, sizeof(vertxData));
     mImageProgram = createProgram(vertShader + 1, fragShader + 1);
     //获取程序中顶点位置属性引用"指针"

@@ -38,6 +38,7 @@ public class Player {
                 mediaPlayer.start();
             }
         });
+        mMediaPlayer.setVolume(0.1f, 0.1f);
     }
 
 }
