@@ -38,12 +38,18 @@ RenderProgramBlurBackground::RenderProgramBlurBackground() {
     fragShader = GL_SHADER_STRING(
             $#version 300 es\n
             precision highp float;
+            uniform sampler2D sTexture;//纹理输入
             in vec4 fragObjectColor;//接收vertShader处理后的颜色值给片元程序
             in vec2 fragVTexCoord;//接收vertShader处理后的纹理内坐标给片元程序
             out vec4 fragColor;//输出到的片元颜色
 
             void main() {
-                fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+                vec4 color = texture(sTexture, fragVTexCoord);  //采样纹理中对应坐标颜色，进行纹理渲染
+                //fragColor = color * vec4(fragVTexCoord, 1.0, 1.0); //just a test
+                fragColor = vec4(1.0, 0.0, 1.0, 1.0);//just a test
+                if (color.b > 0.5) {
+                    fragColor = color;
+                }
             }
     );
     float tempTexCoord[] =   //纹理内采样坐标,类似于canvas坐标
@@ -71,6 +77,9 @@ void RenderProgramBlurBackground::createRender(float x, float y, float z, float 
     mWindowW = windowW;
     mWindowH = windowH;
     initObjMatrix(); //使物体矩阵初始化为单位矩阵，否则接下来的矩阵操作因为都是乘以0而无效
+    //缩小本渲染，实现画面叠加后的画中画效果
+    h *= 0.5f;
+    w *= 0.5f;
     float vertxData[] = {
             x + w, y, z,
             x, y, z,
@@ -139,7 +148,11 @@ void RenderProgramBlurBackground::drawTo(float *cameraMatrix, float *projMatrix,
         glEnableVertexAttribArray(mObjectPositionPointer); //启用顶点属性
         glEnableVertexAttribArray(mObjectVertColorArrayPointer);  //启用颜色属性
         glEnableVertexAttribArray(mVTexCoordPointer);  //启用纹理采样定位坐标
-        //todo sth...
+        //输入纹理
+        glActiveTexture(GL_TEXTURE0); //激活0号纹理
+        glBindTexture(GL_TEXTURE_2D, mInputTexturesArray);
+        glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "sTexture"),
+                    0); //映射到渲染脚本，获取纹理属性的指针
         glDrawArrays(GL_TRIANGLE_STRIP, 0, /*mPointBufferPos / 3*/ 4); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
         glDisableVertexAttribArray(mObjectPositionPointer);
         glDisableVertexAttribArray(mObjectVertColorArrayPointer);
