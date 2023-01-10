@@ -148,9 +148,9 @@ public class CylinderSideL
     public void initShader(MySurfaceView mv)
     {
         //加载顶点着色器的脚本内容
-        mVertexShader=ShaderUtil.loadFromAssetsFile("sample8_1/vertex_color_light.sh", mv.getResources());
+        mVertexShader=ShaderUtil.loadFromAssetsFile("sample8_1/vertex_color_light.shader", mv.getResources());
         //加载片元着色器的脚本内容
-        mFragmentShader=ShaderUtil.loadFromAssetsFile("sample8_1/frag_color_light.sh", mv.getResources());
+        mFragmentShader=ShaderUtil.loadFromAssetsFile("sample8_1/frag_color_light.shader", mv.getResources());
         //基于顶点着色器与片元着色器创建程序
         mProgram = createProgram(mVertexShader, mFragmentShader);
         //获取程序中顶点位置属性引用id
