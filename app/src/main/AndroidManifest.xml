@@ -93,6 +93,8 @@
 <!--                <category android:name="android.intent.category.LAUNCHER" />-->
 <!--            </intent-filter>-->
         </activity>
+        <activity android:name="com.book2.Sample8_1.MyActivity"/>
+        <activity android:name="com.book2.EntranceActivity"/>
         <activity android:name="com.mainpage.MainPage">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
