@@ -8,7 +8,7 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
 
-import com.book.Sample5_2.Sample5_2_Activity;
+import com.book2.Sample5_2.Sample5_2_Activity;
 import com.book2.EntranceActivity;
 import com.opengldecoder.jnibridge.NativeOpenGLOESRenderActivity;
 

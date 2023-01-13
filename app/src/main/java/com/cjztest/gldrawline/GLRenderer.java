@@ -5,12 +5,12 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
 
-import com.book.Sample5_2.MatrixState;
+import com.book2.Sample5_2.MatrixState;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import static com.book.Sample5_2.ShaderUtil.checkGlError;
+import static com.book2.Sample5_2.ShaderUtil.checkGlError;
 
 /**
  * Created by jiezhuchen

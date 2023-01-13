@@ -1,4 +1,4 @@
-package com.book.Sample5_2;// 声明包
+package com.book2.Sample5_2;// 声明包
 import android.opengl.Matrix; //引入相关类
 public class MatrixState {//存储系统矩阵状态的类
 	private static float[] mProjMatrix = new float[16];// 4x4矩阵 投影用

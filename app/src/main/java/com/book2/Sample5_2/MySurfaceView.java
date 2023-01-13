@@ -1,10 +1,4 @@
-package com.book.Sample5_2;
-import android.opengl.GLES30;
-import android.opengl.GLSurfaceView;
-import android.view.MotionEvent;
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
-import android.content.Context;
+package com.book2.Sample5_2;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.view.MotionEvent;

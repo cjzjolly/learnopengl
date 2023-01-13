@@ -1,4 +1,4 @@
-package com.book.Sample5_2;
+package com.book2.Sample5_2;
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;

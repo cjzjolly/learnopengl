@@ -29,7 +29,7 @@
 <!--                <category android:name="android.intent.category.LAUNCHER" />-->
 <!--            </intent-filter>-->
         </activity>
-        <activity android:name="com.book.Sample5_2.Sample5_2_Activity">
+        <activity android:name="com.book2.Sample5_2.Sample5_2_Activity">
 <!--            <intent-filter>-->
 <!--                <action android:name="android.intent.action.MAIN" />-->
 

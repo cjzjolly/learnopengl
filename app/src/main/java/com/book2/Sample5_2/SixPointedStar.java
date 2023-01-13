@@ -1,4 +1,4 @@
-package com.book.Sample5_2;// 声明包
+package com.book2.Sample5_2;// 声明包
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -9,7 +9,7 @@ import java.util.List;
 import android.opengl.GLES30;
 import android.opengl.Matrix;
 
-import static com.book.Sample5_2.ShaderUtil.createProgram;
+import static com.book2.Sample5_2.ShaderUtil.createProgram;
 
 //六角星
 public class SixPointedStar

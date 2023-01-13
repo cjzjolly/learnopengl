@@ -1,4 +1,4 @@
-package com.book.Sample5_2;
+package com.book2.Sample5_2;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
