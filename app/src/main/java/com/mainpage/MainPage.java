@@ -42,6 +42,7 @@ public class MainPage extends Activity {
             startActivity(intent);
         });
         linearLayout.addView(button);
+
         button = new Button(this);
         button.setText("PS FBO例子");
         button.setOnClickListener(v -> {
@@ -49,10 +50,19 @@ public class MainPage extends Activity {
             startActivity(intent);
         });
         linearLayout.addView(button);
+
         button = new Button(this);
         button.setText("Native OpenGL视频播放处理");
         button.setOnClickListener(v -> {
             Intent intent = new Intent(this, NativeOpenGLOESRenderActivity.class);
+            startActivity(intent);
+        });
+        linearLayout.addView(button);
+
+        button = new Button(this);
+        button.setText("实时YUV转RGB并输出到view");
+        button.setOnClickListener(v -> {
+            Intent intent = new Intent(this, com.cjztest.glCameraPreview.MainActivity.class);
             startActivity(intent);
         });
         linearLayout.addView(button);
