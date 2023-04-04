@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 
 import com.book2.Sample1_1.BufferObjectExampleActivity;
 import com.book2.Sample1_5.FrameBufferObjectExampleActivity;
+import com.book2.Sample6_3.Sample6_3_Activity;
 import com.book2.Sample8_1.MyActivity;
 import com.book2.Sample5_2.Sample5_2_Activity;
 import com.example.learnopengl.R;
@@ -47,6 +48,13 @@ public class EntranceActivity extends Activity {
         button.setText("透视投影体验");
         button.setOnClickListener(v -> {
             startActivity(new Intent(this, Sample5_2_Activity.class));
+        });
+        menusll.addView(button);
+
+        button = new Button(this);
+        button.setText("光照效果");
+        button.setOnClickListener(v -> {
+            startActivity(new Intent(this, Sample6_3_Activity.class));
         });
         menusll.addView(button);
     }
