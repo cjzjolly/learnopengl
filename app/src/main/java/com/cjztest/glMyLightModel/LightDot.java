@@ -20,27 +20,41 @@ public class LightDot {
     private int maPositionPointer;
     private int mVTexCoordPointer;
 //    private float vertxData[] = {//光斑的面，使用Z型顶点构造
-//            1, -1, 0,
-//            -1, -1, 0,
-//            1, 1, 0,
-//            -1, 1, 0
-//    };
-//    float vertxData[] = {
-//            0.5f, 0.5f, 0.0f,   // 右上角
-//            0.5f, -0.5f, 0.0f,  // 右下角
-//            -0.5f, -0.5f, 0.0f, // 左下角
-//            -0.5f, 0.5f, 0.0f   // 左上角
+//            0.5f, -0.5f, 0,
+//            -0.5f, -0.5f, 0,
+//            0.5f, 0.5f, 0,
+//            -0.5f, 0.5f, 0
 //    };
     float vertxData[] = {
-            // 第一个三角形
             0.5f, 0.5f, 0.0f,   // 右上角
-            0.5f, -0.5f, 0.0f,  // 右下角
-            -0.5f, 0.5f, 0.0f,  // 左上角
-            // 第二个三角形
             0.5f, -0.5f, 0.0f,  // 右下角
             -0.5f, -0.5f, 0.0f, // 左下角
             -0.5f, 0.5f, 0.0f   // 左上角
     };
+//    float vertxData[] = {
+//            // 第一个三角形
+//            0.5f, 0.5f, 0.0f,   // 右上角
+//            0.5f, -0.5f, 0.0f,  // 右下角
+//            -0.5f, 0.5f, 0.0f,  // 左上角
+//            // 第二个三角形
+//            0.5f, -0.5f, 0.0f,  // 右下角
+//            -0.5f, -0.5f, 0.0f, // 左下角
+//            -0.5f, 0.5f, 0.0f   // 左上角
+//    };
+//    private float vertxData[] = {
+//            0.5f, -0.5f,0f,
+//            -0.5f, -0.5f,0f,
+//            0.5f, 0.5f,0f,
+//            0.5f, 0.5f,0f,
+//            -0.5f, 0.5f,  0f,
+//            -0.5f, -0.5f, 0f
+//    };
+//    private float vertxData[] = {
+//        0.5f, 0, 0,
+//        0, 0, 0,
+//        0.5f, 0.5f, 0,
+//        0, 0.5f, 0
+//    };
 
     public LightDot(Resources resources, float screenRatio) {
         mRsc = resources;
@@ -72,13 +86,10 @@ public class LightDot {
     private void initVertx() {
         float texCoor[] = new float[]   //纹理内采样坐标,类似于canvas坐标
                 {
-                        0, 1,
-                        0, 0,
-                        1, 0,
-
-                        1, 0,
-                        1, 1,
-                        0, 1,
+                        1.0f, 0.0f,
+                        0.0f, 0.0f,
+                        1.0f, 1.0f,
+                        0.0f, 1.0f
                 };
         ByteBuffer vbb = ByteBuffer.allocateDirect(vertxData.length * 4);
         vbb.order(ByteOrder.nativeOrder());// 设置字节顺序
@@ -109,13 +120,13 @@ public class LightDot {
                 MatrixState.getFinalMatrix(), 0);
         //todo cjzmark 绘制光点
         GLES30.glVertexAttribPointer(maPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mVertexBuffer);
-        GLES30.glVertexAttribPointer(mVTexCoordPointer, 2, GLES30.GL_FLOAT, false, 0, mUVBuffer);  //二维向量，size为2
+//        GLES30.glVertexAttribPointer(mVTexCoordPointer, 2, GLES30.GL_FLOAT, false, 0, mUVBuffer);  //二维向量，size为2
         GLES30.glEnableVertexAttribArray(maPositionPointer); //启用顶点属性
-        GLES30.glEnableVertexAttribArray(mVTexCoordPointer); //启用顶点属性
-        GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, vertxData.length / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+//        GLES30.glEnableVertexAttribArray(mVTexCoordPointer); //启用顶点属性
+        GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, vertxData.length / 3 + 1); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
 //        GLES30.glLineWidth(15f);
 //        GLES30.glDrawArrays(GLES30.GL_LINE_STRIP, 0, vertxData.length / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
-//        GLES30.glDisableVertexAttribArray(maPositionHandle); //启用顶点属性
+        GLES30.glDisableVertexAttribArray(maPositionPointer); //启用顶点属性
 //        GLES30.glDisableVertexAttribArray(mVTexCoordPointer); //启用顶点属性
 //        MatrixState.popMatrix();
     }

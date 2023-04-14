@@ -25,5 +25,5 @@ out vec4 fragColor;//输出到的片元颜色\n
 void main() {
 //    fireflyEffect(fragColor, fragVTexCoord);
 //    fragColor = vec4(1.0, 1.0, 1.0, 1.0);
-    fragColor = vec4(fragVTexCoord, 1.0, 1.0);
+    fragColor = vec4(0.0, 1.0, 1.0, 1.0);
 }
