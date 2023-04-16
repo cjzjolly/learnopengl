@@ -35,8 +35,8 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             GLES30.glClearColor(0.0f,0.0f,0.0f,1.0f);
             //打开深度检测
             GLES30.glEnable(GLES30.GL_DEPTH_TEST);
-            //打开背面剪裁
-            GLES30.glEnable(GLES30.GL_CULL_FACE);
+            //打开背面剪裁(demo 不要开)
+//            GLES30.glEnable(GLES30.GL_CULL_FACE);
             //初始化变换矩阵
             MatrixState.setInitStack();
         }
@@ -48,9 +48,9 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             //计算GLSurfaceView的宽高比
             Constant.ratio = (float) width / height;
             // 调用此方法计算产生透视投影矩阵
-            MatrixState.setProjectFrustum(-Constant.ratio, Constant.ratio, -1, 1, 2, 1000);
+            MatrixState.setProjectFrustum(-Constant.ratio, Constant.ratio, -1, 1, 20, 100);
             // 调用此方法产生摄像机9参数位置矩阵
-            MatrixState.setCamera(0,0,0,  0f,0f,-1f,  0f,1.0f,0.0f);
+            MatrixState.setCamera(0, 0f, 30, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
             mLightDot = new LightDot(getResources(), Constant.ratio);
         }
 
@@ -62,7 +62,7 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             GLES30.glClearColor(0f,0f,0f, 1.0f);
             mLightDot.draw();
 
-//            MatrixState.rotate(1, 0, 0, 1);
+            MatrixState.rotate(1, 0, 1, 0);
         }
     }
 }

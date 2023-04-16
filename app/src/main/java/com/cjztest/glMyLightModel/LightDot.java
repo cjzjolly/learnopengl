@@ -19,42 +19,12 @@ public class LightDot {
     private int muMVPMatrixHandle;
     private int maPositionPointer;
     private int mVTexCoordPointer;
-//    private float vertxData[] = {//光斑的面，使用Z型顶点构造
-//            0.5f, -0.5f, 0,
-//            -0.5f, -0.5f, 0,
-//            0.5f, 0.5f, 0,
-//            -0.5f, 0.5f, 0
-//    };
-    float vertxData[] = {
-            0.5f, 0.5f, 0.0f,   // 右上角
-            0.5f, -0.5f, 0.0f,  // 右下角
-            -0.5f, -0.5f, 0.0f, // 左下角
-            -0.5f, 0.5f, 0.0f   // 左上角
+    private float vertxData[] = {//光斑的面，使用Z型顶点构造
+            0.5f, -0.5f, 0,
+            -0.5f, -0.5f, 0,
+            0.5f, 0.5f, 0,
+            -0.5f, 0.5f, 0
     };
-//    float vertxData[] = {
-//            // 第一个三角形
-//            0.5f, 0.5f, 0.0f,   // 右上角
-//            0.5f, -0.5f, 0.0f,  // 右下角
-//            -0.5f, 0.5f, 0.0f,  // 左上角
-//            // 第二个三角形
-//            0.5f, -0.5f, 0.0f,  // 右下角
-//            -0.5f, -0.5f, 0.0f, // 左下角
-//            -0.5f, 0.5f, 0.0f   // 左上角
-//    };
-//    private float vertxData[] = {
-//            0.5f, -0.5f,0f,
-//            -0.5f, -0.5f,0f,
-//            0.5f, 0.5f,0f,
-//            0.5f, 0.5f,0f,
-//            -0.5f, 0.5f,  0f,
-//            -0.5f, -0.5f, 0f
-//    };
-//    private float vertxData[] = {
-//        0.5f, 0, 0,
-//        0, 0, 0,
-//        0.5f, 0.5f, 0,
-//        0, 0.5f, 0
-//    };
 
     public LightDot(Resources resources, float screenRatio) {
         mRsc = resources;
@@ -97,11 +67,11 @@ public class LightDot {
         mVertexBuffer.put(vertxData);// 向缓冲区中放入顶点坐标数据
         mVertexBuffer.position(0);// 设置缓冲区起始位置
 
-        ByteBuffer fragBB = ByteBuffer.allocateDirect(texCoor.length * 4);
-        fragBB.order(ByteOrder.nativeOrder());// 设置字节顺序
-        mUVBuffer = fragBB.asFloatBuffer();// 转换为float型缓冲
-        mUVBuffer.put(texCoor);// 向缓冲区中放入顶点坐标数据
-        mUVBuffer.position(0);// 设置缓冲区起始位置
+//        ByteBuffer fragBB = ByteBuffer.allocateDirect(texCoor.length * 4);
+//        fragBB.order(ByteOrder.nativeOrder());// 设置字节顺序
+//        mUVBuffer = fragBB.asFloatBuffer();// 转换为float型缓冲
+//        mUVBuffer.put(texCoor);// 向缓冲区中放入顶点坐标数据
+//        mUVBuffer.position(0);// 设置缓冲区起始位置
     }
 
     /**设置光点的坐标——变换它的世界坐标**/
@@ -119,11 +89,11 @@ public class LightDot {
         GLES30.glUniformMatrix4fv(muMVPMatrixHandle, 1, false,
                 MatrixState.getFinalMatrix(), 0);
         //todo cjzmark 绘制光点
-        GLES30.glVertexAttribPointer(maPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mVertexBuffer);
+        GLES30.glVertexAttribPointer(maPositionPointer, 3, GLES30.GL_FLOAT, false, 3 * 4, mVertexBuffer);
 //        GLES30.glVertexAttribPointer(mVTexCoordPointer, 2, GLES30.GL_FLOAT, false, 0, mUVBuffer);  //二维向量，size为2
         GLES30.glEnableVertexAttribArray(maPositionPointer); //启用顶点属性
 //        GLES30.glEnableVertexAttribArray(mVTexCoordPointer); //启用顶点属性
-        GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, vertxData.length / 3 + 1); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+        GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, vertxData.length / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
 //        GLES30.glLineWidth(15f);
 //        GLES30.glDrawArrays(GLES30.GL_LINE_STRIP, 0, vertxData.length / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
         GLES30.glDisableVertexAttribArray(maPositionPointer); //启用顶点属性
