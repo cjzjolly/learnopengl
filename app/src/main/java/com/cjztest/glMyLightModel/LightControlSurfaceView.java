@@ -35,6 +35,11 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             GLES30.glClearColor(0.0f,0.0f,0.0f,1.0f);
             //打开深度检测
             GLES30.glEnable(GLES30.GL_DEPTH_TEST);
+            GLES30.glDepthFunc(GLES30.GL_LEQUAL); //还可以
+            //混合模式等
+            GLES30.glEnable(GLES30.GL_BLEND);
+            GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA);
+            GLES30.glDisable(GLES30.GL_DITHER);
             //打开背面剪裁(demo 不要开)
 //            GLES30.glEnable(GLES30.GL_CULL_FACE);
             //初始化变换矩阵
