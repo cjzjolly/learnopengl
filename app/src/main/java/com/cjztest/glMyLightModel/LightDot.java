@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
-/**todo 由于纹理至少要一个面（因此至少要一个三角形）才能进行贴图，所以要弄出光斑效果，用两个三角形拼成光斑的外接矩形比较好**/
+/**光斑**/
 public class LightDot {
     private final Resources mRsc;
     private FloatBuffer mVertexBuffer;// 顶点坐标数据缓冲

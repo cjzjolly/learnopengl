@@ -12,6 +12,7 @@ public class LightControlSurfaceView  extends GLSurfaceView {
 
     private final SceneRenderer mRenderer;
     private LightDot mLightDot;
+    private RoomBox mRoomBox;
 
     public LightControlSurfaceView(Context context) {
         super(context);
@@ -56,6 +57,7 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             MatrixState.setProjectFrustum(-Constant.ratio, Constant.ratio, -1, 1, 20, 100);
             // 调用此方法产生摄像机9参数位置矩阵
             MatrixState.setCamera(0, 0f, 30, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+            mRoomBox = new RoomBox(getResources(), Constant.ratio);
             mLightDot = new LightDot(getResources(), Constant.ratio);
         }
 
@@ -65,6 +67,7 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             GLES30.glClear( GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_COLOR_BUFFER_BIT);
             //设置屏幕背景色RGBA
             GLES30.glClearColor(0f,0f,0f, 1.0f);
+            mRoomBox.draw();
             mLightDot.draw();
 
             MatrixState.rotate(1, 0, 1, 0);
