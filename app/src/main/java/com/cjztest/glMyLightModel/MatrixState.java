@@ -52,6 +52,10 @@ public class MatrixState
         Matrix.rotateM(currMatrix,0,angle,x,y,z);
     }
 
+    public static void scale(float scale) {
+        Matrix.scaleM(currMatrix,0, scale, scale, scale);
+    }
+
 
     //设置摄像机
     static ByteBuffer llbb= ByteBuffer.allocateDirect(3*4);

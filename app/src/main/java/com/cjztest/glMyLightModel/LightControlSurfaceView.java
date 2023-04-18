@@ -5,6 +5,8 @@ import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.view.MotionEvent;
 
+import com.book2.Sample5_2.SixPointedStar;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -13,6 +15,9 @@ public class LightControlSurfaceView  extends GLSurfaceView {
     private final SceneRenderer mRenderer;
     private LightDot mLightDot;
     private RoomBox mRoomBox;
+    private float mPreviousX;
+    private float mPreviousY;
+    private double mPreviousLength;
 
     public LightControlSurfaceView(Context context) {
         super(context);
@@ -24,7 +29,31 @@ public class LightControlSurfaceView  extends GLSurfaceView {
 
     @Override
     public boolean onTouchEvent(MotionEvent e) {
-        //todo cjzmark 把触摸事件转换为光源的顶点，单指移动，多点则缩放（z轴的操作）
+        //把触摸事件转换为光源的顶点，单指移动，多点则缩放
+        if (e.getPointerCount() > 1) {
+            double distance = Math.sqrt(Math.pow(e.getX(0) - e.getX(1), 2)
+                    + Math.pow(e.getY(0)- e.getY(1), 2));
+            switch (e.getAction()) {
+                case MotionEvent.ACTION_MOVE://若为移动动作
+                    MatrixState.scale((float) (distance / mPreviousLength));
+//                    MatrixState.translate(0,0,-(float) (distance / mPreviousLength));
+                    break;
+            }
+            mPreviousLength = distance;
+        } else {
+            float y = e.getY();//获取此次触控的y坐标
+            float x = e.getX();//获取此次触控的x坐标
+            switch (e.getAction()) {
+                case MotionEvent.ACTION_MOVE://若为移动动作
+                    float dy = y - mPreviousY;//计算触控位置的Y位移
+                    float dx = x - mPreviousX;//计算触控位置的X位移
+                    MatrixState.rotate(dx / getWidth() * 360, 0, 1, 0);
+                    MatrixState.rotate(dy / getHeight() * 360, 1, 0, 0);
+                    break;
+            }
+            mPreviousY = y;//记录触控笔y坐标
+            mPreviousX = x;//记录触控笔x坐标
+        }
         return true;
     }
 
@@ -70,7 +99,7 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             mRoomBox.draw();
             mLightDot.draw();
 
-            MatrixState.rotate(1, 0, 1, 0);
+//            MatrixState.rotate(1, 0, 1, 0);
         }
     }
 }
