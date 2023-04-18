@@ -25,10 +25,10 @@ public class LightDot {
             0.5f, 0.5f, 0,
             -0.5f, 0.5f, 0
     };
+    private float mTrans[] = new float[3];
 
     public LightDot(Resources resources, float screenRatio) {
         mRsc = resources;
-        setLocation(new float[3]);
         initShader();
         initVertx();
     }
@@ -76,7 +76,15 @@ public class LightDot {
 
     /**设置光点的坐标——变换它的世界坐标**/
     public void setLocation(float xyz[]) {
+        mTrans[0] = xyz[0];
+        mTrans[1] = xyz[1];
+        mTrans[2] = xyz[2];
+    }
 
+    public void translate(float xyz[]) {
+        mTrans[0] += xyz[0];
+        mTrans[1] += xyz[1];
+        mTrans[2] += xyz[2];
     }
 
     /**进行绘制**/
@@ -85,9 +93,12 @@ public class LightDot {
 //        MatrixState.pushMatrix();
 //        //设置沿Z轴正向位移1
 //        MatrixState.translate(0, 0, 1);
+        MatrixState.pushMatrix();
+        MatrixState.translate(mTrans[0], mTrans[1], mTrans[1]); //仅对光点的世界坐标变换矩阵临时修改，这样就可以实现不改顶点但只改光点的位置了。
         // 将最终变换矩阵传入渲染管线
         GLES30.glUniformMatrix4fv(muMVPMatrixHandle, 1, false,
                 MatrixState.getFinalMatrix(), 0);
+        MatrixState.popMatrix();
         //todo cjzmark 绘制光点
         GLES30.glVertexAttribPointer(maPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mVertexBuffer);
         GLES30.glVertexAttribPointer(mVTexCoordPointer, 2, GLES30.GL_FLOAT, false, 0, mUVBuffer);  //二维向量，size为2

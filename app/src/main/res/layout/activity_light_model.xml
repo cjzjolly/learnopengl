@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/black">
 
-    <com.cjztest.glMyLightModel.LightControlSurfaceView
+    <FrameLayout
+        android:id="@+id/fl_light_test_gl_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
+    <CheckBox
+        android:id="@+id/cb_light_test_move_light_dot"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:text="移动缩放光源" />
 </RelativeLayout>

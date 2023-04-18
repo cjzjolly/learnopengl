@@ -12,6 +12,13 @@ import javax.microedition.khronos.opengles.GL10;
 
 public class LightControlSurfaceView  extends GLSurfaceView {
 
+
+    public enum TouchMode {
+        SCENE,
+        ONLY_LIGHT
+    }
+    private TouchMode mTouchMode = TouchMode.SCENE;
+
     private final SceneRenderer mRenderer;
     private LightDot mLightDot;
     private RoomBox mRoomBox;
@@ -24,7 +31,7 @@ public class LightControlSurfaceView  extends GLSurfaceView {
         this.setEGLContextClientVersion(3); //设置使用OPENGL ES3.0
         mRenderer = new SceneRenderer();	//创建场景渲染器
         setRenderer(mRenderer);				//设置渲染器
-        setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);//设置渲染模式为主动渲染
+        setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);//设置渲染模式为主动渲染
     }
 
     @Override
@@ -43,17 +50,28 @@ public class LightControlSurfaceView  extends GLSurfaceView {
         } else {
             float y = e.getY();//获取此次触控的y坐标
             float x = e.getX();//获取此次触控的x坐标
+            float dy = y - mPreviousY;//计算触控位置的Y位移
+            float dx = x - mPreviousX;//计算触控位置的X位移
             switch (e.getAction()) {
                 case MotionEvent.ACTION_MOVE://若为移动动作
-                    float dy = y - mPreviousY;//计算触控位置的Y位移
-                    float dx = x - mPreviousX;//计算触控位置的X位移
-                    MatrixState.rotate(dx / getWidth() * 360, 0, 1, 0);
-                    MatrixState.rotate(dy / getHeight() * 360, 1, 0, 0);
+                    switch (mTouchMode) {
+                        case SCENE:
+                            MatrixState.rotate(dx / getWidth() * 360, 0, 1, 0);
+                            MatrixState.rotate(dy / getHeight() * 360, 1, 0, 0);
+                            break;
+                        case ONLY_LIGHT:
+                            //单独移动光点位置
+                            if (null != mLightDot) {
+                                mLightDot.translate(new float[] {dx / getWidth(), -dy / getHeight(), 0});
+                            }
+                            break;
+                    }
                     break;
             }
             mPreviousY = y;//记录触控笔y坐标
             mPreviousX = x;//记录触控笔x坐标
         }
+        requestRender();
         return true;
     }
 
@@ -101,5 +119,9 @@ public class LightControlSurfaceView  extends GLSurfaceView {
 
 //            MatrixState.rotate(1, 0, 1, 0);
         }
+    }
+
+    public void setMode(TouchMode mode) {
+        mTouchMode = mode;
     }
 }
