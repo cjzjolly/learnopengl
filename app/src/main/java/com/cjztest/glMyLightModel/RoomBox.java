@@ -20,6 +20,7 @@ public class RoomBox {
     private String mFragmentShader;// 片元着色器代码脚本
     private int mProgram;
     private int muMVPMatrixHandle;
+    private int mObjMatrixHandle;
     private int maPositionPointer;
     private int mVTexCoordPointer;
     private int mVertxColorPointer;
@@ -42,12 +43,13 @@ public class RoomBox {
      * 加载shader
      **/
     public void initShader() {
-        mVertexShader = ShaderUtil.loadFromAssetsFile("fragColorEffect1/vertShader.shader", mRsc);
+        mVertexShader = ShaderUtil.loadFromAssetsFile("cjztest/lightmodel/vertShaderRoom.shader", mRsc);
         mFragmentShader = ShaderUtil.loadFromAssetsFile("cjztest/lightmodel/fragShaderRoom.shader",
                 mRsc);
         mProgram = ShaderUtil.createProgram(mVertexShader, mFragmentShader);
         //变换矩阵索引
         muMVPMatrixHandle = GLES30.glGetUniformLocation(mProgram, "uMVPMatrix");
+        mObjMatrixHandle = GLES30.glGetUniformLocation(mProgram, "objMatrix");
         // 获取程序中顶点位置属性引用
         maPositionPointer = GLES30.glGetAttribLocation(mProgram, "objectPosition");
         mVertxColorPointer = GLES30.glGetAttribLocation(mProgram, "objectColor");
@@ -95,6 +97,7 @@ public class RoomBox {
         GLES30.glUseProgram(mProgram);
         GLES30.glUniformMatrix4fv(muMVPMatrixHandle, 1, false,
                 MatrixState.getFinalMatrix(), 0);
+        GLES30.glUniformMatrix4fv(mObjMatrixHandle, 1, false, MatrixState.getMMatrix(), 0);
         GLES30.glVertexAttribPointer(maPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mVertexBuffer);
         GLES30.glVertexAttribPointer(mVTexCoordPointer, 2, GLES30.GL_FLOAT, false, 0, mUVBuffer);  //二维向量，size为2
         GLES30.glVertexAttribPointer(mVertxColorPointer, 4, GLES30.GL_FLOAT, false, 0, mColorBuffer);
