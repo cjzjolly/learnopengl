@@ -2,7 +2,6 @@ package com.cjztest.glMyLightModel;
 
 import android.content.res.Resources;
 import android.opengl.GLES30;
-import android.opengl.Matrix;
 
 import com.book2.Sample6_3.ShaderUtil;
 
@@ -16,6 +15,7 @@ public class RoomBox {
     private FloatBuffer mVertexBuffer;// 顶点坐标数据缓冲
     private FloatBuffer mUVBuffer;// 顶点坐标数据缓冲
     private FloatBuffer mColorBuffer;// 颜色坐标数据缓冲
+    private FloatBuffer mLightBuffer;// 颜色坐标数据缓冲
     private String mVertexShader;// 顶点着色器代码脚本
     private String mFragmentShader;// 片元着色器代码脚本
     private int mProgram;
@@ -23,7 +23,9 @@ public class RoomBox {
     private int mObjMatrixHandle;
     private int maPositionPointer;
     private int mVTexCoordPointer;
+    private int mLightPosPointer;
     private int mVertxColorPointer;
+    private float mLightPos[];
 
     private float vertx[] = {
             //底面:
@@ -55,6 +57,7 @@ public class RoomBox {
         mVertxColorPointer = GLES30.glGetAttribLocation(mProgram, "objectColor");
         //纹理采样坐标
         mVTexCoordPointer = GLES30.glGetAttribLocation(mProgram, "vTexCoord");
+        mLightPosPointer = GLES30.glGetUniformLocation(mProgram, "lightDotPos");
     }
 
     private void initVertx() {
@@ -90,6 +93,24 @@ public class RoomBox {
         mColorBuffer = colorBB.asFloatBuffer();// 转换为float型缓冲
         mColorBuffer.put(colors);// 向缓冲区中放入顶点坐标数据
         mColorBuffer.position(0);// 设置缓冲区起始位置
+
+        initLightBuff();
+
+    }
+
+    private void initLightBuff() {
+        if (mLightPos != null) {
+            ByteBuffer lightBB = ByteBuffer.allocateDirect(mLightPos.length * 4);
+            lightBB.order(ByteOrder.nativeOrder());// 设置字节顺序
+            mLightBuffer = lightBB.asFloatBuffer();// 转换为float型缓冲
+            mLightBuffer.put(mLightPos);// 向缓冲区中放入顶点坐标数据
+            mLightBuffer.position(0);// 设置缓冲区起始位置
+        }
+    }
+
+    /**cjzmark todo 传入全方向射发射光线的坐标**/
+    public void setLightPosition(float lightPosBuf[]) {
+        mLightPos = lightPosBuf;
     }
 
     /**进行绘制**/
@@ -99,9 +120,18 @@ public class RoomBox {
                 MatrixState.getFinalMatrix(), 0);
         GLES30.glUniformMatrix4fv(mObjMatrixHandle, 1, false, MatrixState.getMMatrix(), 0);
         GLES30.glVertexAttribPointer(maPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mVertexBuffer);
+        initLightBuff();
+//        if (mLightBuffer != null) {
+//            GLES30.glVertexAttribPointer(mLightPosPointer, 3, GLES30.GL_FLOAT, false, 0, mLightBuffer);
+//        }
+        GLES30.glUniform3fv(mLightPosPointer, 1, mLightPos, 0);
         GLES30.glVertexAttribPointer(mVTexCoordPointer, 2, GLES30.GL_FLOAT, false, 0, mUVBuffer);  //二维向量，size为2
         GLES30.glVertexAttribPointer(mVertxColorPointer, 4, GLES30.GL_FLOAT, false, 0, mColorBuffer);
+
         GLES30.glEnableVertexAttribArray(maPositionPointer); //启用顶点属性
+//        if (mLightBuffer != null) {
+//            GLES30.glEnableVertexAttribArray(mLightPosPointer); //启用顶点属性
+//        }
         GLES30.glEnableVertexAttribArray(mVTexCoordPointer); //启用顶点属性
         GLES30.glEnableVertexAttribArray(mVertxColorPointer); //启用顶点属性
 
@@ -138,6 +168,9 @@ public class RoomBox {
 
 
         GLES30.glDisableVertexAttribArray(maPositionPointer); //启用顶点属性
+//        if (mLightBuffer != null) {
+//            GLES30.glDisableVertexAttribArray(mLightPosPointer); //启用顶点属性
+//        }
         GLES30.glDisableVertexAttribArray(mVTexCoordPointer); //启用顶点属性
         GLES30.glDisableVertexAttribArray(mVertxColorPointer); //启用顶点属性
     }

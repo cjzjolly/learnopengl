@@ -5,8 +5,6 @@ import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.view.MotionEvent;
 
-import com.book2.Sample5_2.SixPointedStar;
-
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -114,6 +112,7 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             GLES30.glClear( GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_COLOR_BUFFER_BIT);
             //设置屏幕背景色RGBA
             GLES30.glClearColor(0f,0f,0f, 1.0f);
+            mRoomBox.setLightPosition(mLightDot.getLightDotPos());
             mRoomBox.draw();
             mLightDot.draw();
 

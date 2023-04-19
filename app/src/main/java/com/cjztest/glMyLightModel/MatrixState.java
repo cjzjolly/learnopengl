@@ -66,6 +66,7 @@ public class MatrixState
     }
 
     public static void reverseTotalRotate() {
+        //因为scale和rotate在矩阵中处于同一位置，因此不好分离，重置之后缩放量会消失，因此重置一下
         Matrix.setRotateM(currMatrix, 0, 0, 1, 0, 0);
         Matrix.setRotateM(currMatrix, 0, 0, 0, 1, 0);
         Matrix.setRotateM(currMatrix, 0, 0, 0, 0, 1);

@@ -89,6 +89,10 @@ public class LightDot {
         mTrans[2] += xyz[2];
     }
 
+    public float[] getLightDotPos() {
+        return mTrans;
+    }
+
     /**进行绘制**/
     public void draw() {
         GLES30.glUseProgram(mProgram);
@@ -105,7 +109,7 @@ public class LightDot {
         GLES30.glUniformMatrix4fv(muMVPMatrixHandle, 1, false,
                 MatrixState.getFinalMatrix(), 0);
         MatrixState.popMatrix();
-        //todo cjzmark 绘制光点
+        //绘制光点
         GLES30.glVertexAttribPointer(maPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mVertexBuffer);
         GLES30.glVertexAttribPointer(mVTexCoordPointer, 2, GLES30.GL_FLOAT, false, 0, mUVBuffer);  //二维向量，size为2
         GLES30.glEnableVertexAttribArray(maPositionPointer); //启用顶点属性
