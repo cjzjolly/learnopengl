@@ -7,6 +7,6 @@ in vec3 lightPos;
 out vec4 fragColor;//输出到的片元颜色\n
 
 void main() {
-    vec4 color = vec4(fragObjectColor.rgb * 1.0 / distance(normalize(lightPos), normalize(objPos)), fragObjectColor.a);
+    vec4 color = vec4(fragObjectColor.rgb * 0.5 / distance(normalize(lightPos), normalize(objPos)), fragObjectColor.a);
     fragColor = color;
 }
