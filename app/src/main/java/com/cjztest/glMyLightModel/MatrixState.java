@@ -17,6 +17,13 @@ public class MatrixState
     //保护变换矩阵的栈
     static float[][] mStack=new float[10][16];
     static int stackTop=-1;
+    private static double mTotalXAngle;
+    private static double mTotalYAngle;
+    private static double mTotalZAngle;
+    private static float mTotalXTrans;
+    private static float mTotalYTrans;
+    private static float mTotalZTrans;
+    private static float mTotalScale = 1f;
 
     public static void setInitStack()//获取不变换初始矩阵
     {
@@ -44,15 +51,29 @@ public class MatrixState
 
     public static void translate(float x,float y,float z)//设置沿xyz轴移动
     {
+        mTotalXTrans += x;
+        mTotalYTrans += y;
+        mTotalZTrans += z;
         Matrix.translateM(currMatrix, 0, x, y, z);
     }
 
     public static void rotate(float angle,float x,float y,float z)//设置绕xyz轴移动
     {
+        mTotalXAngle += x;
+        mTotalYAngle += y;
+        mTotalZAngle += z;
         Matrix.rotateM(currMatrix,0,angle,x,y,z);
     }
 
+    public static void reverseTotalRotate() {
+        Matrix.setRotateM(currMatrix, 0, 0, 1, 0, 0);
+        Matrix.setRotateM(currMatrix, 0, 0, 0, 1, 0);
+        Matrix.setRotateM(currMatrix, 0, 0, 0, 0, 1);
+        Matrix.scaleM(currMatrix,0, mTotalScale, mTotalScale, mTotalScale);
+    }
+
     public static void scale(float scale) {
+        mTotalScale *= scale;
         Matrix.scaleM(currMatrix,0, scale, scale, scale);
     }
 

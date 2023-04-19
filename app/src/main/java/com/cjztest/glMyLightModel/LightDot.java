@@ -17,6 +17,7 @@ public class LightDot {
     private String mFragmentShader;// 片元着色器代码脚本
     private int mProgram;
     private int muMVPMatrixHandle;
+    private int mObjMatrixHandle;
     private int maPositionPointer;
     private int mVTexCoordPointer;
     private float vertxData[] = {//光斑的面，使用Z型顶点构造
@@ -45,6 +46,7 @@ public class LightDot {
         mProgram = ShaderUtil.createProgram(mVertexShader, mFragmentShader);
         //变换矩阵索引
         muMVPMatrixHandle = GLES30.glGetUniformLocation(mProgram, "uMVPMatrix");
+        mObjMatrixHandle = GLES30.glGetUniformLocation(mProgram, "objMatrix");
         // 获取程序中顶点位置属性引用
         maPositionPointer = GLES30.glGetAttribLocation(mProgram, "objectPosition");
         //纹理采样坐标
@@ -94,7 +96,11 @@ public class LightDot {
 //        //设置沿Z轴正向位移1
 //        MatrixState.translate(0, 0, 1);
         MatrixState.pushMatrix();
+        MatrixState.reverseTotalRotate();
+
         MatrixState.translate(mTrans[0], mTrans[1], mTrans[1]); //仅对光点的世界坐标变换矩阵临时修改，这样就可以实现不改顶点但只改光点的位置了。
+        GLES30.glUniformMatrix4fv(mObjMatrixHandle, 1, false,
+                MatrixState.getMMatrix(), 0);
         // 将最终变换矩阵传入渲染管线
         GLES30.glUniformMatrix4fv(muMVPMatrixHandle, 1, false,
                 MatrixState.getFinalMatrix(), 0);
