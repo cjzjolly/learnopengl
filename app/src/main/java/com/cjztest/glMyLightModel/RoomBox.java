@@ -19,6 +19,7 @@ public class RoomBox {
     private String mFragmentShader;// 片元着色器代码脚本
     private int mProgram;
     private int muMVPMatrixHandle;
+    private int muMVPMatrixHandleWithoutRotate;
     private int mObjMatrixHandle;
     private int maPositionPointer;
     private int mVTexCoordPointer;
@@ -50,6 +51,7 @@ public class RoomBox {
         mProgram = ShaderUtil.createProgram(mVertexShader, mFragmentShader);
         //变换矩阵索引
         muMVPMatrixHandle = GLES30.glGetUniformLocation(mProgram, "uMVPMatrix");
+        muMVPMatrixHandleWithoutRotate = GLES30.glGetUniformLocation(mProgram, "uMVPMatrixWithoutRotate");
         mObjMatrixHandle = GLES30.glGetUniformLocation(mProgram, "objMatrix");
         // 获取程序中顶点位置属性引用
         maPositionPointer = GLES30.glGetAttribLocation(mProgram, "objectPosition");
@@ -105,6 +107,12 @@ public class RoomBox {
         GLES30.glUseProgram(mProgram);
         GLES30.glUniformMatrix4fv(muMVPMatrixHandle, 1, false,
                 MatrixState.getFinalMatrix(), 0);
+        //光斑不跟随房间旋转，只应用和旋转无关的变换（不然光斑不动，但光线效果跟着房间走了）
+        MatrixState.pushMatrix();
+        MatrixState.reverseTotalRotate();
+        GLES30.glUniformMatrix4fv(muMVPMatrixHandleWithoutRotate, 1, false,
+                MatrixState.getFinalMatrix(), 0);
+        MatrixState.popMatrix();
         GLES30.glUniformMatrix4fv(mObjMatrixHandle, 1, false, MatrixState.getMMatrix(), 0);
         GLES30.glVertexAttribPointer(maPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mVertexBuffer);
         GLES30.glUniform3fv(mLightPosPointer, 1, mLightPos, 0);
