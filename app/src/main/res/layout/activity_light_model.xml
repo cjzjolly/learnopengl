@@ -9,10 +9,39 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <CheckBox
-        android:id="@+id/cb_light_test_move_light_dot"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/white"
-        android:text="移动缩放光源" />
+        android:orientation="vertical">
+
+        <CheckBox
+            android:id="@+id/cb_light_test_move_light_dot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:text="移动缩放光源" />
+
+        <RadioGroup
+            android:id="@+id/rdg_light_mode_list"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/cb_light_mode_0"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:checked="true"
+                android:text="使用散射光" />
+
+            <RadioButton
+                android:id="@+id/cb_light_mode_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:textColor="@color/white"
+                android:text="使用点积光" />
+        </RadioGroup>
+    </LinearLayout>
 </RelativeLayout>

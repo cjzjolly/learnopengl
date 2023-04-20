@@ -120,7 +120,20 @@ public class LightControlSurfaceView  extends GLSurfaceView {
         }
     }
 
+    /**触摸场景切换**/
     public void setMode(TouchMode mode) {
         mTouchMode = mode;
+        requestRender();
     }
+
+    /**光照方式切换**/
+    public void setLightMode(RoomBox.LightMode lightMode) {
+        if (null == mRoomBox) {
+            return;
+        }
+        mRoomBox.setLightMode(lightMode);
+        requestRender();
+    }
+
+
 }

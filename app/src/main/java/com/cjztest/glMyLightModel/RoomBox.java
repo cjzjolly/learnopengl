@@ -24,8 +24,19 @@ public class RoomBox {
     private int maPositionPointer;
     private int mVTexCoordPointer;
     private int mLightPosPointer;
+    /**光照模式指针**/
+    private int mFuncChoicePointer;
+    /**光照模式本地记录**/
+    private int mLightMode;
     private int mVertxColorPointer;
     private float mLightPos[];
+
+    /**光照模式表，与fragShaderRoom可以提供的模式一一对应**/
+    public enum LightMode {
+        BY_DOT_PRODUCT,
+        BY_DISTANCE,
+    }
+
 
     private float vertx[] = {
             //底面:
@@ -59,6 +70,7 @@ public class RoomBox {
         //纹理采样坐标
         mVTexCoordPointer = GLES30.glGetAttribLocation(mProgram, "vTexCoord");
         mLightPosPointer = GLES30.glGetUniformLocation(mProgram, "lightDotPos");
+        mFuncChoicePointer = GLES30.glGetUniformLocation(mProgram, "funcChoice");
     }
 
     private void initVertx() {
@@ -102,9 +114,17 @@ public class RoomBox {
         mLightPos = lightPosBuf;
     }
 
+    /**关照模式设定**/
+    public void setLightMode(LightMode lightMode) {
+        mLightMode = lightMode.ordinal();
+    }
+
     /**进行绘制**/
     public void draw() {
         GLES30.glUseProgram(mProgram);
+        /**光照模式设定**/
+        GLES30.glUniform1i(mFuncChoicePointer, mLightMode);
+
         GLES30.glUniformMatrix4fv(muMVPMatrixHandle, 1, false,
                 MatrixState.getFinalMatrix(), 0);
         //光斑不跟随房间旋转，只应用和旋转无关的变换（不然光斑不动，但光线效果跟着房间走了）
