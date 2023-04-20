@@ -21,7 +21,7 @@ void main() {
             /*nice1 假设顶点向量包含了光源向量，那么顶点向量 - 光源向量 = 光源为源头到顶点的向量，也就是去除了原点到光源的距离，
             其具体含义就是把光线设定为原点到光圈的方向，通过点乘计算当前顶点与前述向量的相关性，以这个相关性作为颜色的浓淡系数*/
             color = vec4(fragObjectColor.rgb * dot(normalize(lightPos), normalize(objPos - lightPos)), fragObjectColor.a);
-            color = color * (10.0 / distance(lightPos, objPos)) * 10.0; //叠加一下与光强度与光源距离成反比的关系式
+            color = color * (10.0 / distance(lightPos, objPos)) * 5.0; //叠加一下与光强度与光源距离成反比的关系式
             break;
         case 1: //使用距离光:
             color = vec4(fragObjectColor.rgb * (1.0 / distance(lightPos, objPos)) * 5.0, fragObjectColor.a);

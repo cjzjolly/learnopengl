@@ -1,6 +1,7 @@
 #version 300 es
 precision highp float;
 in vec2 fragVTexCoord;//接收vertShader处理后的纹理内坐标给片元程序
+in vec3 objPos;
 out vec4 fragColor;//输出到的片元颜色\n
 
 /**uv 传入当前遍历到的纹理ST(x,y)坐标
@@ -19,7 +20,8 @@ vec4 getSpotLightOne(vec2 uv, vec2 center, float intensity, vec3 color) {
 }
 
 void fireflyEffect(out vec4 fragColor, in vec2 fragCoord) {
-    fragColor = getSpotLightOne(fragCoord, vec2(0.5, 0.5), 0.2, vec3(1.0, 1.0, 1.0));
+    //以面的中心点位置发光 光斑纹理原点在左上角，因此最大点为(1,1)，所以中i的那为(1/2, 1/2)，再减去光线本身的方向性即可向发光方向拉伸光斑
+    fragColor = getSpotLightOne(fragCoord, vec2(0.5, 0.5) - normalize(objPos).xy * 0.5, 0.2, vec3(1.0, 1.0, 1.0));
 }
 
 void main() {

@@ -54,7 +54,7 @@ public class LightDot {
 
     }
 
-    /**todo 创造一个矩形面，并根据摄像机矩阵的变换更改自己的物体矩阵，使其始终面向视点**/
+    /**创造一个矩形面，并根据摄像机矩阵的变换更改自己的物体矩阵，使其始终面向视点**/
     private void initVertx() {
         float texCoor[] = new float[]   //纹理内采样坐标,类似于canvas坐标
                 {
