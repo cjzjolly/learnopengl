@@ -19,7 +19,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/white"
-            android:text="移动缩放光源" />
+            android:text="移动缩放光源（双指缩放光源z轴）" />
 
         <RadioGroup
             android:id="@+id/rdg_light_mode_list"

@@ -39,9 +39,16 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             double distance = Math.sqrt(Math.pow(e.getX(0) - e.getX(1), 2)
                     + Math.pow(e.getY(0)- e.getY(1), 2));
             switch (e.getAction()) {
-                case MotionEvent.ACTION_MOVE://若为移动动作
-                    MatrixState.scale((float) (distance / mPreviousLength));
-//                    MatrixState.translate(0,0,-(float) (distance / mPreviousLength));
+                case MotionEvent.ACTION_MOVE:
+                    switch (mTouchMode) {
+                        case SCENE:
+                            MatrixState.scale((float) (distance / mPreviousLength));
+        //                    MatrixState.translate(0,0,-(float) (distance / mPreviousLength));
+                            break;
+                        case ONLY_LIGHT:
+                            mLightDot.translate(new float[] {0, 0, 1f - (float) (distance / mPreviousLength)});
+                            break;
+                    }
                     break;
             }
             mPreviousLength = distance;

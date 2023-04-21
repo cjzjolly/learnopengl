@@ -83,6 +83,7 @@ public class LightDot {
         mTrans[2] = xyz[2];
     }
 
+    /**移动光点**/
     public void translate(float xyz[]) {
         mTrans[0] += xyz[0];
         mTrans[1] += xyz[1];
