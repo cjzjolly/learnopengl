@@ -70,7 +70,7 @@ public class MainPage extends Activity {
         button = new Button(this);
         button.setText("光照实验");
         button.setOnClickListener(v -> {
-            Intent intent = new Intent(this, com.cjztest.glMyLightModel.LightModelActivity.class);
+            Intent intent = new Intent(this, com.cjztest.glMyLightModelSimple.LightModelActivity.class);
             startActivity(intent);
         });
         linearLayout.addView(button);

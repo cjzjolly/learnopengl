@@ -1,4 +1,4 @@
-package com.cjztest.glMyLightModel;
+package com.cjztest.glMyLightModelSimple;
 
 import android.content.res.Resources;
 import android.opengl.GLES30;

@@ -1,4 +1,4 @@
-package com.cjztest.glMyLightModel;
+package com.cjztest.glMyLightModelAdvance;
 
 import android.opengl.Matrix;
 

@@ -96,7 +96,7 @@
         <activity android:name="com.book2.Sample6_3.Sample6_3_Activity"/>
         <activity android:name="com.book2.Sample8_1.MyActivity"/>
         <activity android:name="com.book2.EntranceActivity"/>
-        <activity android:name="com.cjztest.glMyLightModel.LightModelActivity"/>
+        <activity android:name="com.cjztest.glMyLightModelSimple.LightModelActivity"/>
         <activity android:name="com.mainpage.MainPage">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

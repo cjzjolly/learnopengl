@@ -1,7 +1,8 @@
-package com.cjztest.glMyLightModel;
+package com.cjztest.glMyLightModelAdvance;
 
 import android.content.res.Resources;
 import android.opengl.GLES30;
+
 import com.book2.Sample6_3.ShaderUtil;
 
 import java.nio.ByteBuffer;

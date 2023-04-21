@@ -1,4 +1,4 @@
-package com.cjztest.glMyLightModel;
+package com.cjztest.glMyLightModelAdvance;
 
 import android.content.Context;
 import android.opengl.GLES30;
@@ -80,7 +80,7 @@ public class LightControlSurfaceView  extends GLSurfaceView {
         return true;
     }
 
-    private class SceneRenderer implements GLSurfaceView.Renderer {
+    private class SceneRenderer implements Renderer {
 
         @Override
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {

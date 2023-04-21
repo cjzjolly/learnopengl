@@ -1,4 +1,4 @@
-package com.cjztest.glMyLightModel;
+package com.cjztest.glMyLightModelSimple;
 public class Constant
 {
 	//单位尺寸

@@ -1,10 +1,8 @@
-package com.cjztest.glMyLightModel;
+package com.cjztest.glMyLightModelSimple;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.RadioButton;
 
