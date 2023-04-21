@@ -5,7 +5,8 @@ in vec4 fragObjectColor;
 in vec3 objPos;
 in vec3 lightPos;
 out vec4 fragColor;//输出到的片元颜色\n
-uniform int funcChoice;
+uniform int funcChoice; //光照方式选择
+uniform mat3 lightTransMat; //todo 光照变换矩阵
 
 void main() {
     vec4 color;
@@ -13,7 +14,7 @@ void main() {
 //    vec4 color = vec4(fragObjectColor.rgb * (1.0 / pow(distance((lightPos), (objPos)) , 2.0) * 20.0), fragObjectColor.a);
 //    vec4 color = vec4(fragObjectColor.rgb * (1.0 / sqrt(distance((lightPos), (objPos)))), fragObjectColor.a);
 //    vec4 color = vec4(fragObjectColor.rgb * (1.0 / (distance((lightPos), (objPos)))) * 5.0, fragObjectColor.a);
-    //todo 添加功能，实现点积光，光向量方向修改的功能
+    //todo 添加功能，实现点积光，光向量方向修改的功能 可以使用两个光点之间的向量作为方向实现
     vec3 lightVec = lightPos;
     //通过dot product得到光线向量和顶点向量之间的相似性，再把相似性系数作为颜色深度系数
     switch (funcChoice) {
