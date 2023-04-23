@@ -30,23 +30,15 @@ void main() {
             color = vec4(fragObjectColor.rgb * (1.0 / distance(lightPos, objPos)) * 5.0, fragObjectColor.a);
             break;
     }
-    //todo 把缝隙的感觉搞出来
+    //把缝隙的感觉搞出来
     vec2 fragVTexCoordInCenter = fragVTexCoord - vec2(0.5, 0.5); //采样点变换为以点(0,0)为原点
-    //todo 了解当前采样向量的单位长度
+    vec2 fragVTexCoordInCenterNor = normalize(fragVTexCoordInCenter); //当前采样变量的方向特征向量
+    //了解当前采样向量的单位长度
+    float unitLenX = 1.0 / fragVTexCoordInCenterNor[0];
+    float unitLenY = 1.0 / fragVTexCoordInCenterNor[1];
+    float unitLen = min(abs(unitLenX), abs(unitLenY));
 
-
-//    float unitLen = distance(vec2(fragVTexCoordInCenter[0] / fragVTexCoordInCenter[0], fragVTexCoordInCenter[1] / fragVTexCoordInCenter[0]), vec2(0.0, 0.0));
-//    float unitLen = distance(vec2(0.5, 0.5), vec2(0.0, 0.0)) * sin(fragVTexCoordInCenter[1] / fragVTexCoordInCenter[0] * 3.14); //花纹很好看
-//    float unitLen = distance(normalize(fragVTexCoordInCenter) * fragVTexCoordInCenter, vec2(0.5, 0.5));
-//    float unitLen = fragVTexCoordInCenter + normalize(fragVTexCoordInCenter);
-//    float unitLen = 1.0 + (sqrt(2.0) - 1.0) * sin(3.1415926 / 4.0 * (fragVTexCoordInCenter[0] / fragVTexCoordInCenter[0])); //当前采样长度 / 最长长度;
-//    float unitLen = normalize(fragVTexCoordInCenter)[0];
-    float unitLenX = 1.0 / normalize(fragVTexCoordInCenter)[0];
-    float unitLenY = 1.0 / normalize(fragVTexCoordInCenter)[1];
-
-//    vec2 uvInCenterMaxLen = normalize(fragVTexCoordInCenter) * 0.5 * abs(unitLen); //把向量们拉回原点为中心。然后求这个方向在矩形中所能到达的最大长度向量
-//    vec2 uvInCenterMaxLen = normalize(fragVTexCoordInCenter) * 0.5 * (distance(vec2(unitLenX, unitLenY), vec2(0.0, 0.0))); //把向量们拉回原点为中心。然后求这个方向在矩形中所能到达的最大长度向量
-    vec2 uvInCenterMaxLen = normalize(fragVTexCoordInCenter) * 0.5 * min(abs(unitLenX), abs(unitLenY)); //把向量们拉回原点为中心。然后求这个方向在矩形中所能到达的最大长度向量
+    vec2 uvInCenterMaxLen = fragVTexCoordInCenterNor * 0.5 * unitLen; //把向量们拉回原点为中心。然后求这个方向在矩形中所能到达的最大长度向量
     vec2 uvInCenter = fragVTexCoord - vec2(0.5, 0.5);
     float edgeColorX = 1.0 - smoothstep(0.9, 1.0, distance(uvInCenter, vec2(0.0, 0.0)) /  distance(uvInCenterMaxLen, vec2(0.0, 0.0)));
     color = vec4(color.rgb * edgeColorX, color.a);
