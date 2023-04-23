@@ -31,16 +31,27 @@ void main() {
             break;
     }
     //把缝隙的感觉搞出来
+    //方式1:
+//    vec2 fragVTexCoordInCenter = fragVTexCoord - vec2(0.5, 0.5); //采样点变换为以点(0,0)为原点
+//    vec2 fragVTexCoordInCenterNor = normalize(fragVTexCoordInCenter); //当前采样变量的方向特征向量
+//    //了解当前采样向量的单位长度
+//    float unitLenX = 1.0 / fragVTexCoordInCenterNor[0];
+//    float unitLenY = 1.0 / fragVTexCoordInCenterNor[1];
+//    float unitLen = min(abs(unitLenX), abs(unitLenY));
+//
+//    vec2 uvInCenterMaxLen = fragVTexCoordInCenterNor * 0.5 * unitLen; //把向量们拉回原点为中心。然后求这个方向在矩形中所能到达的最大长度向量
+//    vec2 uvInCenter = fragVTexCoord - vec2(0.5, 0.5);
+//    float edgeColorX = 1.0 - smoothstep(0.9, 1.0, distance(uvInCenter, vec2(0.0, 0.0)) /  distance(uvInCenterMaxLen, vec2(0.0, 0.0)));
+//    color = vec4(color.rgb * edgeColorX, color.a);
+    //方式2
     vec2 fragVTexCoordInCenter = fragVTexCoord - vec2(0.5, 0.5); //采样点变换为以点(0,0)为原点
     vec2 fragVTexCoordInCenterNor = normalize(fragVTexCoordInCenter); //当前采样变量的方向特征向量
     //了解当前采样向量的单位长度
-    float unitLenX = 1.0 / fragVTexCoordInCenterNor[0];
-    float unitLenY = 1.0 / fragVTexCoordInCenterNor[1];
-    float unitLen = min(abs(unitLenX), abs(unitLenY));
-
-    vec2 uvInCenterMaxLen = fragVTexCoordInCenterNor * 0.5 * unitLen; //把向量们拉回原点为中心。然后求这个方向在矩形中所能到达的最大长度向量
+    vec2 times = abs(1.0 / fragVTexCoordInCenterNor); //求出如果让x要为单位1.0，要让fragVTexCoordInCenterNor.x乘以多少系数
+    vec2 uvInCenterMaxLen = min(times[0], times[1]) * fragVTexCoordInCenterNor * 0.5;
     vec2 uvInCenter = fragVTexCoord - vec2(0.5, 0.5);
     float edgeColorX = 1.0 - smoothstep(0.9, 1.0, distance(uvInCenter, vec2(0.0, 0.0)) /  distance(uvInCenterMaxLen, vec2(0.0, 0.0)));
     color = vec4(color.rgb * edgeColorX, color.a);
+
     fragColor = color;
 }
