@@ -74,5 +74,13 @@ public class MainPage extends Activity {
             startActivity(intent);
         });
         linearLayout.addView(button);
+
+        button = new Button(this);
+        button.setText("光照实验——进阶");
+        button.setOnClickListener(v -> {
+            Intent intent = new Intent(this, com.cjztest.glMyLightModelAdvance.LightModelActivity.class);
+            startActivity(intent);
+        });
+        linearLayout.addView(button);
     }
 }

@@ -56,8 +56,8 @@ public class RoomBox {
      * 加载shader
      **/
     public void initShader() {
-        mVertexShader = ShaderUtil.loadFromAssetsFile("cjztest/lightmodel/vertShaderRoom.shader", mRsc);
-        mFragmentShader = ShaderUtil.loadFromAssetsFile("cjztest/lightmodel/fragShaderRoom.shader",
+        mVertexShader = ShaderUtil.loadFromAssetsFile("cjztest/lightmodeladvance/vertShaderRoom.shader", mRsc);
+        mFragmentShader = ShaderUtil.loadFromAssetsFile("cjztest/lightmodeladvance/fragShaderRoom.shader",
                 mRsc);
         mProgram = ShaderUtil.createProgram(mVertexShader, mFragmentShader);
         //变换矩阵索引

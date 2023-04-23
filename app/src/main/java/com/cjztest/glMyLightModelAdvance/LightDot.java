@@ -38,10 +38,10 @@ public class LightDot {
     /**加载光点显示**/
     public void initShader() {
         // 加载顶点着色器的脚本内容
-        mVertexShader = ShaderUtil.loadFromAssetsFile("cjztest/lightmodel/vertex.shader",
+        mVertexShader = ShaderUtil.loadFromAssetsFile("cjztest/lightmodeladvance/vertex.shader",
                 mRsc);
         // 加载片元着色器的脚本内容
-        mFragmentShader = ShaderUtil.loadFromAssetsFile("cjztest/lightmodel/fragShaderLightPot.shader",
+        mFragmentShader = ShaderUtil.loadFromAssetsFile("cjztest/lightmodeladvance/fragShaderLightPot.shader",
                 mRsc);
         // program索引
         mProgram = ShaderUtil.createProgram(mVertexShader, mFragmentShader);

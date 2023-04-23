@@ -19,7 +19,7 @@ public class LightModelActivity extends Activity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_light_model);
+        setContentView(R.layout.activity_light_model_advance);
         LightControlSurfaceView surfaceView = new LightControlSurfaceView(this);
         mFlContainer = findViewById(R.id.fl_light_test_gl_container);
         mFlContainer.addView(surfaceView);
