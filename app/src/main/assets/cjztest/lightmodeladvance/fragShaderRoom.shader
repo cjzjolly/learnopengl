@@ -31,26 +31,24 @@ void main() {
             break;
     }
     //todo 把缝隙的感觉搞出来
-//    float maxLenToTexCenter = sqrt(2.0 * pow(0.5, 2.0));
-//    color = vec4(color.rgb * 1.0 - smoothstep(maxLenToTexCenter * 0.92, maxLenToTexCenter, distance(fragVTexCoord, vec2(0.5, 0.5))), color.a);
+    vec2 fragVTexCoordInCenter = fragVTexCoord - vec2(0.5, 0.5); //采样点变换为以点(0,0)为原点
+    //todo 了解当前采样向量的单位长度
 
-//    float edgeColorX = smoothstep(0.44, 0.45, abs(0.9 * (vec2(0.5, 0.5) - fragVTexCoord)));
 
-//    vec2 uvInCenter = fragVTexCoord - vec2(0.5, 0.5); //外框
-//    vec2 uvInCenterSmaller = fragVTexCoord * 0.9 - vec2(0.5, 0.5); //内框
-////    float edgeColorX = smoothstep(0.0, 0.1, abs(distance(uvInCenterSmaller, uvInCenter)));
-//    float edgeColorX = smoothstep(0.0, 0.2, abs(distance(uvInCenter, vec2(0.0, 0.0))));
-//    color = vec4(color.rgb * edgeColorX, color.a);
+//    float unitLen = distance(vec2(fragVTexCoordInCenter[0] / fragVTexCoordInCenter[0], fragVTexCoordInCenter[1] / fragVTexCoordInCenter[0]), vec2(0.0, 0.0));
+//    float unitLen = distance(vec2(0.5, 0.5), vec2(0.0, 0.0)) * sin(fragVTexCoordInCenter[1] / fragVTexCoordInCenter[0] * 3.14); //花纹很好看
+//    float unitLen = distance(normalize(fragVTexCoordInCenter) * fragVTexCoordInCenter, vec2(0.5, 0.5));
+//    float unitLen = fragVTexCoordInCenter + normalize(fragVTexCoordInCenter);
+//    float unitLen = 1.0 + (sqrt(2.0) - 1.0) * sin(3.1415926 / 4.0 * (fragVTexCoordInCenter[0] / fragVTexCoordInCenter[0])); //当前采样长度 / 最长长度;
+//    float unitLen = normalize(fragVTexCoordInCenter)[0];
+    float unitLenX = 1.0 / normalize(fragVTexCoordInCenter)[0];
+    float unitLenY = 1.0 / normalize(fragVTexCoordInCenter)[1];
 
-//    vec2 uvInCenterAndHaveMaxLen = normalize(fragVTexCoord - vec2(0.5, 0.5)) * 0.5; //把向量们拉回原点为中心。然后求这个方向在圆形中所能到达的最大长度向量
-    vec2 uvInCenterAndHaveMaxLen = normalize(fragVTexCoord - vec2(0.5, 0.5)); //把向量们拉回原点为中心。然后求这个方向在矩形中所能到达的最大长度向量
-    uvInCenterAndHaveMaxLen = uvInCenterAndHaveMaxLen * 0.5
-    * distance(vec2((fragVTexCoord[0] - 0.5) / (fragVTexCoord[0] - 0.5), (fragVTexCoord[1] - 0.5) / (fragVTexCoord[0] - 0.5)), vec2(0.0, 0.0));
+//    vec2 uvInCenterMaxLen = normalize(fragVTexCoordInCenter) * 0.5 * abs(unitLen); //把向量们拉回原点为中心。然后求这个方向在矩形中所能到达的最大长度向量
+//    vec2 uvInCenterMaxLen = normalize(fragVTexCoordInCenter) * 0.5 * (distance(vec2(unitLenX, unitLenY), vec2(0.0, 0.0))); //把向量们拉回原点为中心。然后求这个方向在矩形中所能到达的最大长度向量
+    vec2 uvInCenterMaxLen = normalize(fragVTexCoordInCenter) * 0.5 * min(abs(unitLenX), abs(unitLenY)); //把向量们拉回原点为中心。然后求这个方向在矩形中所能到达的最大长度向量
     vec2 uvInCenter = fragVTexCoord - vec2(0.5, 0.5);
-//    float edgeColorX = 1.0 - smoothstep(0.95, 1.0, distance(fragVTexCoord, vec2(0.5, 0.5)) / distance(uvInCenterAndHaveMaxLen, vec2(0.0, 0.0))); //圆
-//    float edgeColorX = 1.0 - smoothstep(0.0, 0.1, distance(fragVTexCoord, vec2(0.5, 0.5)) - distance(uvInCenterAndHaveMaxLen, vec2(0.0, 0.0))); //还是圆
-    float edgeColorX = 1.0 - smoothstep(0.95, 1.0, distance(uvInCenter, vec2(0.0, 0.0)) /  distance(uvInCenterAndHaveMaxLen, vec2(0.0, 0.0))); //还是圆
+    float edgeColorX = 1.0 - smoothstep(0.9, 1.0, distance(uvInCenter, vec2(0.0, 0.0)) /  distance(uvInCenterMaxLen, vec2(0.0, 0.0)));
     color = vec4(color.rgb * edgeColorX, color.a);
-
     fragColor = color;
 }
