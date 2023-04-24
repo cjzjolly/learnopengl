@@ -18,8 +18,17 @@ public class LightControlSurfaceView  extends GLSurfaceView {
     private TouchMode mTouchMode = TouchMode.SCENE;
 
     private final SceneRenderer mRenderer;
+
+    /**光点**/
     private LightDot mLightDot;
+
+    /**光线方向箭头**/
+    private LightArrorw mLightArrow;
+
+    /**塑料盒子**/
     private RoomBox mRoomBox;
+
+
     private float mPreviousX;
     private float mPreviousY;
     private double mPreviousLength;
@@ -111,6 +120,7 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             MatrixState.setCamera(0, 0f, 30, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
             mRoomBox = new RoomBox(getResources(), Constant.ratio);
             mLightDot = new LightDot(getResources(), Constant.ratio);
+            mLightArrow = new LightArrorw(getResources(), Constant.ratio);
         }
 
         @Override
@@ -121,8 +131,8 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             GLES30.glClearColor(0f,0f,0f, 1.0f);
             mRoomBox.setLightPosition(mLightDot.getLightDotPos());
             mRoomBox.draw();
+            mLightArrow.draw();
             mLightDot.draw();
-
 //            MatrixState.rotate(1, 0, 1, 0);
         }
     }
