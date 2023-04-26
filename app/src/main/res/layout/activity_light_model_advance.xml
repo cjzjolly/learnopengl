@@ -14,13 +14,34 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <CheckBox
-            android:id="@+id/cb_light_test_move_light_dot"
+        <RadioGroup
+            android:id="@+id/rdg_light_scene_op_list"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:text="移动缩放光源（双指缩放光源z轴）" />
+            android:orientation="horizontal">
 
+            <RadioButton
+                android:id="@+id/cb_light_test_move_light_dot"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:text="移动缩放光源（双指缩放光源z轴）" />
+
+            <RadioButton
+                android:id="@+id/cb_light_test_move_and_scale_box"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:text="移动缩放盒子" />
+
+            <RadioButton
+                android:id="@+id/cb_light_test_vec"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:text="设定光的方向" />
+
+        </RadioGroup>
         <RadioGroup
             android:id="@+id/rdg_light_mode_list"
             android:layout_width="wrap_content"

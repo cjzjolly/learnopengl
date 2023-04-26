@@ -10,10 +10,11 @@ import javax.microedition.khronos.opengles.GL10;
 
 public class LightControlSurfaceView  extends GLSurfaceView {
 
-
+    /**操作对象选择**/
     public enum TouchMode {
         SCENE,
-        ONLY_LIGHT
+        ONLY_LIGHT,
+        LIGHT_END_VEC,
     }
     private TouchMode mTouchMode = TouchMode.SCENE;
 
@@ -23,7 +24,7 @@ public class LightControlSurfaceView  extends GLSurfaceView {
     private LightDot mLightDot;
 
     /**光线方向箭头**/
-    private LightArrorw mLightArrow;
+    private LightArrow mLightArrow;
 
     /**塑料盒子**/
     private RoomBox mRoomBox;
@@ -79,6 +80,11 @@ public class LightControlSurfaceView  extends GLSurfaceView {
                                 mLightDot.translate(new float[] {dx / getWidth(), -dy / getHeight(), 0});
                             }
                             break;
+                        case LIGHT_END_VEC: //todo 移动光点的终点坐标
+                            if (null != mLightDot && null != mLightArrow) {
+                                mLightArrow.setEndVec(new float[] {dx / getWidth(), -dy / getHeight(), 0});
+                            }
+                            break;
                     }
                     break;
             }
@@ -120,7 +126,7 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             MatrixState.setCamera(0, 0f, 30, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
             mRoomBox = new RoomBox(getResources(), Constant.ratio);
             mLightDot = new LightDot(getResources(), Constant.ratio);
-            mLightArrow = new LightArrorw(getResources(), Constant.ratio);
+            mLightArrow = new LightArrow(getResources(), Constant.ratio);
         }
 
         @Override
@@ -129,11 +135,15 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             GLES30.glClear( GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_COLOR_BUFFER_BIT);
             //设置屏幕背景色RGBA
             GLES30.glClearColor(0f,0f,0f, 1.0f);
-            mRoomBox.setLightPosition(mLightDot.getLightDotPos());
+            if (null != mLightDot) {
+                mRoomBox.setLightPosition(mLightDot.getLightDotPos());
+            }
             mRoomBox.draw();
+            if (null != mLightDot && null != mLightArrow) {
+                mLightArrow.setStartVec(mLightDot.getLightDotPos());
+            }
             mLightArrow.draw();
             mLightDot.draw();
-//            MatrixState.rotate(1, 0, 1, 0);
         }
     }
 

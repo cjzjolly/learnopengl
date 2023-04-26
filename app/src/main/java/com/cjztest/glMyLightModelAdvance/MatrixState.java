@@ -73,6 +73,16 @@ public class MatrixState
         Matrix.scaleM(currMatrix,0, mTotalScale, mTotalScale, mTotalScale);
     }
 
+    public static void setRotate(float angle,float x,float y,float z)//设置绕xyz轴移动
+    {
+        //因为scale和rotate在矩阵中处于同一位置，因此不好分离，重置之后缩放量会消失，因此重置一下
+        Matrix.setRotateM(currMatrix, 0, angle, 1, 0, 0);
+        Matrix.setRotateM(currMatrix, 0, angle, 0, 1, 0);
+        Matrix.setRotateM(currMatrix, 0, angle, 0, 0, 1);
+        Matrix.scaleM(currMatrix,0, mTotalScale, mTotalScale, mTotalScale);
+    }
+
+
     public static void scale(float scale) {
         mTotalScale *= scale;
         Matrix.scaleM(currMatrix,0, scale, scale, scale);

@@ -2,6 +2,7 @@ package com.cjztest.glMyLightModelAdvance;
 
 import android.content.res.Resources;
 import android.opengl.GLES30;
+import android.util.Log;
 
 import com.book2.Sample6_3.ShaderUtil;
 
@@ -10,7 +11,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 /**光斑**/
-public class LightArrorw {
+public class LightArrow {
     private final Resources mRsc;
     private FloatBuffer mVertexBuffer;// 顶点坐标数据缓冲
     private FloatBuffer mUVBuffer;// 顶点坐标数据缓冲
@@ -35,7 +36,7 @@ public class LightArrorw {
     /**终点坐标**/
     private float mEndVec[] = new float[3];
 
-    public LightArrorw(Resources resources, float screenRatio) {
+    public LightArrow(Resources resources, float screenRatio) {
         mRsc = resources;
         initShader();
         initVertx();
@@ -77,9 +78,9 @@ public class LightArrorw {
 
     /**设置终点**/
     public void setEndVec(float xyz[]) {
-        mEndVec[0] = xyz[0];
-        mEndVec[1] = xyz[1];
-        mEndVec[2] = xyz[2];
+        mEndVec[0] += xyz[0];
+        mEndVec[1] += xyz[1];
+        mEndVec[2] += xyz[2];
     }
 
     /**进行绘制**/
@@ -91,9 +92,24 @@ public class LightArrorw {
         MatrixState.pushMatrix();
         MatrixState.reverseTotalRotate();
 
+        //todo 起点变换:
         MatrixState.translate(mStartVec[0], mStartVec[1], mStartVec[1]); //仅对光点的世界坐标变换矩阵临时修改，这样就可以实现不改顶点但只改光点的位置了。
+//        //todo 终点变换(利用scale和rotate): 1、算一下终点向量对比起点向量的夹角，使用这个夹角旋转 2、计算终点向量的长度 - 起点长度的长度的向量，差使用scale乘以
+        float arrowVec[] = new float[] {0f, 1f, 0};
+        float xRotate = (float) calcAngleOfVectorsOnXYPanel(arrowVec, mEndVec);
+        Log.i("cjztest", "xRotate:" + xRotate);
+        MatrixState.rotate((float) calcAngleOfVectorsOnXYPanel(arrowVec, mEndVec), 0, 0, 1); //沿Z轴的旋转量
+//        MatrixState.rotate((float) calcAngleOfVectorsOnXZPanel(arrowVec, mEndVec), 0, 1, 0); //沿Y轴的旋转量
+//        MatrixState.rotate((float) calcAngleOfVectorsOnYZPanel(arrowVec, mEndVec), 1, 0, 0); //沿Y轴的旋转量
+
+        MatrixState.scale((float) Math.sqrt(Math.pow(mEndVec[0], 2) + Math.pow(mEndVec[1], 2)));
+
         GLES30.glUniformMatrix4fv(mObjMatrixHandle, 1, false,
                 MatrixState.getMMatrix(), 0);
+
+
+
+
         // 将最终变换矩阵传入渲染管线
         GLES30.glUniformMatrix4fv(muMVPMatrixHandle, 1, false,
                 MatrixState.getFinalMatrix(), 0);
@@ -106,4 +122,40 @@ public class LightArrorw {
         GLES30.glDisableVertexAttribArray(maPositionPointer); //启用顶点属性
 //        MatrixState.popMatrix();
     }
+
+    //todo XY平面上的的旋转量
+    private double calcAngleOfVectorsOnXYPanel(float vec0[], float vec1[]) {
+        double distanceOfVec0 = Math.sqrt(Math.pow(vec0[0], 2) + Math.pow(vec0[1], 2));
+        double distanceOfVec1 = Math.sqrt(Math.pow(vec1[0], 2) + Math.pow(vec1[1], 2));
+        double dotProduct = vec0[0] * vec1[0] + vec0[1] * vec1[1];
+        double angle = Math.toDegrees(Math.acos(dotProduct / (distanceOfVec0 * distanceOfVec1)));
+        if (vec1[0] > 0) {
+            angle = 360 - angle;
+        }
+        return angle;
+    }
+
+    private double calcAngleOfVectorsOnXZPanel(float vec0[], float vec1[]) {
+        double distanceOfVec0 = Math.sqrt(Math.pow(vec0[0], 2) + Math.pow(vec0[2], 2));
+        double distanceOfVec1 = Math.sqrt(Math.pow(vec1[0], 2) + Math.pow(vec1[2], 2));
+        double dotProduct = vec0[0] * vec1[0] + vec0[2] * vec1[2];
+        double angle = Math.toDegrees(Math.acos(dotProduct / (distanceOfVec0 * distanceOfVec1)));
+        if (vec1[0] > 0) {
+            angle = 360 - angle;
+        }
+        return angle;
+    }
+
+    private double calcAngleOfVectorsOnYZPanel(float vec0[], float vec1[]) {
+        double distanceOfVec0 = Math.sqrt(Math.pow(vec0[1], 2) + Math.pow(vec0[2], 2));
+        double distanceOfVec1 = Math.sqrt(Math.pow(vec1[1], 2) + Math.pow(vec1[2], 2));
+        double dotProduct = vec0[1] * vec1[1] + vec0[2] * vec1[2];
+        double angle = Math.toDegrees(Math.acos(dotProduct / (distanceOfVec0 * distanceOfVec1)));
+        if (vec1[0] > 0) {
+            angle = 360 - angle;
+        }
+        return angle;
+    }
+
+
 }
