@@ -3,7 +3,6 @@ package com.cjztest.glMyLightModelAdvance;
 import android.content.res.Resources;
 import android.opengl.GLES30;
 import android.opengl.Matrix;
-import android.util.Log;
 
 import com.book2.Sample6_3.ShaderUtil;
 
@@ -83,6 +82,14 @@ public class LightArrow {
         mEndVec[0] += xyz[0];
         mEndVec[1] += xyz[1];
         mEndVec[2] += xyz[2];
+    }
+
+    public float[] getStartVec() {
+        return mLocation;
+    }
+
+    public float[] getEndVec() {
+        return mEndVec;
     }
 
     /**进行绘制**/

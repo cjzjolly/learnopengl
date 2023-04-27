@@ -136,7 +136,7 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             //设置屏幕背景色RGBA
             GLES30.glClearColor(0f,0f,0f, 1.0f);
             if (null != mLightDot) {
-                mRoomBox.setLightPosition(mLightDot.getLightDotPos());
+                mRoomBox.setLightPosition(mLightDot.getLightDotPos(), mLightArrow.getEndVec());
             }
             mRoomBox.draw();
             if (null != mLightDot && null != mLightArrow) {

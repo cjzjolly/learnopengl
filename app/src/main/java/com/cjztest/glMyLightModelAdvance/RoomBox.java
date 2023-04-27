@@ -29,7 +29,12 @@ public class RoomBox {
     /**光照模式本地记录**/
     private int mLightMode;
     private int mVertxColorPointer;
-    private float mLightPos[];
+    /**光源起点**/
+    private float mLightStartVec[];
+    /**光源终点**/
+    private float mLightEndVec[];
+    /**合成向量**/
+    private float mLightTotalVec[] = new float[3];
 
     /**光照模式表，与fragShaderRoom可以提供的模式一一对应**/
     public enum LightMode {
@@ -110,8 +115,12 @@ public class RoomBox {
     }
 
     /**传入全方向射发射光线的坐标**/
-    public void setLightPosition(float lightPosBuf[]) {
-        mLightPos = lightPosBuf;
+    public void setLightPosition(float lightStartVec[], float lightEndVec[]) {
+        mLightStartVec = lightStartVec;
+        mLightEndVec = lightEndVec;
+        mLightTotalVec[0] = mLightStartVec[0] + mLightEndVec[0];
+        mLightTotalVec[1] = mLightStartVec[1] + mLightEndVec[1];
+        mLightTotalVec[2] = mLightStartVec[2] + mLightEndVec[2];
     }
 
     /**关照模式设定**/
@@ -135,7 +144,7 @@ public class RoomBox {
         MatrixState.popMatrix();
         GLES30.glUniformMatrix4fv(mObjMatrixHandle, 1, false, MatrixState.getMMatrix(), 0);
         GLES30.glVertexAttribPointer(maPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mVertexBuffer);
-        GLES30.glUniform3fv(mLightPosPointer, 1, mLightPos, 0);
+        GLES30.glUniform3fv(mLightPosPointer, 1, mLightTotalVec, 0);
         GLES30.glVertexAttribPointer(mVTexCoordPointer, 2, GLES30.GL_FLOAT, false, 0, mUVBuffer);  //二维向量，size为2
         GLES30.glVertexAttribPointer(mVertxColorPointer, 4, GLES30.GL_FLOAT, false, 0, mColorBuffer);
 
