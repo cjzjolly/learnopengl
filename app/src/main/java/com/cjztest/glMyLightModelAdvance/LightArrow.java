@@ -2,6 +2,7 @@ package com.cjztest.glMyLightModelAdvance;
 
 import android.content.res.Resources;
 import android.opengl.GLES30;
+import android.opengl.Matrix;
 import android.util.Log;
 
 import com.book2.Sample6_3.ShaderUtil;
@@ -21,9 +22,10 @@ public class LightArrow {
     private int muMVPMatrixHandle;
     private int mObjMatrixHandle;
     private int maPositionPointer;
+    private float mArrowInitedVec[] = new float[] {0f, 1f, 0};
     private float vertxData[] = { //箭头坐标
             0, 0, 0,
-            0, 1, 0,
+            mArrowInitedVec[0], mArrowInitedVec[1], mArrowInitedVec[2],
             -0.2f, 0.8f, 0,
             0.2f, 0.8f, 0,
             0f, 1f, 0,
@@ -31,7 +33,7 @@ public class LightArrow {
     };
 
     /**起点坐标**/
-    private float mStartVec[] = new float[3];
+    private float mLocation[] = new float[3];
 
     /**终点坐标**/
     private float mEndVec[] = new float[3];
@@ -71,9 +73,9 @@ public class LightArrow {
 
     /**起点**/
     public void setStartVec(float xyz[]) {
-        mStartVec[0] = xyz[0];
-        mStartVec[1] = xyz[1];
-        mStartVec[2] = xyz[2];
+        mLocation[0] = xyz[0];
+        mLocation[1] = xyz[1];
+        mLocation[2] = xyz[2];
     }
 
     /**设置终点**/
@@ -86,19 +88,17 @@ public class LightArrow {
     /**进行绘制**/
     public void draw() {
         GLES30.glUseProgram(mProgram);
-//        MatrixState.pushMatrix();
-//        //设置沿Z轴正向位移1
-//        MatrixState.translate(0, 0, 1);
         MatrixState.pushMatrix();
-        MatrixState.reverseTotalRotate();
 
-        //todo 起点变换:
-        MatrixState.translate(mStartVec[0], mStartVec[1], mStartVec[1]); //仅对光点的世界坐标变换矩阵临时修改，这样就可以实现不改顶点但只改光点的位置了。
-//        //todo 终点变换(利用scale和rotate): 1、算一下终点向量对比起点向量的夹角，使用这个夹角旋转 2、计算终点向量的长度 - 起点长度的长度的向量，差使用scale乘以
-        float arrowVec[] = new float[] {0f, 1f, 0};
-        float xRotate = (float) calcAngleOfVectorsOnXYPanel(arrowVec, mEndVec);
-        Log.i("cjztest", "xRotate:" + xRotate);
-        MatrixState.rotate((float) calcAngleOfVectorsOnXYPanel(arrowVec, mEndVec), 0, 0, 1); //沿Z轴的旋转量
+        Matrix.setRotateM(MatrixState.getFinalMatrix(), 0, 0, 1, 0, 0);
+        Matrix.setRotateM(MatrixState.getFinalMatrix(), 0, 0, 0, 1, 0);
+        Matrix.setRotateM(MatrixState.getFinalMatrix(), 0, 0, 0, 0, 1);
+
+        //起点变换:
+        MatrixState.translate(mLocation[0], mLocation[1], mLocation[1]);
+        //终点变换(利用scale和rotate): 1、算一下设置终点向量对比初始向量的夹角，使用这个夹角旋转初始向量 2、计算终点向量的长度 - 起点长度的长度的向量，差使用scale乘以
+        float xRotate = (float) calcAngleOfVectorsOnXYPanel(mArrowInitedVec, mEndVec);
+        MatrixState.rotate(xRotate, 0, 0, 1); //沿Z轴的旋转量
 //        MatrixState.rotate((float) calcAngleOfVectorsOnXZPanel(arrowVec, mEndVec), 0, 1, 0); //沿Y轴的旋转量
 //        MatrixState.rotate((float) calcAngleOfVectorsOnYZPanel(arrowVec, mEndVec), 1, 0, 0); //沿Y轴的旋转量
 
@@ -107,13 +107,14 @@ public class LightArrow {
         GLES30.glUniformMatrix4fv(mObjMatrixHandle, 1, false,
                 MatrixState.getMMatrix(), 0);
 
-
-
-
         // 将最终变换矩阵传入渲染管线
         GLES30.glUniformMatrix4fv(muMVPMatrixHandle, 1, false,
                 MatrixState.getFinalMatrix(), 0);
+
         MatrixState.popMatrix();
+
+
+
         //绘制光点
         GLES30.glVertexAttribPointer(maPositionPointer, 3, GLES30.GL_FLOAT, false, 0, mVertexBuffer);
         GLES30.glEnableVertexAttribArray(maPositionPointer); //启用顶点属性

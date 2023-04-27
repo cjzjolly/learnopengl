@@ -16,6 +16,7 @@ public class MatrixState
     public static FloatBuffer lightPositionFB;
     //保护变换矩阵的栈
     static float[][] mStack=new float[10][16];
+    static float[] mScaleStack = new float[10];
     static int stackTop=-1;
     private static double mTotalXAngle;
     private static double mTotalYAngle;
@@ -38,6 +39,7 @@ public class MatrixState
         {
             mStack[stackTop][i]=currMatrix[i];
         }
+        mScaleStack[stackTop] = mTotalScale;
     }
 
     public static void popMatrix()//恢复变换矩阵
@@ -46,6 +48,7 @@ public class MatrixState
         {
             currMatrix[i]=mStack[stackTop][i];
         }
+        mTotalScale = mScaleStack[stackTop];
         stackTop--;
     }
 
