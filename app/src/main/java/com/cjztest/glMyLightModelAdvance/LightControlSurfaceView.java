@@ -20,11 +20,11 @@ public class LightControlSurfaceView  extends GLSurfaceView {
 
     private final SceneRenderer mRenderer;
 
-    /**光点**/
-    private LightDot mLightDot;
+    /**光线起点箭头**/
+    private LightArrow mLightArrowStart;
 
-    /**光线方向箭头**/
-    private LightArrow mLightArrow;
+    /**光线终点箭头**/
+    private LightArrow mLightArrowEnd;
 
     /**塑料盒子**/
     private RoomBox mRoomBox;
@@ -56,7 +56,7 @@ public class LightControlSurfaceView  extends GLSurfaceView {
         //                    MatrixState.translate(0,0,-(float) (distance / mPreviousLength));
                             break;
                         case ONLY_LIGHT:
-                            mLightDot.translate(new float[] {0, 0, 1f - (float) (distance / mPreviousLength)});
+                            mLightArrowStart.setEndVec(new float[] {0, 0, 1f - (float) (distance / mPreviousLength)});
                             break;
                     }
                     break;
@@ -76,13 +76,13 @@ public class LightControlSurfaceView  extends GLSurfaceView {
                             break;
                         case ONLY_LIGHT:
                             //单独移动光点位置
-                            if (null != mLightDot) {
-                                mLightDot.translate(new float[] {dx / getWidth(), -dy / getHeight(), 0});
+                            if (null != mLightArrowStart) {
+                                mLightArrowStart.setEndVec(new float[] {dx / getWidth(), -dy / getHeight(), 0});
                             }
                             break;
                         case LIGHT_END_VEC: //todo 移动光点的终点坐标
-                            if (null != mLightDot && null != mLightArrow) {
-                                mLightArrow.setEndVec(new float[] {dx / getWidth(), -dy / getHeight(), 0});
+                            if (null != mLightArrowStart && null != mLightArrowEnd) {
+                                mLightArrowEnd.setEndVec(new float[] {dx / getWidth(), -dy / getHeight(), 0});
                             }
                             break;
                     }
@@ -125,8 +125,8 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             // 调用此方法产生摄像机9参数位置矩阵
             MatrixState.setCamera(0, 0f, 30, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
             mRoomBox = new RoomBox(getResources(), Constant.ratio);
-            mLightDot = new LightDot(getResources(), Constant.ratio);
-            mLightArrow = new LightArrow(getResources(), Constant.ratio);
+            mLightArrowStart = new LightArrow(getResources(), Constant.ratio);
+            mLightArrowEnd = new LightArrow(getResources(), Constant.ratio);
         }
 
         @Override
@@ -135,15 +135,15 @@ public class LightControlSurfaceView  extends GLSurfaceView {
             GLES30.glClear( GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_COLOR_BUFFER_BIT);
             //设置屏幕背景色RGBA
             GLES30.glClearColor(0f,0f,0f, 1.0f);
-            if (null != mLightDot) {
-                mRoomBox.setLightPosition(mLightDot.getLightDotPos(), mLightArrow.getEndVec());
+            if (null != mLightArrowStart) {
+                mRoomBox.setLightPosition(mLightArrowStart.getEndVec(), mLightArrowEnd.getEndVec());
             }
             mRoomBox.draw();
-            if (null != mLightDot && null != mLightArrow) {
-                mLightArrow.setStartVec(mLightDot.getLightDotPos());
+            if (null != mLightArrowStart && null != mLightArrowEnd) {
+                mLightArrowEnd.setStartVec(mLightArrowStart.getEndVec());
             }
-            mLightArrow.draw();
-            mLightDot.draw();
+            mLightArrowStart.draw();
+            mLightArrowEnd.draw();
         }
     }
 
