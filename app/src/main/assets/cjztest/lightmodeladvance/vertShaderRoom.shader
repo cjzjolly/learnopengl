@@ -17,6 +17,8 @@ void main() {
     fragVTexCoord = vTexCoord; //默认无任何处理，直接输出物理内采样坐标
     fragObjectColor = objectColor; //默认无任何处理，输出颜色值到片源
     objPos = (uMVPMatrix * vec4(objectPosition, 1.0)).xyz; //给片元传一下实际转换后实际的坐标
-    lightPos = (uMVPMatrixWithoutRotate * vec4(lightDotPos, 1.0)).xyz;
+//    lightPos = (uMVPMatrixWithoutRotate * vec4(lightDotPos, 1.0)).xyz;
+//    lightPos = (uMVPMatrix * vec4(lightDotPos, 1.0)).xyz;
 //    lightPos = lightDotPos;
+    lightPos = vec3(0.0, 0.0, 0.5); //cjztest
 }
