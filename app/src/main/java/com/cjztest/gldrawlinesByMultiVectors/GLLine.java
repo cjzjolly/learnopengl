@@ -126,4 +126,16 @@ public class GLLine {
             return mPointBuf;
         }
     }
+
+    /**获取线条的顶点坐标集**/
+    public FloatBuffer getColorBuf() {
+        synchronized (mLock) {
+            return mColorBuf;
+        }
+    }
+
+
+    public int getPointBufferPos() {
+        return mPointBufferPos;
+    }
 }
