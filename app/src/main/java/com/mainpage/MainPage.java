@@ -44,6 +44,14 @@ public class MainPage extends Activity {
         linearLayout.addView(button);
 
         button = new Button(this);
+        button.setText("线条绘制demo2");
+        button.setOnClickListener(v -> {
+            Intent intent = new Intent(this, com.cjztest.gldrawlinesByMultiVectors.MainActivity.class);
+            startActivity(intent);
+        });
+        linearLayout.addView(button);
+
+        button = new Button(this);
         button.setText("shader特效demo");
         button.setOnClickListener(v -> {
             Intent intent = new Intent(this, com.cjztest.glShaderEffect.MainActivity.class);
