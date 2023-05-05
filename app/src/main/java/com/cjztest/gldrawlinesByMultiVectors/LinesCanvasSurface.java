@@ -1,6 +1,7 @@
 package com.cjztest.gldrawlinesByMultiVectors;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.view.MotionEvent;
@@ -10,11 +11,21 @@ import com.cjztest.glMyLightModelSimple.LightDot;
 import com.cjztest.glMyLightModelSimple.MatrixState;
 import com.cjztest.glMyLightModelSimple.RoomBox;
 
+import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class LinesCanvasSurface extends GLSurfaceView {
     private final SceneRenderer mRenderer;
+    private int mWidth;
+    private int mHeight;
+    /**线条列表**/
+    private List<GLLine> mLines = new ArrayList<>();
+    private GLLine mCurrentLine;
+
 
     public LinesCanvasSurface(Context context) {
         super(context);
@@ -26,17 +37,29 @@ public class LinesCanvasSurface extends GLSurfaceView {
 
     @Override
     public boolean onTouchEvent(MotionEvent e) {
-        //把触摸事件转换为光源的顶点，单指移动，多点则缩放
+        switch (e.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                mCurrentLine = new GLLine();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (null == mCurrentLine) {
+                    break;
+                }
+                if (mWidth <= 0 || mHeight <= 0) {
+                    break;
+                }
+                mCurrentLine.addPoint(e.getX() / mWidth, e.getY() / mHeight, Color.WHITE);
+                break;
+            case MotionEvent.ACTION_UP:
+                mLines.add(mCurrentLine);
+                break;
+        }
         requestRender();
         return true;
     }
 
-    /**todo 粗线条三角形顶点生成**/
-    private void makePoints() {
-
-    }
-
     private class SceneRenderer implements Renderer {
+
 
         @Override
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
@@ -57,6 +80,8 @@ public class LinesCanvasSurface extends GLSurfaceView {
 
         @Override
         public void onSurfaceChanged(GL10 gl, int width, int height) {
+            mWidth = width;
+            mHeight = height;
             //设置视窗大小及位置
             GLES30.glViewport(0, 0, width, height);
             //计算GLSurfaceView的宽高比
@@ -73,6 +98,13 @@ public class LinesCanvasSurface extends GLSurfaceView {
             GLES30.glClear( GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_COLOR_BUFFER_BIT);
             //设置屏幕背景色RGBA
             GLES30.glClearColor(0f,0f,0f, 1.0f);
+
+
+
+            //todo 遍历所有线条并绘制
+            for (GLLine line : mLines) {
+                FloatBuffer lineVerts = line.getPointBuf();
+            }
         }
     }
 
