@@ -92,11 +92,7 @@ public class GLLine {
             }
             for (int i = 0; i < vert.length / 3; i++) {
                 //写入颜色值r,g,b,a
-//                int color = colorARGB;  //argb to abgr
-                int color = Color.RED;  //cjztest
-                if (i == 1) {
-                    color = Color.GREEN; //cjztest
-                }
+                int color = colorARGB;  //argb to abgr
                 float alpha = (float) (((color & 0xFF000000) >> 24) & 0x000000FF) / 255f;
                 float blue = (float) ((color & 0x000000FF)) / 255f;
                 float green = (float) ((color & 0x0000FF00) >> 8) / 255f;

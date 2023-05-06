@@ -11,7 +11,9 @@ import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 
 public class LinesCanvasSurface extends GLSurfaceView {
@@ -30,6 +32,7 @@ public class LinesCanvasSurface extends GLSurfaceView {
     public LinesCanvasSurface(Context context) {
         super(context);
         this.setEGLContextClientVersion(3); //设置使用OPENGL ES3.0
+        setEGLConfigChooser(new MSAAConfigChooser());
         mRenderer = new SceneRenderer();	//创建场景渲染器
         setRenderer(mRenderer);				//设置渲染器
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);//设置渲染模式为主动渲染
@@ -60,6 +63,35 @@ public class LinesCanvasSurface extends GLSurfaceView {
         while ((error = GLES30.glGetError()) != GLES30.GL_NO_ERROR) {
             Log.e("ES30_ERROR", op + ": glError " + error);
             throw new RuntimeException(op + ": glError " + error);
+        }
+    }
+
+    public class MSAAConfigChooser implements GLSurfaceView.EGLConfigChooser {
+        @Override
+        public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display) {
+
+            int attribs[] = {
+                    EGL10.EGL_LEVEL, 0,
+                    EGL10.EGL_RENDERABLE_TYPE, 4,  // EGL_OPENGL_ES2_BIT
+                    EGL10.EGL_COLOR_BUFFER_TYPE, EGL10.EGL_RGB_BUFFER,
+                    EGL10.EGL_RED_SIZE, 8,
+                    EGL10.EGL_GREEN_SIZE, 8,
+                    EGL10.EGL_BLUE_SIZE, 8,
+                    EGL10.EGL_DEPTH_SIZE, 24,
+                    EGL10.EGL_SAMPLE_BUFFERS, 1,
+                    EGL10.EGL_SAMPLES, 4,  // 在这里修改MSAA的倍数，4就是4xMSAA，再往上开程序可能会崩
+                    EGL10.EGL_NONE
+            };
+            EGLConfig[] configs = new EGLConfig[1];
+            int[] configCounts = new int[1];
+            egl.eglChooseConfig(display, attribs, configs, 1, configCounts);
+
+            if (configCounts[0] == 0) {
+                // Failed! Error handling.
+                return null;
+            } else {
+                return configs[0];
+            }
         }
     }
 
@@ -132,7 +164,7 @@ public class LinesCanvasSurface extends GLSurfaceView {
                 if (mWidth <= 0 || mHeight <= 0) {
                     break;
                 }
-                mCurrentLine.addPoint((e.getX() / mWidth - 0.5f) * 3f * Constant.ratio,  (0.5f - e.getY() / mHeight) * 3f, Color.WHITE);
+                mCurrentLine.addPoint((e.getX() / mWidth - 0.5f) * 3f * Constant.ratio,  (0.5f - e.getY() / mHeight) * 3f, Color.GREEN);
                 break;
             case MotionEvent.ACTION_UP:
                 mLines.add(mCurrentLine);
