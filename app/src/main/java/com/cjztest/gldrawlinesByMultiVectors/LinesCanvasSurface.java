@@ -285,8 +285,8 @@ public class LinesCanvasSurface extends GLSurfaceView {
                             );
                     GLES30.glEnableVertexAttribArray(maPositionPointer); //启用顶点属性
                     GLES30.glEnableVertexAttribArray(maColorPointer);  //启用颜色属性
-//                    GLES30.glDrawArrays(GLES30.GL_LINE_STRIP, 0, mCurrentLine.getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
-                    GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, mCurrentLine.getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+                    GLES30.glDrawArrays(GLES30.GL_LINE_STRIP, 0, mCurrentLine.getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+//                    GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, mCurrentLine.getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
                 }
             }
         }

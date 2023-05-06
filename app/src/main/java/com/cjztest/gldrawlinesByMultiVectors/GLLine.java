@@ -33,6 +33,10 @@ public class GLLine {
     private float mStandardVec[] = new float[] {0, 1, 0};
     /**上一次传入的坐标**/
     private float mPrevInputVec[] = null;
+    /**上上次传入的坐标**/
+    private float mBezierKeyPoint0[] = null;
+    private float mBezierKeyPoint1[] = null;
+    private float mBezierKeyPoint2[] = null;
 
 
     private Object mLock = new Object();
@@ -47,15 +51,29 @@ public class GLLine {
     }
 
 
+//    private List<PointF> bezierCalc(PointF[] keyPointP) {
+//        List<PointF> points = new LinkedList<>();
+//        double t = 0.1f; //步进
+//        for (double k = t; k <= 1f + t; k += t) {
+//            double r = 1 - k;
+//            double x = Math.pow(r, 2) * keyPointP[0].x + 2 * k * r * keyPointP[1].x
+//                    + Math.pow(k, 2) * keyPointP[2].x;
+//            double y = Math.pow(r, 2) * keyPointP[0].y + 2 * k * r * keyPointP[1].y
+//                    + Math.pow(k, 2) * keyPointP[2].y;
+//            points.add(new PointF((float) x, (float) y));
+//        }
+//        return points;
+//    }
+
     private List<PointF> bezierCalc(PointF[] keyPointP) {
         List<PointF> points = new LinkedList<>();
-        double t = 0.01f; //步进
-        for (double k = t; k <= 1 + t; k += t) {
+        double t = 0.1f; //步进
+        for (double k = t; k <= 1f + t; k += t) {
             double r = 1 - k;
-            double x = Math.pow(r, 2) * keyPointP[0].x + 2 * k * r * keyPointP[1].x
-                    + Math.pow(k, 2) * keyPointP[2].x;
-            double y = Math.pow(r, 2) * keyPointP[0].y + 2 * k * r * keyPointP[1].y
-                    + Math.pow(k, 2) * keyPointP[2].y;
+            double x = Math.pow(r, 3) * keyPointP[0].x + 3 * k * Math.pow(r, 2) * keyPointP[1].x
+                    + 3 * Math.pow(k, 2) * (1 - k) * keyPointP[2].x + Math.pow(k, 3) * keyPointP[3].x;
+            double y = Math.pow(r, 3) * keyPointP[0].y + 3 * k * Math.pow(r, 2) * keyPointP[1].y
+                    + 3 * Math.pow(k, 2) * (1 - k) * keyPointP[2].y + Math.pow(k, 3) * keyPointP[3].y;
             points.add(new PointF((float) x, (float) y));
         }
         return points;
@@ -65,12 +83,16 @@ public class GLLine {
     public void addPoint(float x, float y, int colorARGB) {
         //按初始化大小初始化顶点字节数组和顶点数组
         synchronized (mLock) {
-            if (null == mPrevInputVec) {
-                mPrevInputVec = new float[] {x, y, 0};
+            if (null == mBezierKeyPoint0) {
+                mBezierKeyPoint0 = new float[] {x, y, 0};
                 return;
             }
-            double distance = distance(new float[] {x, y}, mPrevInputVec);
-            if (distance < 0.002f) { //太小的移动这次就不纳入顶点了
+            if (null == mBezierKeyPoint1) {
+                mBezierKeyPoint1 = new float[] {x, y, 0};
+                return;
+            }
+            if (null == mBezierKeyPoint2) {
+                mBezierKeyPoint2 = new float[] {x, y, 0};
                 return;
             }
 
@@ -91,28 +113,39 @@ public class GLLine {
             }
 
             //todo 通过贝塞尔曲线细化顶点
-//            PointF keyPoint0 = ;
-//            PointF keyPoint1 = ;
-//            PointF keyPoint2 = ;
-//            List<PointF> points = bezierCalc(new PointF[] {keyPoint0, keyPoint1, keyPoint2});
-//            for (PointF pointF : points) {
-//                addPointToBuffer(pointF.x, pointF.y, distance, colorARGB);
-//            }
-            addPointToBuffer(x, y, distance, colorARGB);
+            PointF keyPoint0 = new PointF(mBezierKeyPoint0[0], mBezierKeyPoint0[1]);
+            PointF keyPoint1 = new PointF(mBezierKeyPoint1[0], mBezierKeyPoint1[1]);
+            PointF keyPoint2 = new PointF(mBezierKeyPoint2[0], mBezierKeyPoint2[1]);
+            PointF keyPoint3 = new PointF(x, y);
+            List<PointF> points = bezierCalc(new PointF[] {keyPoint0, keyPoint1, keyPoint2, keyPoint3});
+            for (PointF pointF : points) {
+                addPointToBuffer(pointF.x, pointF.y, colorARGB);
+            }
+            mBezierKeyPoint0 = new float[] {mBezierKeyPoint1[0], mBezierKeyPoint1[1]};
+            mBezierKeyPoint1 = new float[] {mBezierKeyPoint2[0], mBezierKeyPoint2[1]};
+            mBezierKeyPoint2 = new float[] {x, y};
         }
     }
 
-    private void addPointToBuffer(float x, float y, double distance, int colorARGB) {
+    private void addPointToBuffer(float x, float y, int colorARGB) {
+//        double distance = distance(new float[] {x, y}, mPrevInputVec);
+//        if (distance < 0.002f) { //太小的移动这次就不纳入顶点了
+//            return;
+//        }
         //核心代码:把这次输入的向量-上次输入的向量，得到绘制移动方向的向量，对比作为标准的向量，计算两端点坐标旋转角度：
-        float initVert[] = new float[]{ //初始时左右两端点的坐标，初始时在原点两侧，然后以传入的顶点作为偏移量
+        float initVert[] = new float[] { //初始时左右两端点的坐标，初始时在原点两侧，然后以传入的顶点作为偏移量
                 -mLineWidth / 2f, 0, 0,
                 mLineWidth / 2f, 0, 0,
         };
-        //自动缩放笔划粗细
-        float ratio = (float) Math.min(1.5f, (0.01f / distance * 5f));
-        initVert[0] = (float) (initVert[0] * ratio);
-        initVert[3] = (float) (initVert[3] * ratio);
+//        //自动缩放笔划粗细
+//        float ratio = (float) Math.min(1.5f, (0.01f / distance * 5f));
+//        initVert[0] = (float) (initVert[0] * ratio);
+//        initVert[3] = (float) (initVert[3] * ratio);
 
+        if (null == mPrevInputVec) {
+            mPrevInputVec = new float[] {x, y, 0};
+            return;
+        }
         float newVec[] = new float[] {x - mPrevInputVec[0], y - mPrevInputVec[1], 0 - mPrevInputVec[2]}; //把这次输入的向量-上次输入的向量，得到绘制移动方向的向量
         double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, newVec);
         double angleRad = Math.toRadians(angle);
@@ -145,7 +178,7 @@ public class GLLine {
             mColorBuf.put(mColorBufferPos++, alpha);
         }
         //如果写入的颜色数超过初始值，将顶点数和颜色数组容量翻倍
-        if (mPointBufferPos >= mInitVertexCount) {//todo bug，扩容之后有些点信息错了
+        if (mPointBufferPos >= mInitVertexCount) {
             Log.i("GLLines", "扩容点数到:" + mInitVertexCount);
             mInitVertexCount += 12;
             mInitColorCount += 16;
