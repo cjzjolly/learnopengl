@@ -164,7 +164,7 @@ public class LinesCanvasSurface extends GLSurfaceView {
                 if (mWidth <= 0 || mHeight <= 0) {
                     break;
                 }
-                mCurrentLine.addPoint((e.getX() / mWidth - 0.5f) * 3f * Constant.ratio,  (0.5f - e.getY() / mHeight) * 3f, Color.GREEN);
+                mCurrentLine.addPoint((e.getX() / mWidth - 0.5f) * 3f * Constant.ratio,  (0.5f - e.getY() / mHeight) * 3f, 0xFFFF00FF);
                 break;
             case MotionEvent.ACTION_UP:
                 mLines.add(mCurrentLine);
@@ -220,7 +220,8 @@ public class LinesCanvasSurface extends GLSurfaceView {
 
 
             //遍历所有线条并绘制
-            for (GLLine line : mLines) {
+            for (int i = 0; i < mLines.size(); i++) {
+                GLLine line = mLines.get(i);
                 if (null == line) {
                     continue;
                 }

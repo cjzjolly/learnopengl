@@ -1,11 +1,13 @@
 package com.cjztest.gldrawlinesByMultiVectors;
 
-import android.graphics.Color;
+import android.graphics.PointF;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.LinkedList;
+import java.util.List;
 
 public class GLLine {
     /**顶点字节数组**/
@@ -26,11 +28,11 @@ public class GLLine {
     private int mInitColorCount = 16;
 
     /**线条宽度**/
-    private float mLineWidth = 0.1f;
+    private float mLineWidth = 0.05f;
     /**标准向量，用来确认端点的旋转量**/
     private float mStandardVec[] = new float[] {0, 1, 0};
     /**上一次传入的坐标**/
-    private float mPrevInputVec[] = new float[3];
+    private float mPrevInputVec[] = null;
 
 
     private Object mLock = new Object();
@@ -39,16 +41,39 @@ public class GLLine {
     public GLLine() {
     }
 
+    /**距离计算**/
     private double distance(float point0[], float point1[]) {
         return Math.sqrt(Math.pow(point0[0] - point1[0], 2) + Math.pow(point0[1] - point1[1], 2));
     }
 
+
+    private List<PointF> bezierCalc(PointF[] keyPointP) {
+        List<PointF> points = new LinkedList<>();
+        double t = 0.01f; //步进
+        for (double k = t; k <= 1 + t; k += t) {
+            double r = 1 - k;
+            double x = Math.pow(r, 2) * keyPointP[0].x + 2 * k * r * keyPointP[1].x
+                    + Math.pow(k, 2) * keyPointP[2].x;
+            double y = Math.pow(r, 2) * keyPointP[0].y + 2 * k * r * keyPointP[1].y
+                    + Math.pow(k, 2) * keyPointP[2].y;
+            points.add(new PointF((float) x, (float) y));
+        }
+        return points;
+    }
+
+    /**添加一系列触摸点，转换为指定粗细的线条**/
     public void addPoint(float x, float y, int colorARGB) {
         //按初始化大小初始化顶点字节数组和顶点数组
         synchronized (mLock) {
-            if (distance(new float[] {x, y}, mPrevInputVec) < 0.01f) { //太小的移动这次就不纳入顶点了
+            if (null == mPrevInputVec) {
+                mPrevInputVec = new float[] {x, y, 0};
                 return;
             }
+            double distance = distance(new float[] {x, y}, mPrevInputVec);
+            if (distance < 0.002f) { //太小的移动这次就不纳入顶点了
+                return;
+            }
+
             if (mPointBuf == null) {
                 mPointByteBuffer = ByteBuffer.allocateDirect(mInitVertexCount * 4);    //顶点数 * sizeof(float)
                 mPointByteBuffer.order(ByteOrder.nativeOrder());
@@ -65,63 +90,79 @@ public class GLLine {
                 mColorBufferPos = 0;
             }
 
+            //todo 通过贝塞尔曲线细化顶点
+//            PointF keyPoint0 = ;
+//            PointF keyPoint1 = ;
+//            PointF keyPoint2 = ;
+//            List<PointF> points = bezierCalc(new PointF[] {keyPoint0, keyPoint1, keyPoint2});
+//            for (PointF pointF : points) {
+//                addPointToBuffer(pointF.x, pointF.y, distance, colorARGB);
+//            }
+            addPointToBuffer(x, y, distance, colorARGB);
+        }
+    }
 
-            //核心代码:把这次输入的向量-上次输入的向量，得到绘制移动方向的向量，对比作为标准的向量，计算两端点坐标旋转角度：
-            float initVert[] = new float[]{ //初始时左右两端点的坐标，初始时在原点两侧，然后以传入的顶点作为偏移量
-                    -mLineWidth / 2f, 0, 0,
-                    mLineWidth / 2f, 0, 0,
-            };
-            float newVec[] = new float[] {x - mPrevInputVec[0], y - mPrevInputVec[1], 0 - mPrevInputVec[2]}; //把这次输入的向量-上次输入的向量，得到绘制移动方向的向量
-            double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, newVec);
-            double angleRad = Math.toRadians(angle);
-            float vert[] = new float[6];
-            vert[0] = (float) (Math.cos(angleRad) * initVert[0] - Math.sin(angleRad) * initVert[1]);
-            vert[1] = (float) (Math.sin(angleRad) * initVert[0] + Math.cos(angleRad) * initVert[1]);
-            vert[3] = (float) (Math.cos(angleRad) * initVert[3] - Math.sin(angleRad) * initVert[4]);
-            vert[4] = (float) (Math.sin(angleRad) * initVert[3] + Math.cos(angleRad) * initVert[4]);
-            vert[0] += x;
-            vert[1] += y;
-            vert[3] += x;
-            vert[4] += y;
-            mPrevInputVec = new float[] {x, y, 0};
+    private void addPointToBuffer(float x, float y, double distance, int colorARGB) {
+        //核心代码:把这次输入的向量-上次输入的向量，得到绘制移动方向的向量，对比作为标准的向量，计算两端点坐标旋转角度：
+        float initVert[] = new float[]{ //初始时左右两端点的坐标，初始时在原点两侧，然后以传入的顶点作为偏移量
+                -mLineWidth / 2f, 0, 0,
+                mLineWidth / 2f, 0, 0,
+        };
+        //自动缩放笔划粗细
+        float ratio = (float) Math.min(1.5f, (0.01f / distance * 5f));
+        initVert[0] = (float) (initVert[0] * ratio);
+        initVert[3] = (float) (initVert[3] * ratio);
+
+        float newVec[] = new float[] {x - mPrevInputVec[0], y - mPrevInputVec[1], 0 - mPrevInputVec[2]}; //把这次输入的向量-上次输入的向量，得到绘制移动方向的向量
+        double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, newVec);
+        double angleRad = Math.toRadians(angle);
+        float vert[] = new float[6];
+        vert[0] = (float) (Math.cos(angleRad) * initVert[0] - Math.sin(angleRad) * initVert[1]);
+        vert[1] = (float) (Math.sin(angleRad) * initVert[0] + Math.cos(angleRad) * initVert[1]);
+        vert[3] = (float) (Math.cos(angleRad) * initVert[3] - Math.sin(angleRad) * initVert[4]);
+        vert[4] = (float) (Math.sin(angleRad) * initVert[3] + Math.cos(angleRad) * initVert[4]);
+        vert[0] += x;
+        vert[1] += y;
+        vert[3] += x;
+        vert[4] += y;
+        mPrevInputVec = new float[] {x, y, 0};
 
 
-            //写入坐标值
-            for (int i = 0; i < vert.length; i++) {
-                mPointBuf.put(mPointBufferPos++, vert[i]);
-            }
-            for (int i = 0; i < vert.length / 3; i++) {
-                //写入颜色值r,g,b,a
-                int color = colorARGB;  //argb to abgr
-                float alpha = (float) (((color & 0xFF000000) >> 24) & 0x000000FF) / 255f;
-                float blue = (float) ((color & 0x000000FF)) / 255f;
-                float green = (float) ((color & 0x0000FF00) >> 8) / 255f;
-                float red = (float) ((color & 0x00FF0000) >> 16) / 255f;
-                mColorBuf.put(mColorBufferPos++, red);
-                mColorBuf.put(mColorBufferPos++, green);
-                mColorBuf.put(mColorBufferPos++, blue);
-                mColorBuf.put(mColorBufferPos++, alpha);
-            }
-            //如果写入的颜色数超过初始值，将顶点数和颜色数组容量翻倍
-            if (mPointBufferPos >= mInitVertexCount) {//todo bug，扩容之后有些点信息错了
-                Log.i("GLLines", "扩容点数到:" + mInitVertexCount);
-                mInitVertexCount += 12;
-                mInitColorCount += 16;
+        //写入坐标值
+        for (int i = 0; i < vert.length; i++) {
+            mPointBuf.put(mPointBufferPos++, vert[i]);
+        }
+        for (int i = 0; i < vert.length / 3; i++) {
+            //写入颜色值r,g,b,a
+            int color = colorARGB;  //argb to abgr
+            float alpha = (float) (((color & 0xFF000000) >> 24) & 0x000000FF) / 255f;
+            float blue = (float) ((color & 0x000000FF)) / 255f;
+            float green = (float) ((color & 0x0000FF00) >> 8) / 255f;
+            float red = (float) ((color & 0x00FF0000) >> 16) / 255f;
+            mColorBuf.put(mColorBufferPos++, red);
+            mColorBuf.put(mColorBufferPos++, green);
+            mColorBuf.put(mColorBufferPos++, blue);
+            mColorBuf.put(mColorBufferPos++, alpha);
+        }
+        //如果写入的颜色数超过初始值，将顶点数和颜色数组容量翻倍
+        if (mPointBufferPos >= mInitVertexCount) {//todo bug，扩容之后有些点信息错了
+            Log.i("GLLines", "扩容点数到:" + mInitVertexCount);
+            mInitVertexCount += 12;
+            mInitColorCount += 16;
 
-                ByteBuffer qbb = ByteBuffer.allocateDirect(mInitVertexCount * 4);    //顶点数 * sizeof(float) ; 加4个点
-                qbb.order(ByteOrder.nativeOrder());
-                System.arraycopy(mPointByteBuffer.array(), 0, qbb.array(), 0, (mPointBufferPos + 1) * 4);   //顶点数 * sizeof(float)
-                mPointByteBuffer = qbb;
-                mPointBuf = mPointByteBuffer.asFloatBuffer();
-                mPointBuf.position(0);
+            ByteBuffer qbb = ByteBuffer.allocateDirect(mInitVertexCount * 4);    //顶点数 * sizeof(float) ; 加4个点
+            qbb.order(ByteOrder.nativeOrder());
+            System.arraycopy(mPointByteBuffer.array(), 0, qbb.array(), 0, (mPointBufferPos + 1) * 4);   //顶点数 * sizeof(float)
+            mPointByteBuffer = qbb;
+            mPointBuf = mPointByteBuffer.asFloatBuffer();
+            mPointBuf.position(0);
 
-                ByteBuffer qbb2 = ByteBuffer.allocateDirect(mInitColorCount * 4);    //顶点数 * sizeof(float) ;
-                qbb2.order(ByteOrder.nativeOrder());
-                System.arraycopy(mColorByteBuffer.array(), 0, qbb2.array(), 0, (mColorBufferPos + 1) * 4);  //sizeof(R,G,B,Alpha) * sizeof(float)
-                mColorByteBuffer = qbb2;
-                mColorBuf = mColorByteBuffer.asFloatBuffer();
-                mColorBuf.position(0);
-            }
+            ByteBuffer qbb2 = ByteBuffer.allocateDirect(mInitColorCount * 4);    //顶点数 * sizeof(float) ;
+            qbb2.order(ByteOrder.nativeOrder());
+            System.arraycopy(mColorByteBuffer.array(), 0, qbb2.array(), 0, (mColorBufferPos + 1) * 4);  //sizeof(R,G,B,Alpha) * sizeof(float)
+            mColorByteBuffer = qbb2;
+            mColorBuf = mColorByteBuffer.asFloatBuffer();
+            mColorBuf.position(0);
         }
     }
 
