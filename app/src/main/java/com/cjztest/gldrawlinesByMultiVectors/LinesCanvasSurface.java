@@ -7,8 +7,6 @@ import android.opengl.GLSurfaceView;
 import android.util.Log;
 import android.view.MotionEvent;
 
-import com.cjztest.glMyLightModelSimple.Constant;
-
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -134,7 +132,7 @@ public class LinesCanvasSurface extends GLSurfaceView {
                 if (mWidth <= 0 || mHeight <= 0) {
                     break;
                 }
-                mCurrentLine.addPoint(-1f + (e.getX() / mWidth) * 4f, -1f + (1f - e.getY() / mHeight) * 2f, Color.WHITE);
+                mCurrentLine.addPoint((e.getX() / mWidth - 0.5f) * 3f * Constant.ratio,  (0.5f - e.getY() / mHeight) * 3f, Color.WHITE);
                 break;
             case MotionEvent.ACTION_UP:
                 mLines.add(mCurrentLine);
@@ -223,7 +221,7 @@ public class LinesCanvasSurface extends GLSurfaceView {
                         );
                 GLES30.glEnableVertexAttribArray(maPositionPointer); //启用顶点属性
                 GLES30.glEnableVertexAttribArray(maColorPointer);  //启用颜色属性
-                GLES30.glDrawArrays(GLES30.GL_LINE_STRIP, 0, line.getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+                GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, line.getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
             }
 
             if (null != mCurrentLine) {
