@@ -31,12 +31,11 @@ public class GLLine {
     private float mLineWidth = 0.05f;
     /**标准向量，用来确认端点的旋转量**/
     private float mStandardVec[] = new float[] {0, 1, 0};
-    /**上一次传入的坐标**/
+    /**上一次做旋转计算用过的坐标**/
     private float mPrevInputVec[] = null;
     /**上上次传入的坐标**/
     private float mBezierKeyPoint0[] = null;
     private float mBezierKeyPoint1[] = null;
-//    private float mBezierKeyPoint2[] = null;
 
 
     private Object mLock = new Object();
@@ -54,7 +53,7 @@ public class GLLine {
     private List<PointF> bezierCalc(PointF[] keyPointP) {
         List<PointF> points = new LinkedList<>();
         double t = 0.1f; //步进
-        for (double k = t; k <= 1f; k += t) {
+        for (double k = 0; k <= 1f; k += t) {
             double r = 1 - k;
             double x = Math.pow(r, 2) * keyPointP[0].x + 2 * k * r * keyPointP[1].x
                     + Math.pow(k, 2) * keyPointP[2].x;
@@ -77,10 +76,6 @@ public class GLLine {
                 mBezierKeyPoint1 = new float[] {x, y, 0};
                 return;
             }
-//            if (null == mBezierKeyPoint2) {
-//                mBezierKeyPoint2 = new float[] {x, y, 0};
-//                return;
-//            }
 
             if (mPointBuf == null) {
                 mPointByteBuffer = ByteBuffer.allocateDirect(mInitVertexCount * 4);    //顶点数 * sizeof(float)
@@ -98,18 +93,9 @@ public class GLLine {
                 mColorBufferPos = 0;
             }
 
-            //todo 通过贝塞尔曲线细化顶点
-            //cjztest 这样3个控制点其实只是围成一条直线而已
-//            PointF keyPoint0 = new PointF(mBezierKeyPoint1[0], mBezierKeyPoint1[1]);
-//            PointF keyPoint1 = new PointF((mBezierKeyPoint1[0] + x) / 2f, (mBezierKeyPoint1[1] + y) / 2f);
-//            PointF keyPoint2 = new PointF(x, y);
-
-//            PointF keyPoint0 = new PointF(mBezierKeyPoint0[0], mBezierKeyPoint0[1]);
+            //通过贝塞尔曲线细化顶点
             PointF keyPoint0 = new PointF((mBezierKeyPoint0[0] + mBezierKeyPoint1[0]) / 2f, (mBezierKeyPoint0[1] + mBezierKeyPoint1[1]) / 2f);
             PointF keyPoint1 = new PointF(mBezierKeyPoint1[0], mBezierKeyPoint1[1]);
-//            PointF keyPoint1 = new PointF((mBezierKeyPoint0[0] + mBezierKeyPoint1[0]) / 2f, (mBezierKeyPoint0[1] + mBezierKeyPoint1[1]) / 2f);
-//            PointF keyPoint1 = new PointF((x + mBezierKeyPoint1[0]) / 2f, (y + mBezierKeyPoint1[1]) / 2f);
-//            PointF keyPoint2 = new PointF(x, y);
             PointF keyPoint2 = new PointF((x + mBezierKeyPoint1[0]) / 2f, (y + mBezierKeyPoint1[1]) / 2f);
             List<PointF> points = bezierCalc(new PointF[] {keyPoint0, keyPoint1, keyPoint2});
 
@@ -118,9 +104,6 @@ public class GLLine {
                 addPointToBuffer(pointF.x, pointF.y, colorARGB);
             }
             mBezierKeyPoint0 = new float[] {mBezierKeyPoint1[0], mBezierKeyPoint1[1]};
-//            mBezierKeyPoint0 = new float[] {(mBezierKeyPoint0[0] + mBezierKeyPoint1[0]) / 2f, (mBezierKeyPoint0[1] + mBezierKeyPoint1[1]) / 2f};
-//            mBezierKeyPoint0 = new float[] {(x + mBezierKeyPoint1[0]) / 2f, (y + mBezierKeyPoint1[1]) / 2f};
-//            mBezierKeyPoint1 = new float[] {(x + mBezierKeyPoint1[0]) / 2f, (y + mBezierKeyPoint1[1]) / 2f};
             mBezierKeyPoint1 = new float[] {x, y};
         }
     }
