@@ -9,7 +9,7 @@ import java.nio.FloatBuffer;
 import java.util.LinkedList;
 import java.util.List;
 
-public class GLLine {
+public class GLLineWithBezier {
     /**顶点字节数组**/
     private ByteBuffer mPointByteBuffer;
     /**顶点RGBA字节数组**/
@@ -41,7 +41,7 @@ public class GLLine {
     private Object mLock = new Object();
 
 
-    public GLLine() {
+    public GLLineWithBezier() {
     }
 
     /**距离计算**/

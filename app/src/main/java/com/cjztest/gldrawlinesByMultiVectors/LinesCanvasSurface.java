@@ -1,7 +1,6 @@
 package com.cjztest.gldrawlinesByMultiVectors;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
@@ -21,8 +20,8 @@ public class LinesCanvasSurface extends GLSurfaceView {
     private int mWidth;
     private int mHeight;
     /**线条列表**/
-    private List<GLLine> mLines = new ArrayList<>();
-    private GLLine mCurrentLine;
+    private List<GLLineWithBezier> mLines = new ArrayList<>();
+    private GLLineWithBezier mCurrentLine;
     private int mProgram;
     private int maPositionPointer;
     private int maColorPointer;
@@ -155,7 +154,7 @@ public class LinesCanvasSurface extends GLSurfaceView {
     public boolean onTouchEvent(MotionEvent e) {
         switch (e.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                mCurrentLine = new GLLine();
+                mCurrentLine = new GLLineWithBezier();
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (null == mCurrentLine) {
@@ -165,6 +164,9 @@ public class LinesCanvasSurface extends GLSurfaceView {
                     break;
                 }
                 mCurrentLine.addPoint((e.getX() / mWidth - 0.5f) * 3f * Constant.ratio,  (0.5f - e.getY() / mHeight) * 3f, 0xFFFF00FF);
+//                mCurrentLine.addPoint(-1, -1, 0xFFFF00FF);
+//                mCurrentLine.addPoint(0, 1, 0xFFFF00FF);
+//                mCurrentLine.addPoint(1, -1, 0xFFFF00FF);
                 break;
             case MotionEvent.ACTION_UP:
                 mLines.add(mCurrentLine);
@@ -221,7 +223,7 @@ public class LinesCanvasSurface extends GLSurfaceView {
 
             //遍历所有线条并绘制
             for (int i = 0; i < mLines.size(); i++) {
-                GLLine line = mLines.get(i);
+                GLLineWithBezier line = mLines.get(i);
                 if (null == line) {
                     continue;
                 }
