@@ -1,6 +1,7 @@
 package com.cjztest.gldrawlinesByMultiVectors;
 
 import android.graphics.PointF;
+import android.opengl.GLES30;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
@@ -158,6 +159,10 @@ public class GLLineWithBezier {
             mColorBuf.put(mColorBufferPos++, blue);
             mColorBuf.put(mColorBufferPos++, alpha);
         }
+        checkCapacity();
+    }
+
+    private void checkCapacity() {
         //如果写入的颜色数超过初始值，将顶点数和颜色数组容量翻倍
         if (mPointBufferPos >= mInitVertexCount) {
             Log.i("GLLines", "扩容点数到:" + mInitVertexCount);
@@ -209,5 +214,41 @@ public class GLLineWithBezier {
 
     public int getPointBufferPos() {
         return mPointBufferPos;
+    }
+
+    /**把绘制过程迁移回去对象内部**/
+    public void draw(int vertPointer, int colorPointer) {
+        FloatBuffer lineVerts = mPointBuf;
+        FloatBuffer colors = mColorBuf;
+        if (lineVerts != null && colors != null) {
+            lineVerts.position(0);
+            colors.position(0);
+            //将顶点位置数据送入渲染管线
+            GLES30.glVertexAttribPointer
+                    (
+                            vertPointer,
+                            3,
+                            GLES30.GL_FLOAT,
+                            false,
+                            0,  //stride是啥？
+                            lineVerts
+                    );
+            //将顶点颜色数据送入渲染管线
+            GLES30.glVertexAttribPointer
+                    (
+                            colorPointer,
+                            4,
+                            GLES30.GL_FLOAT,
+                            false,
+                            0,
+                            colors
+                    );
+            GLES30.glEnableVertexAttribArray(vertPointer); //启用顶点属性
+            GLES30.glEnableVertexAttribArray(colorPointer);  //启用颜色属性
+//            GLES30.glDrawArrays(GLES30.GL_LINE_STRIP, 0, getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+            GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+            GLES30.glDisableVertexAttribArray(vertPointer); //启用顶点属性
+            GLES30.glDisableVertexAttribArray(colorPointer);  //启用颜色属性
+        }
     }
 }
