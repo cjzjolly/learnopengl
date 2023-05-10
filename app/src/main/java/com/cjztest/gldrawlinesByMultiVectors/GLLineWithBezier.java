@@ -4,6 +4,8 @@ import android.graphics.PointF;
 import android.opengl.GLES30;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -38,7 +40,6 @@ public class GLLineWithBezier {
     private float mBezierKeyPoint0[] = null;
     private float mBezierKeyPoint1[] = null;
 
-
     private Object mLock = new Object();
 
 
@@ -65,10 +66,42 @@ public class GLLineWithBezier {
         return points;
     }
 
+
+    /**对向量继续进行旋转**/
+    private float[] rotate2d(float vec[], double angle) throws Exception {
+        if (null == vec) {
+            return null;
+        }
+        if (vec.length > 2) {
+            throw new Exception("不接受超过2D的坐标");
+        }
+        double angleRad = Math.toRadians(angle);
+        float rotatedVec[] = new float[2];
+        rotatedVec[0] = (float) (Math.cos(angleRad) * vec[0] - Math.sin(angleRad) * vec[1]);
+        rotatedVec[1] = (float) (Math.sin(angleRad) * vec[0] + Math.cos(angleRad) * vec[1]);
+        return rotatedVec;
+    }
+
     /**todo 绘制线头**/
-    private void lineCap() {
+    private void lineCap(@NonNull float firstVec[]) {
+        if (null == firstVec) {
+            return;
+        }
         /**1、了解线条开始的方向，将半径线条绕旋转该方向与标准测量用向量的夹角的角度量
          * 2、旋转180度时按照一定步进产生多个顶点，todo 但怎么确定旋转的方向是顺时针还是逆时针？以什么为依据判断？以传入向量方向为参考，但具体怎么做？*/
+        float initVert[] = new float[] { //初始时左端点的坐标，初始时在原点两侧，然后以传入的顶点作为偏移量
+                -mLineWidth / 2f, 0, 0,
+        };
+        //todo 旋转并在过程中产生顶点
+        double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, firstVec); //对比基准向量偏移了多少度
+        int step = 30;
+        for (double degreeBias = 0 + angle ; degreeBias < 180 + angle; degreeBias += step) {
+            try {
+                float rotatedVec[] = rotate2d(initVert, degreeBias);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**添加一系列触摸点，转换为指定粗细的线条**/
@@ -77,6 +110,7 @@ public class GLLineWithBezier {
         synchronized (mLock) {
             if (null == mBezierKeyPoint0) {
                 mBezierKeyPoint0 = new float[] {x, y, 0};
+                lineCap(mBezierKeyPoint0);
                 return;
             }
             if (null == mBezierKeyPoint1) {
@@ -136,12 +170,17 @@ public class GLLineWithBezier {
         }
         float newVec[] = new float[] {x - mPrevInputVec[0], y - mPrevInputVec[1], 0 - mPrevInputVec[2]}; //把这次输入的向量-上次输入的向量，得到绘制移动方向的向量
         double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, newVec);
-        double angleRad = Math.toRadians(angle);
         float vert[] = new float[6];
-        vert[0] = (float) (Math.cos(angleRad) * initVert[0] - Math.sin(angleRad) * initVert[1]);
-        vert[1] = (float) (Math.sin(angleRad) * initVert[0] + Math.cos(angleRad) * initVert[1]);
-        vert[3] = (float) (Math.cos(angleRad) * initVert[3] - Math.sin(angleRad) * initVert[4]);
-        vert[4] = (float) (Math.sin(angleRad) * initVert[3] + Math.cos(angleRad) * initVert[4]);
+        try {
+            float rotatedVec[] = rotate2d(new float[] {initVert[0], initVert[1]}, angle);
+            vert[0] = rotatedVec[0];
+            vert[1] = rotatedVec[1];
+            rotatedVec = rotate2d(new float[] {initVert[3], initVert[4]}, angle);
+            vert[3] = rotatedVec[0];
+            vert[4] = rotatedVec[1];
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         vert[0] += x;
         vert[1] += y;
         vert[3] += x;
