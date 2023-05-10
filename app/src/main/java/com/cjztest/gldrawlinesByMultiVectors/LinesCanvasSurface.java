@@ -224,6 +224,9 @@ public class LinesCanvasSurface extends GLSurfaceView {
             //遍历所有线条并绘制
             for (int i = 0; i < mLines.size(); i++) {
                 GLLineWithBezier line = mLines.get(i);
+                if (null == line) {
+                    continue;
+                }
                 line.draw(maPositionPointer, maColorPointer);
             }
 

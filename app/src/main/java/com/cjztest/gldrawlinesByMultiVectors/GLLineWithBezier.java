@@ -31,7 +31,8 @@ public class GLLineWithBezier {
     private int mInitColorCount = 16;
 
     /**线条宽度**/
-    private float mLineWidth = 0.05f;
+//    private float mLineWidth = 0.05f;
+    private float mLineWidth = 0.5f; //cjztest
     /**标准向量，用来确认端点的旋转量**/
     private float mStandardVec[] = new float[] {0, 1, 0};
     /**上一次做旋转计算用过的坐标**/
@@ -82,27 +83,98 @@ public class GLLineWithBezier {
         return rotatedVec;
     }
 
-    /**todo 绘制线头**/
-    private void lineCap(@NonNull float firstVec[]) {
+    /**todo 绘制线头 bug 现在这套只能做到GL_LINE_FAN绘制，这样会引起一些问题**/
+    private void lineCap(@NonNull float firstVec[], @NonNull float secVec[]) {
         if (null == firstVec) {
             return;
         }
         /**1、了解线条开始的方向，将半径线条绕旋转该方向与标准测量用向量的夹角的角度量
          * 2、旋转180度时按照一定步进产生多个顶点，todo 但怎么确定旋转的方向是顺时针还是逆时针？以什么为依据判断？以传入向量方向为参考，但具体怎么做？*/
         float initVert[] = new float[] { //初始时左端点的坐标，初始时在原点两侧，然后以传入的顶点作为偏移量
-                -mLineWidth / 2f, 0, 0,
+                -mLineWidth / 2f, 0
         };
         //todo 旋转并在过程中产生顶点
-        double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, firstVec); //对比基准向量偏移了多少度
-        int step = 30;
-        for (double degreeBias = 0 + angle ; degreeBias < 180 + angle; degreeBias += step) {
+        float actualVec[] = new float[3];
+//        secVec[0] *= 10f;
+//        secVec[1] *= 10f;
+//        actualVec[0] = firstVec[0] - secVec[0];
+//        actualVec[1] = firstVec[1] - secVec[1];
+        actualVec[0] = secVec[0] - firstVec[0];
+        actualVec[1] = secVec[1] - firstVec[1];
+        actualVec[0] *= 10f;
+        actualVec[1] *= 10f;
+        if (Math.abs(actualVec[0]) < 0.0001f && Math.abs(actualVec[1]) < 0.0001f) {        //todo 如果相减之后遇到(0,0)向量怎么办呢？只能出现这种状况的向量不让它传入了
+            Log.e("cjztest", "fuck");
+        }
+        double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, actualVec); //对比基准向量旋转了多少度
+        int step = 10; //改成只有3份可以得到一个尖头笔帽
+        List<float[]> newVecs = new LinkedList<>();
+        for (double degreeBias = 180 + angle; degreeBias >= 0 + angle; degreeBias -= step) {
             try {
-                float rotatedVec[] = rotate2d(initVert, degreeBias);
+                if (degreeBias > 0 + angle) {
+                    float rotatedVec[] = rotate2d(initVert, degreeBias);
+                    float newVec[] = new float[6];
+                    //偏移到对应位置
+                    newVec[0] = rotatedVec[0] + firstVec[0];
+                    newVec[1] = rotatedVec[1] + firstVec[1];
+                    newVec[3] += firstVec[0];
+                    newVec[4] += firstVec[1];
+                    newVecs.add(newVec);
+                } else {
+                    float vert[] = new float[] {
+                            mLineWidth / 2f, 0
+                    };
+                    float rotatedVec[] = rotate2d(initVert, degreeBias);
+                    float rotatedVec2[] = rotate2d(vert, degreeBias);
+                    float newVec[] = new float[6];
+                    //偏移到对应位置
+                    newVec[0] = rotatedVec[0] + firstVec[0];
+                    newVec[1] = rotatedVec[1] + firstVec[1];
+                    newVec[3] = rotatedVec2[0] + firstVec[0];
+                    newVec[4] = rotatedVec2[1] + firstVec[1];
+                    newVecs.add(newVec);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+
+        for (float[] newVec : newVecs) {
+            if (mPointBuf == null) {
+                mPointByteBuffer = ByteBuffer.allocateDirect(mInitVertexCount * 4);    //顶点数 * sizeof(float)
+                mPointByteBuffer.order(ByteOrder.nativeOrder());
+                mPointBuf = mPointByteBuffer.asFloatBuffer();
+                mPointBuf.position(0);
+                mPointBufferPos = 0;
+            }
+            //按初始化大小初始化RGBA字节数组和RGBA数组
+            if (mColorBuf == null) {
+                mColorByteBuffer = ByteBuffer.allocateDirect(mInitColorCount * 4);
+                mColorByteBuffer.order(ByteOrder.nativeOrder());
+                mColorBuf = mColorByteBuffer.asFloatBuffer();
+                mColorBuf.position(0);
+                mColorBufferPos = 0;
+            }
+            for (int i = 0; i < newVec.length; i++) {
+                mPointBuf.put(mPointBufferPos++, newVec[i]);
+            }
+            for (int i = 0; i < newVec.length / 3; i++) {
+                //写入颜色值r,g,b,a
+                int color = 0xFFFF0000;  //argb to abgr
+                float alpha = (float) (((color & 0xFF000000) >> 24) & 0x000000FF) / 255f;
+                float blue = (float) ((color & 0x000000FF)) / 255f;
+                float green = (float) ((color & 0x0000FF00) >> 8) / 255f;
+                float red = (float) ((color & 0x00FF0000) >> 16) / 255f;
+                mColorBuf.put(mColorBufferPos++, red);
+                mColorBuf.put(mColorBufferPos++, green);
+                mColorBuf.put(mColorBufferPos++, blue);
+                mColorBuf.put(mColorBufferPos++, alpha);
+            }
+            checkCapacity();
+        }
     }
+
+    boolean drawedtest = false;
 
     /**添加一系列触摸点，转换为指定粗细的线条**/
     public void addPoint(float x, float y, int colorARGB) {
@@ -110,13 +182,22 @@ public class GLLineWithBezier {
         synchronized (mLock) {
             if (null == mBezierKeyPoint0) {
                 mBezierKeyPoint0 = new float[] {x, y, 0};
-                lineCap(mBezierKeyPoint0);
                 return;
             }
             if (null == mBezierKeyPoint1) {
                 mBezierKeyPoint1 = new float[] {x, y, 0};
                 return;
             }
+            double distance = distance(new float[] {x, y}, mBezierKeyPoint1);
+            if (distance < 0.002f) { //太小的移动这次就不纳入顶点了
+                return;
+            }
+            if (!drawedtest) {
+                lineCap(mBezierKeyPoint0, new float[] {x, y, 0});
+                drawedtest = true;
+                return;
+            }
+
 
             if (mPointBuf == null) {
                 mPointByteBuffer = ByteBuffer.allocateDirect(mInitVertexCount * 4);    //顶点数 * sizeof(float)
@@ -133,6 +214,8 @@ public class GLLineWithBezier {
                 mColorBuf.position(0);
                 mColorBufferPos = 0;
             }
+
+            //cjztest 暂时屏蔽看看:
 
             //通过贝塞尔曲线细化顶点
             PointF keyPoint0 = new PointF((mBezierKeyPoint0[0] + mBezierKeyPoint1[0]) / 2f, (mBezierKeyPoint0[1] + mBezierKeyPoint1[1]) / 2f);
@@ -291,7 +374,8 @@ public class GLLineWithBezier {
             GLES30.glEnableVertexAttribArray(vertPointer); //启用顶点属性
             GLES30.glEnableVertexAttribArray(colorPointer);  //启用颜色属性
 //            GLES30.glDrawArrays(GLES30.GL_LINE_STRIP, 0, getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
-            GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+//            GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+            GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, getPointBufferPos() / 3); //cjztest
             GLES30.glDisableVertexAttribArray(vertPointer); //启用顶点属性
             GLES30.glDisableVertexAttribArray(colorPointer);  //启用颜色属性
         }
