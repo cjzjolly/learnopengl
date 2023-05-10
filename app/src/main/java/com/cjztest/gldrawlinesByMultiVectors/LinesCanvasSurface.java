@@ -170,6 +170,7 @@ public class LinesCanvasSurface extends GLSurfaceView {
                 break;
             case MotionEvent.ACTION_UP:
                 mLines.add(mCurrentLine);
+                mCurrentLine = null;
                 break;
         }
         requestRender();

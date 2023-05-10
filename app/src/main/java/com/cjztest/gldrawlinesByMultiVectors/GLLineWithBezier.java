@@ -50,7 +50,7 @@ public class GLLineWithBezier {
         return Math.sqrt(Math.pow(point0[0] - point1[0], 2) + Math.pow(point0[1] - point1[1], 2));
     }
 
-
+    /**二次贝塞尔**/
     private List<PointF> bezierCalc(PointF[] keyPointP) {
         List<PointF> points = new LinkedList<>();
         double t = 0.1f; //步进
@@ -63,6 +63,12 @@ public class GLLineWithBezier {
             points.add(new PointF((float) x, (float) y));
         }
         return points;
+    }
+
+    /**todo 绘制线头**/
+    private void lineCap() {
+        /**1、了解线条开始的方向，将半径线条绕旋转该方向与标准测量用向量的夹角的角度量
+         * 2、旋转180度时按照一定步进产生多个顶点，todo 但怎么确定旋转的方向是顺时针还是逆时针？以什么为依据判断？以传入向量方向为参考，但具体怎么做？*/
     }
 
     /**添加一系列触摸点，转换为指定粗细的线条**/
