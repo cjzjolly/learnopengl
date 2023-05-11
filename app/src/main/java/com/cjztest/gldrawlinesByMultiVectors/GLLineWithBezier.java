@@ -1,5 +1,6 @@
 package com.cjztest.gldrawlinesByMultiVectors;
 
+import android.graphics.Color;
 import android.graphics.PointF;
 import android.opengl.GLES30;
 import android.util.Log;
@@ -193,13 +194,11 @@ public class GLLineWithBezier {
             if (distance < 0.002f) { //太小的移动这次就不纳入顶点了
                 return;
             }
-            if (!drawedtest) {
-                lineCap(mBezierKeyPoint0, new float[] {x, y, 0});
-                drawedtest = true;
-                return;
-            }
-
-
+//            if (!drawedtest) {
+//                lineCap(mBezierKeyPoint0, new float[] {x, y, 0});
+//                drawedtest = true;
+//                return;
+//            }
             if (mPointBuf == null) {
                 mPointByteBuffer = ByteBuffer.allocateDirect(mInitVertexCount * 4);    //顶点数 * sizeof(float)
                 mPointByteBuffer.order(ByteOrder.nativeOrder());
@@ -252,6 +251,11 @@ public class GLLineWithBezier {
             mPrevInputVec = new float[] {x, y, 0};
             return;
         }
+        if (!drawedtest) {
+            lineCap(mPrevInputVec, new float[] {x, y, 0});
+            drawedtest = true;
+            return;
+        }
         float newVec[] = new float[] {x - mPrevInputVec[0], y - mPrevInputVec[1], 0 - mPrevInputVec[2]}; //把这次输入的向量-上次输入的向量，得到绘制移动方向的向量
         double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, newVec);
         float vert[] = new float[6];
@@ -278,7 +282,11 @@ public class GLLineWithBezier {
         }
         for (int i = 0; i < vert.length / 3; i++) {
             //写入颜色值r,g,b,a
-            int color = colorARGB;  //argb to abgr
+//            int color = colorARGB;  //argb to abgr
+            int color = Color.GREEN;  //cjztest
+            if (i == 1) {
+                color = Color.YELLOW; //cjztest
+            }
             float alpha = (float) (((color & 0xFF000000) >> 24) & 0x000000FF) / 255f;
             float blue = (float) ((color & 0x000000FF)) / 255f;
             float green = (float) ((color & 0x0000FF00) >> 8) / 255f;
