@@ -49,7 +49,7 @@ public class GLLineWithBezier {
 
     /**线条宽度**/
 //    private float mLineWidth = 0.05f;
-    private float mLineWidth = 0.5f; //cjztest
+    private float mLineWidth = 0.3f; //cjztest
     /**标准向量，用来确认端点的旋转量**/
     private float mStandardVec[] = new float[] {0, 1, 0};
     /**上一次做旋转计算用过的坐标**/
@@ -133,8 +133,8 @@ public class GLLineWithBezier {
 //        actualVec[1] = firstVec[1] - secVec[1];
         actualVec[0] = secVec[0] - firstVec[0];
         actualVec[1] = secVec[1] - firstVec[1];
-        actualVec[0] *= 10f;
-        actualVec[1] *= 10f;
+//        actualVec[0] *= 10f;
+//        actualVec[1] *= 10f;
         if (Math.abs(actualVec[0]) < 0.0001f && Math.abs(actualVec[1]) < 0.0001f) {        //todo 如果相减之后遇到(0,0)向量怎么办呢？只能出现这种状况的向量不让它传入了
             Log.e("cjztest", "fuck");
         }
@@ -269,10 +269,10 @@ public class GLLineWithBezier {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        vert[0] += x;
-        vert[1] += y;
-        vert[3] += x;
-        vert[4] += y;
+        vert[0] += mPrevInputVec[0];
+        vert[1] += mPrevInputVec[1];
+        vert[3] += mPrevInputVec[0];
+        vert[4] += mPrevInputVec[1];
         mPrevInputVec = new float[] {x, y, 0};
 
 
@@ -282,11 +282,11 @@ public class GLLineWithBezier {
         }
         for (int i = 0; i < vert.length / 3; i++) {
             //写入颜色值r,g,b,a
-//            int color = colorARGB;  //argb to abgr
-            int color = Color.GREEN;  //cjztest
-            if (i == 1) {
-                color = Color.YELLOW; //cjztest
-            }
+            int color = colorARGB;  //argb to abgr
+//            int color = Color.GREEN;  //cjztest
+//            if (i == 1) {
+//                color = Color.YELLOW; //cjztest
+//            }
             float alpha = (float) (((color & 0xFF000000) >> 24) & 0x000000FF) / 255f;
             float blue = (float) ((color & 0x000000FF)) / 255f;
             float green = (float) ((color & 0x0000FF00) >> 8) / 255f;
