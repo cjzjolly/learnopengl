@@ -1,6 +1,5 @@
 package com.cjztest.gldrawlinesByMultiVectors;
 
-import android.graphics.Color;
 import android.graphics.PointF;
 import android.opengl.GLES30;
 import android.util.Log;
@@ -57,6 +56,7 @@ public class GLLineWithBezier {
     /**上上次传入的坐标**/
     private float mBezierKeyPoint0[] = null;
     private float mBezierKeyPoint1[] = null;
+    private boolean mIsLineCapHeadDrew = false;
 
     private Object mLock = new Object();
 
@@ -141,8 +141,9 @@ public class GLLineWithBezier {
         double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, actualVec); //对比基准向量旋转了多少度
         int step = 10; //改成只有3份可以得到一个尖头笔帽
         List<float[]> newVecs = new LinkedList<>();
-        for (double degreeBias = 180 + angle; degreeBias >= 0 + angle; degreeBias -= step) {
-            try {
+//        for (double degreeBias = 180 + angle; degreeBias >= 0 + angle; degreeBias -= step) {
+        for (double degreeBias = angle; degreeBias <= 180 + angle; degreeBias += step) {
+                try {
                 float rotatedVec[] = rotate2d(initVert, degreeBias);
                 float newVec[] = new float[6];
                 //偏移到对应位置
@@ -176,7 +177,7 @@ public class GLLineWithBezier {
         }
     }
 
-    boolean drawedtest = false;
+
 
     /**添加一系列触摸点，转换为指定粗细的线条**/
     public void addPoint(float x, float y, int colorARGB) {
@@ -191,7 +192,7 @@ public class GLLineWithBezier {
                 return;
             }
             double distance = distance(new float[] {x, y}, mBezierKeyPoint1);
-            if (distance < 0.002f) { //太小的移动这次就不纳入顶点了
+            if (distance < mLineWidth / 2f) { //太小的移动这次就不纳入顶点了
                 return;
             }
 //            if (!drawedtest) {
@@ -251,10 +252,9 @@ public class GLLineWithBezier {
             mPrevInputVec = new float[] {x, y, 0};
             return;
         }
-        if (!drawedtest) {
+        if (!mIsLineCapHeadDrew) {
             lineCap(mPrevInputVec, new float[] {x, y, 0});
-            drawedtest = true;
-            return;
+            mIsLineCapHeadDrew = true;
         }
         float newVec[] = new float[] {x - mPrevInputVec[0], y - mPrevInputVec[1], 0 - mPrevInputVec[2]}; //把这次输入的向量-上次输入的向量，得到绘制移动方向的向量
         double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, newVec);
@@ -348,7 +348,7 @@ public class GLLineWithBezier {
         double dotProduct = vec0[0] * vec1[0] + vec0[1] * vec1[1];
         double angle = Math.toDegrees(Math.acos(dotProduct / (distanceOfVec0 * distanceOfVec1)));
         if (vec1[0] > 0) {
-            angle = 360 - angle;
+            angle = 360f - angle;
         }
         return angle;
     }
@@ -401,6 +401,7 @@ public class GLLineWithBezier {
                     );
             GLES30.glEnableVertexAttribArray(vertPointer); //启用顶点属性
             GLES30.glEnableVertexAttribArray(colorPointer);  //启用颜色属性
+//            GLES30.glDrawArrays(GLES30.GL_LINES, 0, mHeadCapPointBufferPos / 3); //cjztest
             GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, mHeadCapPointBufferPos / 3); //cjztest
             GLES30.glDisableVertexAttribArray(vertPointer); //启用顶点属性
             GLES30.glDisableVertexAttribArray(colorPointer);  //启用颜色属性
@@ -430,7 +431,7 @@ public class GLLineWithBezier {
                     );
             GLES30.glEnableVertexAttribArray(vertPointer); //启用顶点属性
             GLES30.glEnableVertexAttribArray(colorPointer);  //启用颜色属性
-//            GLES30.glDrawArrays(GLES30.GL_LINE_STRIP, 0, getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+//            GLES30.glDrawArrays(GLES30.GL_LINES, 0, getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
 //            GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
             GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, getPointBufferPos() / 3); //cjztest
             GLES30.glDisableVertexAttribArray(vertPointer); //启用顶点属性
