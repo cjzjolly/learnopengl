@@ -163,7 +163,7 @@ public class LinesCanvasSurface extends GLSurfaceView {
                 if (mWidth <= 0 || mHeight <= 0) {
                     break;
                 }
-                mCurrentLine.addPoint((e.getX() / mWidth - 0.5f) * 3f * Constant.ratio,  (0.5f - e.getY() / mHeight) * 3f, 0x5533FF55);
+                mCurrentLine.addPoint((e.getX() / mWidth - 0.5f) * 3f * Constant.ratio,  (0.5f - e.getY() / mHeight) * 3f, 0xFF33FF55);
 //                mCurrentLine.addPoint(0, 0, 0x5500FF00);
 //                mCurrentLine.addPoint(0, 0.5f, 0x5500FF00);
 //                mCurrentLine.addPoint(0, 1, 0x5500FF00);

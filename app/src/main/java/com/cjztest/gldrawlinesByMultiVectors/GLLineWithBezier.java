@@ -47,8 +47,8 @@ public class GLLineWithBezier {
     private int mHeadInitColorCount = 16;
 
     /**线条宽度**/
-    private float mLineWidth = 0.05f;
-//    private float mLineWidth = 0.7f; //cjztest
+//    private float mLineWidth = 0.05f;
+    private float mLineWidth = 0.1f; //cjztest
     /**标准向量，用来确认端点的旋转量**/
     private float mStandardVec[] = new float[] {0, 1, 0};
     /**上一次做旋转计算用过的坐标**/
@@ -57,8 +57,11 @@ public class GLLineWithBezier {
     private float mBezierKeyPoint0[] = null;
     private float mBezierKeyPoint1[] = null;
     private boolean mIsLineCapHeadDrew = false;
+    private boolean mIsLineCapEndDrew = false;
+
 
     private Object mLock = new Object();
+    private int endCapPointCount;
 
 
     public GLLineWithBezier() {
@@ -100,10 +103,10 @@ public class GLLineWithBezier {
         return rotatedVec;
     }
 
-    /**todo 绘制线头 bug 现在这套只能做到GL_LINE_FAN绘制，这样会引起一些问题，感觉还是分解成几个部分绘制更好**/
-    private void lineCap(@NonNull float firstVec[], @NonNull float secVec[], int color) {
+    /**绘制线头**/
+    private int lineCap(boolean isHead, @NonNull float firstVec[], @NonNull float secVec[], int color) {
         if (null == firstVec) {
-            return;
+            return -1;
         }
         if (mHeadPointBuf == null) {
             mHeadCapPointByteBuffer = ByteBuffer.allocateDirect(mHeadInitVertexCount * 4);    //顶点数 * sizeof(float)
@@ -135,6 +138,22 @@ public class GLLineWithBezier {
         double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, actualVec); //对比基准向量旋转了多少度
         int step = 10; //改成只有3份可以得到一个尖头笔帽
         List<float[]> newVecs = new LinkedList<>();
+        if (!isHead) {
+            //最后再加一段和线宽等长的边
+            try {
+                float rotatedVec0[] = rotate2d(new float[] {-mLineWidth / 2f, 0}, angle + 180);
+                float rotatedVec1[] = rotate2d(new float[] {mLineWidth / 2f, 0}, angle + 180);
+                float newVec[] = new float[6];
+                //偏移到对应位置
+                newVec[0] = rotatedVec0[0] + firstVec[0];
+                newVec[1] = rotatedVec0[1] + firstVec[1];
+                newVec[3] = rotatedVec1[0] + firstVec[0];
+                newVec[4] = rotatedVec1[1] + firstVec[1];
+                newVecs.add(newVec);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 //        for (double degreeBias = 180 + angle; degreeBias >= 0 + angle; degreeBias -= step) {
         for (double degreeBias = angle; degreeBias <= 180 + angle; degreeBias += step) {
                 try {
@@ -151,21 +170,22 @@ public class GLLineWithBezier {
             }
         }
 
-        //todo 最后再加一段和线宽等长的边
-        try {
-            float rotatedVec0[] = rotate2d(new float[] {-mLineWidth / 2f, 0}, angle + 180);
-            float rotatedVec1[] = rotate2d(new float[] {mLineWidth / 2f, 0}, angle + 180);
-            float newVec[] = new float[6];
-            //偏移到对应位置
-            newVec[0] = rotatedVec0[0] + firstVec[0];
-            newVec[1] = rotatedVec0[1] + firstVec[1];
-            newVec[3] = rotatedVec1[0] + firstVec[0];
-            newVec[4] = rotatedVec1[1] + firstVec[1];
-            newVecs.add(newVec);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (isHead) { //todo 冗余
+            //最后再加一段和线宽等长的边
+            try {
+                float rotatedVec0[] = rotate2d(new float[] {-mLineWidth / 2f, 0}, angle + 180);
+                float rotatedVec1[] = rotate2d(new float[] {mLineWidth / 2f, 0}, angle + 180);
+                float newVec[] = new float[6];
+                //偏移到对应位置
+                newVec[0] = rotatedVec0[0] + firstVec[0];
+                newVec[1] = rotatedVec0[1] + firstVec[1];
+                newVec[3] = rotatedVec1[0] + firstVec[0];
+                newVec[4] = rotatedVec1[1] + firstVec[1];
+                newVecs.add(newVec);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-
 
         for (float[] newVec : newVecs) {
             for (int i = 0; i < newVec.length; i++) {
@@ -185,6 +205,7 @@ public class GLLineWithBezier {
             }
             checkCapacity();
         }
+        return newVecs.size();
     }
 
 
@@ -205,11 +226,6 @@ public class GLLineWithBezier {
             if (distance < mLineWidth / 2f) { //太小的移动这次就不纳入顶点了
                 return;
             }
-//            if (!drawedtest) {
-//                lineCap(mBezierKeyPoint0, new float[] {x, y, 0});
-//                drawedtest = true;
-//                return;
-//            }
             if (mPointBuf == null) {
                 mPointByteBuffer = ByteBuffer.allocateDirect(mInitVertexCount * 4);    //顶点数 * sizeof(float)
                 mPointByteBuffer.order(ByteOrder.nativeOrder());
@@ -262,10 +278,17 @@ public class GLLineWithBezier {
             mPrevInputVec = new float[] {x, y, 0};
             return;
         }
+        //todo 消除上一次的线头
+//        if (mIsLineCapEndDrew) {
+//            mPointBufferPos -= endCapPointCount;
+//            mColorBufferPos -= endCapPointCount / 3 * 4;
+//        }
+        //添加线头，只执行一次
         if (!mIsLineCapHeadDrew) {
-            lineCap(mPrevInputVec, new float[] {x, y, 0}, colorARGB);
+            lineCap(true, mPrevInputVec, new float[] {x, y, 0}, colorARGB);
             mIsLineCapHeadDrew = true;
         }
+        //添加线段
         float newVec[] = new float[] {x - mPrevInputVec[0], y - mPrevInputVec[1], 0 - mPrevInputVec[2]}; //把这次输入的向量-上次输入的向量，得到绘制移动方向的向量
         double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, newVec);
         float vert[] = new float[6];
@@ -283,7 +306,8 @@ public class GLLineWithBezier {
         vert[1] += mPrevInputVec[1];
         vert[3] += mPrevInputVec[0];
         vert[4] += mPrevInputVec[1];
-        mPrevInputVec = new float[] {x, y, 0};
+
+
 
 
         //写入坐标值
@@ -307,6 +331,12 @@ public class GLLineWithBezier {
             mColorBuf.put(mColorBufferPos++, alpha);
         }
         checkCapacity();
+        //todo 添加线尾，每次清除上一次的线尾，然后增加一次新的
+        endCapPointCount = lineCap(false, new float[] {x, y, 0}, mPrevInputVec, colorARGB);
+        mIsLineCapEndDrew = true;
+        checkCapacity();
+
+        mPrevInputVec = new float[] {x, y, 0};
     }
 
     private void checkCapacity() {
