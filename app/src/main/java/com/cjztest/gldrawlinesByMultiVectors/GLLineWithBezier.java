@@ -47,8 +47,8 @@ public class GLLineWithBezier {
     private int mHeadInitColorCount = 16;
 
     /**线条宽度**/
-//    private float mLineWidth = 0.05f;
-    private float mLineWidth = 0.3f; //cjztest
+    private float mLineWidth = 0.05f;
+//    private float mLineWidth = 0.7f; //cjztest
     /**标准向量，用来确认端点的旋转量**/
     private float mStandardVec[] = new float[] {0, 1, 0};
     /**上一次做旋转计算用过的坐标**/
@@ -101,7 +101,7 @@ public class GLLineWithBezier {
     }
 
     /**todo 绘制线头 bug 现在这套只能做到GL_LINE_FAN绘制，这样会引起一些问题，感觉还是分解成几个部分绘制更好**/
-    private void lineCap(@NonNull float firstVec[], @NonNull float secVec[]) {
+    private void lineCap(@NonNull float firstVec[], @NonNull float secVec[], int color) {
         if (null == firstVec) {
             return;
         }
@@ -125,19 +125,13 @@ public class GLLineWithBezier {
         float initVert[] = new float[] { //初始时左端点的坐标，初始时在原点两侧，然后以传入的顶点作为偏移量
                 -mLineWidth / 2f, 0
         };
-        //todo 旋转并在过程中产生顶点
+        //旋转并在过程中产生顶点
         float actualVec[] = new float[3];
-//        secVec[0] *= 10f;
-//        secVec[1] *= 10f;
-//        actualVec[0] = firstVec[0] - secVec[0];
-//        actualVec[1] = firstVec[1] - secVec[1];
         actualVec[0] = secVec[0] - firstVec[0];
         actualVec[1] = secVec[1] - firstVec[1];
-//        actualVec[0] *= 10f;
-//        actualVec[1] *= 10f;
-        if (Math.abs(actualVec[0]) < 0.0001f && Math.abs(actualVec[1]) < 0.0001f) {        //todo 如果相减之后遇到(0,0)向量怎么办呢？只能出现这种状况的向量不让它传入了
-            Log.e("cjztest", "fuck");
-        }
+//        if (Math.abs(actualVec[0]) < 0.0001f && Math.abs(actualVec[1]) < 0.0001f) {        //todo 如果相减之后遇到(0,0)向量怎么办呢？只能出现这种状况的向量不让它传入了
+//            Log.e("cjztest", "fuck");
+//        }
         double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, actualVec); //对比基准向量旋转了多少度
         int step = 10; //改成只有3份可以得到一个尖头笔帽
         List<float[]> newVecs = new LinkedList<>();
@@ -157,21 +151,37 @@ public class GLLineWithBezier {
             }
         }
 
+        //todo 最后再加一段和线宽等长的边
+        try {
+            float rotatedVec0[] = rotate2d(new float[] {-mLineWidth / 2f, 0}, angle + 180);
+            float rotatedVec1[] = rotate2d(new float[] {mLineWidth / 2f, 0}, angle + 180);
+            float newVec[] = new float[6];
+            //偏移到对应位置
+            newVec[0] = rotatedVec0[0] + firstVec[0];
+            newVec[1] = rotatedVec0[1] + firstVec[1];
+            newVec[3] = rotatedVec1[0] + firstVec[0];
+            newVec[4] = rotatedVec1[1] + firstVec[1];
+            newVecs.add(newVec);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
         for (float[] newVec : newVecs) {
             for (int i = 0; i < newVec.length; i++) {
-                mHeadPointBuf.put(mHeadCapPointBufferPos++, newVec[i]);
+                mPointBuf.put(mPointBufferPos++, newVec[i]);
             }
             for (int i = 0; i < newVec.length / 3; i++) {
                 //写入颜色值r,g,b,a
-                int color = 0xFFFF0000;  //argb to abgr
+//                int color = 0xFFFF0000;  //argb to abgr
                 float alpha = (float) (((color & 0xFF000000) >> 24) & 0x000000FF) / 255f;
                 float blue = (float) ((color & 0x000000FF)) / 255f;
                 float green = (float) ((color & 0x0000FF00) >> 8) / 255f;
                 float red = (float) ((color & 0x00FF0000) >> 16) / 255f;
-                mHeadColorBuf.put(mHeadCapColorBufferPos++, red);
-                mHeadColorBuf.put(mHeadCapColorBufferPos++, green);
-                mHeadColorBuf.put(mHeadCapColorBufferPos++, blue);
-                mHeadColorBuf.put(mHeadCapColorBufferPos++, alpha);
+                mColorBuf.put(mColorBufferPos++, red);
+                mColorBuf.put(mColorBufferPos++, green);
+                mColorBuf.put(mColorBufferPos++, blue);
+                mColorBuf.put(mColorBufferPos++, alpha);
             }
             checkCapacity();
         }
@@ -253,7 +263,7 @@ public class GLLineWithBezier {
             return;
         }
         if (!mIsLineCapHeadDrew) {
-            lineCap(mPrevInputVec, new float[] {x, y, 0});
+            lineCap(mPrevInputVec, new float[] {x, y, 0}, colorARGB);
             mIsLineCapHeadDrew = true;
         }
         float newVec[] = new float[] {x - mPrevInputVec[0], y - mPrevInputVec[1], 0 - mPrevInputVec[2]}; //把这次输入的向量-上次输入的向量，得到绘制移动方向的向量
@@ -320,25 +330,25 @@ public class GLLineWithBezier {
             mColorBuf = mColorByteBuffer.asFloatBuffer();
             mColorBuf.position(0);
         }
-        if (mHeadCapPointBufferPos >= mHeadInitVertexCount) {
-            Log.i("GLLines", "扩容点数到:" + mHeadInitVertexCount);
-            mHeadInitVertexCount += 12;
-            mHeadInitColorCount += 16;
-
-            ByteBuffer qbb = ByteBuffer.allocateDirect(mHeadInitVertexCount * 4);    //顶点数 * sizeof(float) ; 加4个点
-            qbb.order(ByteOrder.nativeOrder());
-            System.arraycopy(mHeadCapPointByteBuffer.array(), 0, qbb.array(), 0, (mHeadCapPointBufferPos + 1) * 4);   //顶点数 * sizeof(float)
-            mHeadCapPointByteBuffer = qbb;
-            mHeadPointBuf = mHeadCapPointByteBuffer.asFloatBuffer();
-            mHeadPointBuf.position(0);
-
-            ByteBuffer qbb2 = ByteBuffer.allocateDirect(mHeadInitColorCount * 4);    //顶点数 * sizeof(float) ;
-            qbb2.order(ByteOrder.nativeOrder());
-            System.arraycopy(mHeadCapColorByteBuffer.array(), 0, qbb2.array(), 0, (mHeadCapColorBufferPos + 1) * 4);  //sizeof(R,G,B,Alpha) * sizeof(float)
-            mHeadCapColorByteBuffer = qbb2;
-            mHeadColorBuf = mHeadCapColorByteBuffer.asFloatBuffer();
-            mHeadColorBuf.position(0);
-        }
+//        if (mHeadCapPointBufferPos >= mHeadInitVertexCount) {
+//            Log.i("GLLines", "扩容点数到:" + mHeadInitVertexCount);
+//            mHeadInitVertexCount += 12;
+//            mHeadInitColorCount += 16;
+//
+//            ByteBuffer qbb = ByteBuffer.allocateDirect(mHeadInitVertexCount * 4);    //顶点数 * sizeof(float) ; 加4个点
+//            qbb.order(ByteOrder.nativeOrder());
+//            System.arraycopy(mHeadCapPointByteBuffer.array(), 0, qbb.array(), 0, (mHeadCapPointBufferPos + 1) * 4);   //顶点数 * sizeof(float)
+//            mHeadCapPointByteBuffer = qbb;
+//            mHeadPointBuf = mHeadCapPointByteBuffer.asFloatBuffer();
+//            mHeadPointBuf.position(0);
+//
+//            ByteBuffer qbb2 = ByteBuffer.allocateDirect(mHeadInitColorCount * 4);    //顶点数 * sizeof(float) ;
+//            qbb2.order(ByteOrder.nativeOrder());
+//            System.arraycopy(mHeadCapColorByteBuffer.array(), 0, qbb2.array(), 0, (mHeadCapColorBufferPos + 1) * 4);  //sizeof(R,G,B,Alpha) * sizeof(float)
+//            mHeadCapColorByteBuffer = qbb2;
+//            mHeadColorBuf = mHeadCapColorByteBuffer.asFloatBuffer();
+//            mHeadColorBuf.position(0);
+//        }
     }
 
     //XY平面上的的旋转量
@@ -376,36 +386,36 @@ public class GLLineWithBezier {
     public void draw(int vertPointer, int colorPointer) {
         FloatBuffer lineVerts = mPointBuf;
         FloatBuffer colors = mColorBuf;
-        if (mHeadPointBuf != null && mHeadColorBuf != null) {
-            mHeadPointBuf.position(0);
-            mHeadColorBuf.position(0);
-            //将顶点位置数据送入渲染管线
-            GLES30.glVertexAttribPointer
-                    (
-                            vertPointer,
-                            3,
-                            GLES30.GL_FLOAT,
-                            false,
-                            0,  //stride是啥？
-                            mHeadPointBuf
-                    );
-            //将顶点颜色数据送入渲染管线
-            GLES30.glVertexAttribPointer
-                    (
-                            colorPointer,
-                            4,
-                            GLES30.GL_FLOAT,
-                            false,
-                            0,
-                            mHeadColorBuf
-                    );
-            GLES30.glEnableVertexAttribArray(vertPointer); //启用顶点属性
-            GLES30.glEnableVertexAttribArray(colorPointer);  //启用颜色属性
-//            GLES30.glDrawArrays(GLES30.GL_LINES, 0, mHeadCapPointBufferPos / 3); //cjztest
-            GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, mHeadCapPointBufferPos / 3); //cjztest
-            GLES30.glDisableVertexAttribArray(vertPointer); //启用顶点属性
-            GLES30.glDisableVertexAttribArray(colorPointer);  //启用颜色属性
-        }
+//        if (mHeadPointBuf != null && mHeadColorBuf != null) {
+//            mHeadPointBuf.position(0);
+//            mHeadColorBuf.position(0);
+//            //将顶点位置数据送入渲染管线
+//            GLES30.glVertexAttribPointer
+//                    (
+//                            vertPointer,
+//                            3,
+//                            GLES30.GL_FLOAT,
+//                            false,
+//                            0,  //stride是啥？
+//                            mHeadPointBuf
+//                    );
+//            //将顶点颜色数据送入渲染管线
+//            GLES30.glVertexAttribPointer
+//                    (
+//                            colorPointer,
+//                            4,
+//                            GLES30.GL_FLOAT,
+//                            false,
+//                            0,
+//                            mHeadColorBuf
+//                    );
+//            GLES30.glEnableVertexAttribArray(vertPointer); //启用顶点属性
+//            GLES30.glEnableVertexAttribArray(colorPointer);  //启用颜色属性
+////            GLES30.glDrawArrays(GLES30.GL_LINES, 0, mHeadCapPointBufferPos / 3); //cjztest
+//            GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, mHeadCapPointBufferPos / 3); //cjztest
+//            GLES30.glDisableVertexAttribArray(vertPointer); //启用顶点属性
+//            GLES30.glDisableVertexAttribArray(colorPointer);  //启用颜色属性
+//        }
         if (lineVerts != null && colors != null) {
             lineVerts.position(0);
             colors.position(0);
