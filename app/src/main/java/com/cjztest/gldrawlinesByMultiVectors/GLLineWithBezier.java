@@ -103,7 +103,26 @@ public class GLLineWithBezier {
         return rotatedVec;
     }
 
-    /**绘制线头**/
+
+    /**给线头添加符合线宽的边界，便于和纤体本身链接**/
+    private void lineCapAddBorder(double angle, float firstVec[], List<float[]> newVecs) {
+        try {
+            float rotatedVec0[] = rotate2d(new float[] {-mLineWidth / 2f, 0}, angle + 180);
+            float rotatedVec1[] = rotate2d(new float[] {mLineWidth / 2f, 0}, angle + 180);
+            float newVec[] = new float[6];
+            //偏移到对应位置
+            newVec[0] = rotatedVec0[0] + firstVec[0];
+            newVec[1] = rotatedVec0[1] + firstVec[1];
+            newVec[3] = rotatedVec1[0] + firstVec[0];
+            newVec[4] = rotatedVec1[1] + firstVec[1];
+            newVecs.add(newVec);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**绘制线头
+     * @param isHead 是否曲线头部添加线帽，否则视为曲线尾部添加线帽**/
     private int lineCap(boolean isHead, @NonNull float firstVec[], @NonNull float secVec[], int color) {
         if (null == firstVec) {
             return -1;
@@ -138,22 +157,12 @@ public class GLLineWithBezier {
         double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, actualVec); //对比基准向量旋转了多少度
         int step = 10; //改成只有3份可以得到一个尖头笔帽
         List<float[]> newVecs = new LinkedList<>();
+
         if (!isHead) {
-            //最后再加一段和线宽等长的边
-            try {
-                float rotatedVec0[] = rotate2d(new float[] {-mLineWidth / 2f, 0}, angle + 180);
-                float rotatedVec1[] = rotate2d(new float[] {mLineWidth / 2f, 0}, angle + 180);
-                float newVec[] = new float[6];
-                //偏移到对应位置
-                newVec[0] = rotatedVec0[0] + firstVec[0];
-                newVec[1] = rotatedVec0[1] + firstVec[1];
-                newVec[3] = rotatedVec1[0] + firstVec[0];
-                newVec[4] = rotatedVec1[1] + firstVec[1];
-                newVecs.add(newVec);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            //给曲线结尾加一段和线宽等长的边
+            lineCapAddBorder(angle, firstVec, newVecs);
         }
+
 //        for (double degreeBias = 180 + angle; degreeBias >= 0 + angle; degreeBias -= step) {
         for (double degreeBias = angle; degreeBias <= 180 + angle; degreeBias += step) {
                 try {
@@ -170,28 +179,18 @@ public class GLLineWithBezier {
             }
         }
 
-        if (isHead) { //todo 冗余
-            //最后再加一段和线宽等长的边
-            try {
-                float rotatedVec0[] = rotate2d(new float[] {-mLineWidth / 2f, 0}, angle + 180);
-                float rotatedVec1[] = rotate2d(new float[] {mLineWidth / 2f, 0}, angle + 180);
-                float newVec[] = new float[6];
-                //偏移到对应位置
-                newVec[0] = rotatedVec0[0] + firstVec[0];
-                newVec[1] = rotatedVec0[1] + firstVec[1];
-                newVec[3] = rotatedVec1[0] + firstVec[0];
-                newVec[4] = rotatedVec1[1] + firstVec[1];
-                newVecs.add(newVec);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        if (isHead) {
+            //给曲线开头加一段和线宽等长的边
+            lineCapAddBorder(angle, firstVec, newVecs);
         }
 
         for (float[] newVec : newVecs) {
             for (int i = 0; i < newVec.length; i++) {
+                checkCapacity();
                 mPointBuf.put(mPointBufferPos++, newVec[i]);
             }
             for (int i = 0; i < newVec.length / 3; i++) {
+                checkCapacity();
                 //写入颜色值r,g,b,a
 //                int color = 0xFFFF0000;  //argb to abgr
                 float alpha = (float) (((color & 0xFF000000) >> 24) & 0x000000FF) / 255f;
@@ -203,9 +202,8 @@ public class GLLineWithBezier {
                 mColorBuf.put(mColorBufferPos++, blue);
                 mColorBuf.put(mColorBufferPos++, alpha);
             }
-            checkCapacity();
         }
-        return newVecs.size();
+        return newVecs.size() * newVecs.get(0).length;
     }
 
 
@@ -260,6 +258,7 @@ public class GLLineWithBezier {
     }
 
     private void addPointToBuffer(float x, float y, int colorARGB) {
+        checkCapacity();
 //        double distance = distance(new float[] {x, y}, mPrevInputVec);
 //        if (distance < 0.002f) { //太小的移动这次就不纳入顶点了
 //            return;
@@ -278,11 +277,13 @@ public class GLLineWithBezier {
             mPrevInputVec = new float[] {x, y, 0};
             return;
         }
+
         //todo 消除上一次的线头
-//        if (mIsLineCapEndDrew) {
-//            mPointBufferPos -= endCapPointCount;
-//            mColorBufferPos -= endCapPointCount / 3 * 4;
-//        }
+        if (mIsLineCapEndDrew) {
+            mPointBufferPos -= endCapPointCount;
+            mColorBufferPos -= endCapPointCount / 3 * 4;
+        }
+
         //添加线头，只执行一次
         if (!mIsLineCapHeadDrew) {
             lineCap(true, mPrevInputVec, new float[] {x, y, 0}, colorARGB);
@@ -341,7 +342,7 @@ public class GLLineWithBezier {
 
     private void checkCapacity() {
         //如果写入的颜色数超过初始值，将顶点数和颜色数组容量翻倍
-        if (mPointBufferPos >= mInitVertexCount) {
+        if (mPointBufferPos * 3 / 2 >= mInitVertexCount) {
             Log.i("GLLines", "扩容点数到:" + mInitVertexCount);
             mInitVertexCount += 12;
             mInitColorCount += 16;
