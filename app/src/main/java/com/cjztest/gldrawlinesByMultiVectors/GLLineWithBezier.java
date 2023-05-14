@@ -47,8 +47,8 @@ public class GLLineWithBezier {
     private int mHeadInitColorCount = 16;
 
     /**线条宽度**/
-//    private float mLineWidth = 0.05f;
-    private float mLineWidth = 0.1f; //cjztest
+    private float mLineWidth = 0.05f;
+//    private float mLineWidth = 0.1f; //cjztest
     /**标准向量，用来确认端点的旋转量**/
     private float mStandardVec[] = new float[] {0, 1, 0};
     /**上一次做旋转计算用过的坐标**/
@@ -155,7 +155,7 @@ public class GLLineWithBezier {
 //            Log.e("cjztest", "fuck");
 //        }
         double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, actualVec); //对比基准向量旋转了多少度
-        int step = 10; //改成只有3份可以得到一个尖头笔帽
+        int step = 6; //改成只有90度可以得到一个尖头笔帽
         List<float[]> newVecs = new LinkedList<>();
 
         if (!isHead) {
@@ -163,6 +163,7 @@ public class GLLineWithBezier {
             lineCapAddBorder(angle, firstVec, newVecs);
         }
 
+        //半圆线头
 //        for (double degreeBias = 180 + angle; degreeBias >= 0 + angle; degreeBias -= step) {
         for (double degreeBias = angle; degreeBias <= 180 + angle; degreeBias += step) {
                 try {
