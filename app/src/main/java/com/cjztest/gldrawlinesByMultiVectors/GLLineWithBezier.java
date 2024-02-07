@@ -3,7 +3,6 @@ package com.cjztest.gldrawlinesByMultiVectors;
 import android.graphics.PointF;
 import android.opengl.GLES30;
 import android.util.Log;
-import android.util.Pair;
 
 import androidx.annotation.NonNull;
 
@@ -12,8 +11,6 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingDeque;
 
 /**todo 使用包络方式重新设计**/
 public class GLLineWithBezier {
@@ -64,6 +61,8 @@ public class GLLineWithBezier {
     private float mBezierKeyPoint1[] = null;
     private boolean mIsLineCapHeadDrew = false;
     private boolean mIsLineCapEndDrew = false;
+    private float mPrevPressure = Float.MIN_VALUE;
+    private double mPrevDistance = Float.MIN_VALUE;
 
     /**是否模仿钢笔书写的模式**/
     public enum PenStyle {
@@ -244,13 +243,10 @@ public class GLLineWithBezier {
         return newVecs.size() * newVecs.get(0).length;
     }
 
-    private List<Float> mPressureValQueue = new LinkedList<>();
-
     /**添加一系列触摸点，转换为指定粗细的线条**/
     public void addPoint(float x, float y, int colorARGB, float pressure, float maxPressure) {
         //按初始化大小初始化顶点字节数组和顶点数组
         synchronized (mLock) {
-            mPressureValQueue.add(pressure);
             if (null == mBezierKeyPoint0) {
                 mBezierKeyPoint0 = new float[] {x, y, 0};
                 return;
@@ -286,47 +282,52 @@ public class GLLineWithBezier {
             PointF keyPoint2 = new PointF((x + mBezierKeyPoint1[0]) / 2f, (y + mBezierKeyPoint1[1]) / 2f);
             List<PointF> points = bezierCalc(new PointF[] {keyPoint0, keyPoint1, keyPoint2});
 
-
-            for (PointF pointF : points) {
-                addPointToBuffer(pointF.x, pointF.y, colorARGB, pressure, maxPressure);
+            double distance = distance(new float[] {x, y}, mBezierKeyPoint1);
+            for (int i = 0; i < points.size(); i++) {
+                PointF pointF = points.get(i);
+                switch (mPenStyle) {
+                    default:
+                    case NORMAL: {
+                        addPointToBuffer(pointF.x, pointF.y, colorARGB, mLineWidth);
+                        break;
+                    }
+                    //加速度笔锋效果实验:
+                    case BY_ACC: { //todo 这个以后做成根据设备、用户设置可调的才行
+                        double ratio = 1f;
+                        if (mPrevDistance == Float.MIN_VALUE) {
+                            ratio = Math.min(1f, Math.pow(1f / (distance * 20), 1));
+                        } else {
+                            float delta = (float) ((distance - mPrevDistance) / points.size());
+                            ratio = Math.min(1f, Math.pow(1f / ((mPrevDistance + delta * i) * 20), 1));
+                        }
+                        float width = (float) (mLineWidth * ratio);
+                        addPointToBuffer(pointF.x, pointF.y, colorARGB, width);
+                        break;
+                    }
+                    //设备笔锋效果实验:
+                    case BY_DEV_PRESSURE: {
+                        double ratio = 1f;
+                        if (mPrevPressure == Float.MIN_VALUE) {
+                            ratio = Math.min(1f, pressure / maxPressure);
+                        } else {
+                            float delta = (pressure - mPrevPressure) / points.size();
+                            ratio = Math.min(1f, (mPrevPressure + delta * i) / maxPressure);
+                        }
+                        float width = (float) (mLineWidth * ratio);
+                        addPointToBuffer(pointF.x, pointF.y, colorARGB, width);
+                        break;
+                    }
+                }
             }
+            mPrevDistance = distance; //记录上一次的距离值
+            mPrevPressure = pressure; //记录上一次的压力值
             mBezierKeyPoint0 = new float[] {mBezierKeyPoint1[0], mBezierKeyPoint1[1]};
             mBezierKeyPoint1 = new float[] {x, y};
-
         }
     }
 
-    private void addPointToBuffer(float x, float y, int colorARGB, float currentPressure, float maxPressure) {
+    private void addPointToBuffer(float x, float y, int colorARGB, float width) {
         checkCapacity();
-        float width = mLineWidth;
-        if (mPrevInputVec != null) {
-            switch (mPenStyle) {
-                //加速度笔锋效果实验:
-                case BY_ACC: {
-                    double distance = distance(new float[] {x, y}, mPrevInputVec);
-                    double ratio = Math.min(1f, Math.pow(1f / (distance * 120), 2));
-                    width = (float) (mLineWidth * ratio);
-                    break;
-                }
-                //设备笔锋效果实验:
-                case BY_DEV_PRESSURE: {
-//                    float avgPressure = 1f;
-//                    if (mPressureValQueue.size() > 0) {
-//                        float totalPressure = 0;
-//                        for (int i = 0; i < mPressureValQueue.size(); i++) {
-//                            totalPressure += mPressureValQueue.get(i);
-//                        }
-//                        avgPressure = totalPressure / mPressureValQueue.size();
-//                    }
-//                    while (mPressureValQueue.size() > 5) {
-//                        mPressureValQueue.remove(0);
-//                    }
-                    double ratio = Math.min(1f, currentPressure / maxPressure);
-                    width = (float) (mLineWidth * ratio);
-                    break;
-                }
-            }
-        }
         float initVert[] = new float[] { //初始时左右两端点的坐标，初始时在原点两侧，然后以传入的顶点作为偏移量
                 -width / 2f, 0, 0,
                 width / 2f, 0, 0,
