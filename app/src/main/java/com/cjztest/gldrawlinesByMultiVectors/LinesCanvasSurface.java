@@ -9,12 +9,17 @@ import android.view.MotionEvent;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 
+/**在OpenGL中通过使用记录两次移动的坐标计算向量，获取向量所垂直的两个端点，实现粗线条绘制的demo
+ * 此方法有一定缺陷：在线条粗到一定程度时，如果移动速度慢而且拐锐角弯，会导致很多断电重叠，此时
+ * 如果使用半透明颜色进行绘制将会看到透明度叠加重新的斑块。
+ * //todo 为了解决这个问题，我打算下个demo试图用fragShader直接在绘制点轨迹上生成包络**/
 public class LinesCanvasSurface extends GLSurfaceView {
     private final SceneRenderer mRenderer;
     private int mWidth;
@@ -26,6 +31,7 @@ public class LinesCanvasSurface extends GLSurfaceView {
     private int maPositionPointer;
     private int maColorPointer;
     private int muMVPMatrixPointer;
+    private int mColor = 0xFFFFAA00;
 
 
     public LinesCanvasSurface(Context context) {
@@ -155,6 +161,7 @@ public class LinesCanvasSurface extends GLSurfaceView {
         switch (e.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 mCurrentLine = new GLLineWithBezier();
+                mCurrentLine.setLineWidth((float) (Math.random() * 0.05f));
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (null == mCurrentLine) {
@@ -163,10 +170,8 @@ public class LinesCanvasSurface extends GLSurfaceView {
                 if (mWidth <= 0 || mHeight <= 0) {
                     break;
                 }
-                mCurrentLine.addPoint((e.getX() / mWidth - 0.5f) * 3f * Constant.ratio,  (0.5f - e.getY() / mHeight) * 3f, 0x5533FF55);
-//                mCurrentLine.addPoint(0, 0, 0x5500FF00);
-//                mCurrentLine.addPoint(0, 0.5f, 0x5500FF00);
-//                mCurrentLine.addPoint(0, 1, 0x5500FF00);
+                //使用随机变化颜色
+                mCurrentLine.addPoint((e.getX() / mWidth - 0.5f) * 3f * Constant.ratio,  (0.5f - e.getY() / mHeight) * 3f, mColor);
                 break;
             case MotionEvent.ACTION_UP:
                 mLines.add(mCurrentLine);
