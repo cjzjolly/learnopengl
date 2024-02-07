@@ -3,6 +3,7 @@ package com.cjztest.gldrawlinesByMultiVectors;
 import android.graphics.PointF;
 import android.opengl.GLES30;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.annotation.NonNull;
 
@@ -11,6 +12,8 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 /**todo 使用包络方式重新设计**/
 public class GLLineWithBezier {
@@ -49,7 +52,6 @@ public class GLLineWithBezier {
 
     /**线条宽度**/
     private float mLineWidth = 0.05f;
-//    private float mLineWidth = 0.5f; //cjztest
     /**标准向量，用来确认端点的旋转量**/
     private float mStandardVec[] = new float[] {0, 1, 0};
     /**上一次做旋转计算用过的坐标**/
@@ -63,6 +65,19 @@ public class GLLineWithBezier {
     private boolean mIsLineCapHeadDrew = false;
     private boolean mIsLineCapEndDrew = false;
 
+    /**是否模仿钢笔书写的模式**/
+    public enum PenStyle {
+        NORMAL,
+        BY_ACC, //以加速度作为笔锋判断。
+        BY_DEV_PRESSURE //以设备压力为判断
+    }
+
+    public void setPenStyle(PenStyle penStyle) {
+        this.mPenStyle = penStyle;
+    }
+
+    private PenStyle mPenStyle = PenStyle.NORMAL;
+
 
     private Object mLock = new Object();
     private int endCapPointCount;
@@ -74,37 +89,6 @@ public class GLLineWithBezier {
     /**距离计算**/
     private double distance(float point0[], float point1[]) {
         return Math.sqrt(Math.pow(point0[0] - point1[0], 2) + Math.pow(point0[1] - point1[1], 2));
-    }
-
-    /**todo 相交判断**/
-    private int isIntersect(float line0Point0[], float line0Point1[], float line1Point0[], float line1Point1[]) {
-//        if (null == line0Point0 || null == line0Point1 || line1Point0.length != line1Point1.length) {
-//            return -1;
-//        }
-//        float deltaX0 = line0Point0[0] - line1Point0[0];
-//        float deltaX1 = line0Point1[0] - line1Point1[0];
-//        float deltaY0 = line0Point0[1] - line1Point0[1];
-//        float deltaY1 = line0Point1[1] - line1Point1[1];
-//
-//        boolean isXIntersect = true;
-//        boolean isYIntersect = true;
-//        if ((deltaX0 <= 0 && deltaX1 <= 0) || (deltaX0 >= 0 && deltaX1 >= 0)) {
-//            isXIntersect = false;
-//        }
-//        if ((deltaY0 <= 0 && deltaY1 <= 0) || (deltaY0 >= 0 && deltaY1 >= 0)) {
-//            isYIntersect = false;
-//        }
-//        int val = 0;
-//        if (isXIntersect) {
-//            val |= 1;
-//        }
-//        if (isYIntersect) {
-//            val |= (1 << 1);
-//        }
-//        return val;
-
-        return 0;
-
     }
 
     /**二次贝塞尔**/
@@ -152,13 +136,13 @@ public class GLLineWithBezier {
 
     private float mPrevVec[] = null;
     /**给线头添加符合线宽的边界，便于和纤体本身链接**/
-    private void lineCapAddBorder(double angle, float firstVec[], List<float[]> newVecs) {
+    private void lineCapAddBorder(double angle, float firstVec[], List<float[]> newVecs, float width) {
         try {
             if (mPrevVec == null) {
                 mPrevVec = firstVec;
             }
-            float rotatedVec0[] = rotate2d(new float[] {-mLineWidth / 2f, 0}, angle + 180, distance(mPrevVec, firstVec));
-            float rotatedVec1[] = rotate2d(new float[] {mLineWidth / 2f, 0}, angle + 180, distance(mPrevVec, firstVec));
+            float rotatedVec0[] = rotate2d(new float[] {-width / 2f, 0}, angle + 180, distance(mPrevVec, firstVec));
+            float rotatedVec1[] = rotate2d(new float[] {width / 2f, 0}, angle + 180, distance(mPrevVec, firstVec));
             float newVec[] = new float[6];
             if (rotatedVec0 == null || rotatedVec1 == null) {
                 return;
@@ -176,7 +160,7 @@ public class GLLineWithBezier {
 
     /**绘制线头
      * @param isHead 是否曲线头部添加线帽，否则视为曲线尾部添加线帽**/
-    private int lineCap(boolean isHead, @NonNull float firstVec[], @NonNull float secVec[], int color) {
+    private int lineCap(boolean isHead, @NonNull float firstVec[], @NonNull float secVec[], int color, float width) {
         if (null == firstVec) {
             return -1;
         }
@@ -198,7 +182,7 @@ public class GLLineWithBezier {
         /**1、了解线条开始的方向，将半径线条绕旋转该方向与标准测量用向量的夹角的角度量
          * 2、旋转180度时按照一定步进产生多个顶点，todo 但怎么确定旋转的方向是顺时针还是逆时针？以什么为依据判断？以传入向量方向为参考，但具体怎么做？*/
         float initVert[] = new float[] { //初始时左端点的坐标，初始时在原点两侧，然后以传入的顶点作为偏移量
-                -mLineWidth / 2f, 0
+                -width / 2f, 0
         };
         //旋转并在过程中产生顶点
         float actualVec[] = new float[3];
@@ -213,7 +197,7 @@ public class GLLineWithBezier {
 
         if (!isHead) {
             //给曲线结尾加一段和线宽等长的边
-            lineCapAddBorder(angle, firstVec, newVecs);
+            lineCapAddBorder(angle, firstVec, newVecs, width);
         }
 
         //半圆线头
@@ -235,7 +219,7 @@ public class GLLineWithBezier {
 
         if (isHead) {
             //给曲线开头加一段和线宽等长的边
-            lineCapAddBorder(angle, firstVec, newVecs);
+            lineCapAddBorder(angle, firstVec, newVecs, width);
         }
 
         for (float[] newVec : newVecs) {
@@ -260,12 +244,13 @@ public class GLLineWithBezier {
         return newVecs.size() * newVecs.get(0).length;
     }
 
-
+    private List<Float> mPressureValQueue = new LinkedList<>();
 
     /**添加一系列触摸点，转换为指定粗细的线条**/
-    public void addPoint(float x, float y, int colorARGB) {
+    public void addPoint(float x, float y, int colorARGB, float pressure, float maxPressure) {
         //按初始化大小初始化顶点字节数组和顶点数组
         synchronized (mLock) {
+            mPressureValQueue.add(pressure);
             if (null == mBezierKeyPoint0) {
                 mBezierKeyPoint0 = new float[] {x, y, 0};
                 return;
@@ -303,27 +288,48 @@ public class GLLineWithBezier {
 
 
             for (PointF pointF : points) {
-                addPointToBuffer(pointF.x, pointF.y, colorARGB);
+                addPointToBuffer(pointF.x, pointF.y, colorARGB, pressure, maxPressure);
             }
             mBezierKeyPoint0 = new float[] {mBezierKeyPoint1[0], mBezierKeyPoint1[1]};
             mBezierKeyPoint1 = new float[] {x, y};
+
         }
     }
 
-    private void addPointToBuffer(float x, float y, int colorARGB) {
+    private void addPointToBuffer(float x, float y, int colorARGB, float currentPressure, float maxPressure) {
         checkCapacity();
-//        double distance = distance(new float[] {x, y}, mPrevInputVec);
-//        if (distance < 0.002f) { //太小的移动这次就不纳入顶点了
-//            return;
-//        }
-        //核心代码:把这次输入的向量-上次输入的向量，得到绘制移动方向的向量，对比作为标准的向量，计算两端点坐标旋转角度：
-//        float initVert[] = new float[] { //初始时左右两端点的坐标，初始时在原点两侧，然后以传入的顶点作为偏移量
-//                -mLineWidth / 2f, 0, 0,
-//                mLineWidth / 2f, 0, 0,
-//        };
+        float width = mLineWidth;
+        if (mPrevInputVec != null) {
+            switch (mPenStyle) {
+                //加速度笔锋效果实验:
+                case BY_ACC: {
+                    double distance = distance(new float[] {x, y}, mPrevInputVec);
+                    double ratio = Math.min(1f, Math.pow(1f / (distance * 120), 2));
+                    width = (float) (mLineWidth * ratio);
+                    break;
+                }
+                //设备笔锋效果实验:
+                case BY_DEV_PRESSURE: {
+//                    float avgPressure = 1f;
+//                    if (mPressureValQueue.size() > 0) {
+//                        float totalPressure = 0;
+//                        for (int i = 0; i < mPressureValQueue.size(); i++) {
+//                            totalPressure += mPressureValQueue.get(i);
+//                        }
+//                        avgPressure = totalPressure / mPressureValQueue.size();
+//                    }
+//                    while (mPressureValQueue.size() > 5) {
+//                        mPressureValQueue.remove(0);
+//                    }
+                    double ratio = Math.min(1f, currentPressure / maxPressure);
+                    width = (float) (mLineWidth * ratio);
+                    break;
+                }
+            }
+        }
         float initVert[] = new float[] { //初始时左右两端点的坐标，初始时在原点两侧，然后以传入的顶点作为偏移量
-                -mLineWidth / 2f, 0, 0,
-                mLineWidth / 2f, 0, 0,
+                -width / 2f, 0, 0,
+                width / 2f, 0, 0,
         };
 //        //自动缩放笔划粗细
 //        float ratio = (float) Math.min(1.5f, (0.01f / distance * 5f));
@@ -337,7 +343,7 @@ public class GLLineWithBezier {
 
         //添加线头，只执行一次
         if (!mIsLineCapHeadDrew) {
-            lineCap(true, mPrevInputVec, new float[] {x, y, 0}, colorARGB);
+            lineCap(true, mPrevInputVec, new float[] {x, y, 0}, colorARGB, width);
             mIsLineCapHeadDrew = true;
         }
         //添加线段
@@ -365,16 +371,7 @@ public class GLLineWithBezier {
 
         /*todo 上一次端点和这次端点是否重叠**/
         if (mPrevRotatedVec != null) {
-            int val = isIntersect(
-                    new float[] {vert[0], vert[1]},
-                    new float[] {vert[3], vert[4]},
-                    new float[] {mPrevRotatedVec[0], mPrevRotatedVec[1]},
-                    new float[] {mPrevRotatedVec[3], mPrevRotatedVec[4]});
 
-
-
-            //不要使用以上方法，这样只要外接矩形有重合的地方就会被判为相交。
-            // 我想了一个新的办法，通过K值判断是否有相交可能，然后判断两个线性方程的交点，如果交点都有落在两个线段上，就一定相交
         }
         mPrevRotatedVec = vert;
 
@@ -411,7 +408,7 @@ public class GLLineWithBezier {
         }
         checkCapacity();
         //添加线尾，每次清除上一次的线尾，然后增加一次新的
-        endCapPointCount = lineCap(false, new float[] {x, y, 0}, mPrevInputVec, colorARGB);
+        endCapPointCount = lineCap(false, new float[] {x, y, 0}, mPrevInputVec, colorARGB, width);
         mIsLineCapEndDrew = true;
         checkCapacity();
 

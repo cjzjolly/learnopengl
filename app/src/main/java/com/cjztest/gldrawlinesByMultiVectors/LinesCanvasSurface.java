@@ -32,6 +32,7 @@ public class LinesCanvasSurface extends GLSurfaceView {
     private int maColorPointer;
     private int muMVPMatrixPointer;
     private int mColor = 0xFFFFAA00;
+    private GLLineWithBezier.PenStyle mPenStyle = GLLineWithBezier.PenStyle.NORMAL;
 
 
     public LinesCanvasSurface(Context context) {
@@ -156,12 +157,17 @@ public class LinesCanvasSurface extends GLSurfaceView {
         muMVPMatrixPointer = GLES30.glGetUniformLocation(mProgram, "uMVPMatrix");
     }
 
+    public void setPenStyle(GLLineWithBezier.PenStyle penStyle) {
+        this.mPenStyle = penStyle;
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent e) {
         switch (e.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 mCurrentLine = new GLLineWithBezier();
-                mCurrentLine.setLineWidth((float) (Math.random() * 0.05f));
+                mCurrentLine.setPenStyle(mPenStyle);
+                mCurrentLine.setLineWidth((float) (0.05f));
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (null == mCurrentLine) {
@@ -171,7 +177,8 @@ public class LinesCanvasSurface extends GLSurfaceView {
                     break;
                 }
                 //使用随机变化颜色
-                mCurrentLine.addPoint((e.getX() / mWidth - 0.5f) * 3f * Constant.ratio,  (0.5f - e.getY() / mHeight) * 3f, mColor);
+                Log.i("cjztest", "pressure:" + e.getPressure());
+                mCurrentLine.addPoint((e.getX() / mWidth - 0.5f) * 3f * Constant.ratio,  (0.5f - e.getY() / mHeight) * 3f, mColor, e.getPressure(), 1f);
                 break;
             case MotionEvent.ACTION_UP:
                 mLines.add(mCurrentLine);
