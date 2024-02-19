@@ -6,10 +6,8 @@ import android.opengl.GLSurfaceView;
 import android.util.Log;
 import android.view.MotionEvent;
 
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -33,6 +31,7 @@ public class LinesCanvasSurface extends GLSurfaceView {
     private int muMVPMatrixPointer;
     private int mColor = 0xFFFFAA00;
     private GLLineWithBezier.PenStyle mPenStyle = GLLineWithBezier.PenStyle.NORMAL;
+    private GLLineWithBezier.DisplayStyle mDisPlayStyle = GLLineWithBezier.DisplayStyle.TRIANGLE_STRIPS;
 
 
     public LinesCanvasSurface(Context context) {
@@ -161,12 +160,17 @@ public class LinesCanvasSurface extends GLSurfaceView {
         this.mPenStyle = penStyle;
     }
 
+    public void setDisplayStyle(GLLineWithBezier.DisplayStyle displayStyle) {
+        this.mDisPlayStyle = displayStyle;
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent e) {
         switch (e.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 mCurrentLine = new GLLineWithBezier();
                 mCurrentLine.setPenStyle(mPenStyle);
+                mCurrentLine.setDisplayStyle(mDisPlayStyle);
                 mCurrentLine.setLineWidth((float) (0.05f));
                 break;
             case MotionEvent.ACTION_MOVE:

@@ -9,31 +9,64 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <RadioGroup
-        android:id="@+id/draw_lines_style_choice"
+    <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
-
-        <RadioButton
-            android:id="@+id/draw_lines_style_normal"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <RadioGroup
+            android:id="@+id/draw_lines_style_choice"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="普通模式"
-            android:checked="true"/>
+            android:layout_height="wrap_content">
 
-        <RadioButton
-            android:id="@+id/draw_lines_style_pen"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="加速度笔锋模式"
-            android:checked="false"/>
+            <RadioButton
+                android:id="@+id/draw_lines_style_normal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="普通模式"
+                android:checked="true"/>
 
-        <RadioButton
-            android:id="@+id/draw_lines_style_pen_of_device"
+            <RadioButton
+                android:id="@+id/draw_lines_style_pen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="加速度笔锋模式"
+                android:checked="false"/>
+
+            <RadioButton
+                android:id="@+id/draw_lines_style_pen_of_device"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="手写笔笔锋模式（需要设备支持）"
+                android:checked="false"/>
+        </RadioGroup>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@color/black"/>
+
+        <RadioGroup
+            android:id="@+id/display_lines_style_choice"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="手写笔笔锋模式（需要设备支持）"
-            android:checked="false"/>
-    </RadioGroup>
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/display_style_tri"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="三角形填充模式"
+                android:checked="true"/>
+
+            <RadioButton
+                android:id="@+id/display_style_line"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="线条模式"
+                android:checked="false"/>
+
+        </RadioGroup>
+    </LinearLayout>
+
+
 
 </RelativeLayout>

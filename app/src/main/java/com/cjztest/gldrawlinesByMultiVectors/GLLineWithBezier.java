@@ -71,12 +71,22 @@ public class GLLineWithBezier {
         BY_DEV_PRESSURE //以设备压力为判断
     }
 
+    /**显示的方式**/
+    public enum DisplayStyle {
+        LINE,
+        TRIANGLE_STRIPS
+    }
+
+    private PenStyle mPenStyle = PenStyle.NORMAL;
+    private DisplayStyle mDisplayStyle = DisplayStyle.TRIANGLE_STRIPS;
+
     public void setPenStyle(PenStyle penStyle) {
         this.mPenStyle = penStyle;
     }
 
-    private PenStyle mPenStyle = PenStyle.NORMAL;
-
+    public void setDisplayStyle(DisplayStyle showStyle) {
+        this.mDisplayStyle = showStyle;
+    }
 
     private Object mLock = new Object();
     private int endCapPointCount;
@@ -506,10 +516,17 @@ public class GLLineWithBezier {
             GLES30.glEnableVertexAttribArray(vertPointer); //启用顶点属性
             GLES30.glEnableVertexAttribArray(colorPointer);  //启用颜色属性
 
-//            GLES30.glDrawArrays(GLES30.GL_LINES, 0, getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
-//            GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
 //            GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ZERO); //可以解决线条自身重叠问题
-            GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, getPointBufferPos() / 3); //cjztest
+
+            switch (mDisplayStyle) {
+                case TRIANGLE_STRIPS:
+                    GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, getPointBufferPos() / 3); //cjztest
+                    break;
+                case LINE:
+                    GLES30.glDrawArrays(GLES30.GL_LINES, 0, getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
+                    break;
+            }
+
             GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA); //还原
             GLES30.glDisableVertexAttribArray(vertPointer); //启用顶点属性
             GLES30.glDisableVertexAttribArray(colorPointer);  //启用颜色属性
