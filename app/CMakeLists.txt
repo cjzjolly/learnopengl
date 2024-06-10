@@ -21,7 +21,8 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -save-temps=obj")
 
 
 ADD_SUBDIRECTORY(src/main/cpp/opengl_decoder)
-ADD_SUBDIRECTORY(src/main/cpp/ffmpeg)
+#暂时注释ffmpeg相关代码，否则暂时会出现引用不了库的情况
+#ADD_SUBDIRECTORY(src/main/cpp/ffmpeg)
 
 #暂时注释白板的代码不然编译不过
 #ADD_SUBDIRECTORY(src/main/cpp/gl_whiteboard)
