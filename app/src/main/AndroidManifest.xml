@@ -99,6 +99,7 @@
         <activity android:name="com.cjztest.glMyLightModelSimple.LightModelActivity"/>
         <activity android:name="com.cjztest.glMyLightModelAdvance.LightModelActivity"/>
         <activity android:name="com.cjztest.gldrawlinesByMultiVectors.MainActivity"/>
+        <activity android:name="com.cjztest.glOffscreenProcess.OffScreenGLDemoActivity"/>
         <activity android:name="com.mainpage.MainPage">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
