@@ -1,4 +1,4 @@
-package com.cjztest.glOffscreenProcess
+package com.cjztest.glOffscreenProcess.demo0
 
 import android.content.Context
 import android.opengl.EGL14
@@ -153,7 +153,12 @@ class EGLMaker : Object {
         }
     }
 
+    fun getWidth() : Int {
+        return mWidth
+    }
 
-    
+    fun getHeight() : Int {
+        return mHeight
+    }
     
 }

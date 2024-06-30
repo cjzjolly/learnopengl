@@ -37,7 +37,7 @@ public class LinesCanvasSurface extends GLSurfaceView {
     public LinesCanvasSurface(Context context) {
         super(context);
         this.setEGLContextClientVersion(3); //设置使用OPENGL ES3.0
-        setEGLConfigChooser(new MSAAConfigChooser());
+//        setEGLConfigChooser(new MSAAConfigChooser()); //fixme:部分设备不支持，暂时取消
         mRenderer = new SceneRenderer();	//创建场景渲染器
         setRenderer(mRenderer);				//设置渲染器
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);//设置渲染模式为主动渲染

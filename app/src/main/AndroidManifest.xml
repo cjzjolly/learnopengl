@@ -98,8 +98,10 @@
         <activity android:name="com.book2.EntranceActivity"/>
         <activity android:name="com.cjztest.glMyLightModelSimple.LightModelActivity"/>
         <activity android:name="com.cjztest.glMyLightModelAdvance.LightModelActivity"/>
-        <activity android:name="com.cjztest.gldrawlinesByMultiVectors.MainActivity"/>
-        <activity android:name="com.cjztest.glOffscreenProcess.OffScreenGLDemoActivity"/>
+        <activity android:name="com.cjztest.gldrawlinesByMultiVectors.MainActivity"
+            android:theme="@android:style/Theme.Black"/>
+        <activity android:name="com.cjztest.glOffscreenProcess.MenuActivity"/>
+        <activity android:name="com.cjztest.glOffscreenProcess.demo0.OffScreenGLDemoActivity"/>
         <activity android:name="com.mainpage.MainPage">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

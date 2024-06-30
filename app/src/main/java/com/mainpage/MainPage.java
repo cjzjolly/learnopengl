@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 
 import com.book2.Sample5_2.Sample5_2_Activity;
 import com.book2.EntranceActivity;
+import com.cjztest.glOffscreenProcess.MenuActivity;
 import com.opengldecoder.jnibridge.NativeOpenGLOESRenderActivity;
 
 public class MainPage extends Activity {
@@ -71,6 +72,14 @@ public class MainPage extends Activity {
         button.setText("Native OpenGL视频播放处理");
         button.setOnClickListener(v -> {
             Intent intent = new Intent(this, NativeOpenGLOESRenderActivity.class);
+            startActivity(intent);
+        });
+        linearLayout.addView(button);
+
+        button = new Button(this);
+        button.setText("EGL、离屏渲染使用相关例子");
+        button.setOnClickListener(v -> {
+            Intent intent = new Intent(this, MenuActivity.class);
             startActivity(intent);
         });
         linearLayout.addView(button);
