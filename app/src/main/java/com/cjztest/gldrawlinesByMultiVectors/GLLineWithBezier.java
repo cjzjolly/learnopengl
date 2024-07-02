@@ -305,10 +305,10 @@ public class GLLineWithBezier {
                     case BY_ACC: { //todo 这个以后做成根据设备、用户设置可调的才行
                         double ratio = 1f;
                         if (mPrevDistance == Float.MIN_VALUE) {
-                            ratio = Math.min(1f, Math.pow(1f / (distance * 20), 1));
+                            ratio = Math.min(1f, Math.pow(1f / (distance * 8), 1));
                         } else {
                             float delta = (float) ((distance - mPrevDistance) / points.size());
-                            ratio = Math.min(1f, Math.pow(1f / ((mPrevDistance + delta * i) * 20), 1));
+                            ratio = Math.min(1f, Math.pow(1f / ((mPrevDistance + delta * i) * 8), 1));
                         }
                         float width = (float) (mLineWidth * ratio);
                         addPointToBuffer(pointF.x, pointF.y, colorARGB, width);
