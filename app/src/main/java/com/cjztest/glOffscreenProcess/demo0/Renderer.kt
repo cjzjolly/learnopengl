@@ -19,12 +19,11 @@ class Renderer : EGLMaker.IRenderer {
     }
 
     override fun onDrawFrame() {
-        //todo 可能要先创建并绑定FBO
         GLES30.glClearColor(1f, 0f, 0f, 1f) //设定清理颜色
         // 将颜色缓存区设置为预设的颜色
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)
 
-        //可以使用glMap....等来实现，代替低速度的readPixel
+        //todo 可以使用glMapBufferRange来实现，代替低速度的readPixel
 
         //试试读出里面的像素，如果有颜色就代表这一阶段成功了
         if (mWidth != null && mHeight != null) {

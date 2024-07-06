@@ -19,8 +19,8 @@ class OffScreenGLDemoActivity : Activity() {
         rootView.setBackgroundColor(Color.GRAY)
 
         val imageView = ImageView(this)
-        imageView.layoutParams = ViewGroup.LayoutParams(300, 300)
-        imageView.setBackgroundColor(Color.GREEN)
+//        imageView.layoutParams = ViewGroup.LayoutParams(300, 300)
+//        imageView.setBackgroundColor(Color.GREEN)
 
         val renderer = Renderer()
         mEGL = EGLMaker(this, 300, 300)
