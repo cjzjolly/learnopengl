@@ -21,7 +21,7 @@ class Renderer : EGLMaker.IRenderer {
     override fun onDrawFrame() {
         GLES30.glClearColor(1f, 0f, 0f, 1f) //设定清理颜色
         // 将颜色缓存区设置为预设的颜色
-        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
 
         //todo 可以使用glMapBufferRange来实现，代替低速度的readPixel
 

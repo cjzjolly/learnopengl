@@ -23,12 +23,14 @@ class EGLMaker : Object {
     var mIsCreated = false
 
     // EGLConfig参数
-    private val mEGLConfigAttrs = intArrayOf(EGL14.EGL_RED_SIZE, 8,
+    private val mEGLConfigAttrs = intArrayOf(
+            EGL14.EGL_RED_SIZE, 8,
             EGL14.EGL_GREEN_SIZE, 8,
             EGL14.EGL_BLUE_SIZE, 8,
             EGL14.EGL_ALPHA_SIZE, 8,
             EGL14.EGL_DEPTH_SIZE, 8,
-            EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
+            EGL14.EGL_RENDERABLE_TYPE,
+            EGL14.EGL_OPENGL_ES2_BIT,
             EGL14.EGL_NONE
     )
 
@@ -93,7 +95,7 @@ class EGLMaker : Object {
         }
         // 3.创建EGLContext
         if (mEGLConfig != null) {
-            mEGLContext = EGL14.eglCreateContext(mEGLDisplay, mEGLConfig, EGL14.EGL_NO_CONTEXT, mEGLContextAttrs, 0) //cjzmark todo 第3个参数有什么意义？
+            mEGLContext = EGL14.eglCreateContext(mEGLDisplay, mEGLConfig, EGL14.EGL_NO_CONTEXT, mEGLContextAttrs, 0)
         }
 
         // 4.创建EGLSurface
