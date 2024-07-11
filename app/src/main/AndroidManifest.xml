@@ -102,6 +102,8 @@
             android:theme="@android:style/Theme.Black"/>
         <activity android:name="com.cjztest.glOffscreenProcess.MenuActivity"/>
         <activity android:name="com.cjztest.glOffscreenProcess.demo0.OffScreenGLDemoActivity"/>
+        <activity android:name="com.cjztest.glOffscreenProcess.demo1.NativeModifySurfaceActivity"/>
+
         <activity android:name="com.mainpage.MainPage">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.LinearLayout
 import com.cjztest.glOffscreenProcess.demo0.OffScreenGLDemoActivity
+import com.cjztest.glOffscreenProcess.demo1.NativeModifySurfaceActivity
 
 class MenuActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -13,13 +14,19 @@ class MenuActivity : Activity() {
         val ll = LinearLayout(this)
         ll.orientation = LinearLayout.VERTICAL
 
-        val btnDemo0 = Button(this)
-        btnDemo0.text = "Demo0"
-        btnDemo0.setOnClickListener {
+        var btnDemo = Button(this)
+        btnDemo.text = "Demo0"
+        btnDemo.setOnClickListener {
             startActivity(Intent(this, OffScreenGLDemoActivity::class.java))
         }
+        ll.addView(btnDemo)
 
-        ll.addView(btnDemo0)
+        btnDemo = Button(this)
+        btnDemo.text = "Demo1"
+        btnDemo.setOnClickListener {
+            startActivity(Intent(this, NativeModifySurfaceActivity::class.java))
+        }
+        ll.addView(btnDemo)
         setContentView(ll)
     }
 }

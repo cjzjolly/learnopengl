@@ -104,10 +104,14 @@ extern "C" {
         if (nwBuffer.format == WINDOW_FORMAT_RGB_565) {
             int y, x;
             LOGI("nwBuffer->format == WINDOW_FORMAT_RGB_565");
-            memset(nwBuffer.bits, color << 8, sizeof(__uint16_t) * nwBuffer.height * nwBuffer.width);
+            for (int i = 0; i < nwBuffer.height * nwBuffer.width; i++) {
+                *((short*)nwBuffer.bits + i) = color;
+            }
         } else if (nwBuffer.format == WINDOW_FORMAT_RGBA_8888) {
             LOGI("nwBuffer->format == WINDOW_FORMAT_RGBA_8888 ");
-            memset(nwBuffer.bits, color, sizeof(__uint32_t) * nwBuffer.height * nwBuffer.width);
+            for (int i = 0; i < nwBuffer.height * nwBuffer.width; i++) {
+                *((int*)nwBuffer.bits + i) = color;
+            }
         }
         LOGI("ANativeWindow_unlockAndPost ");
         if (0 != ANativeWindow_unlockAndPost(mANativeWindow)) {
