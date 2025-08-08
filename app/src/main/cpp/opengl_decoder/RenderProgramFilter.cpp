@@ -49,12 +49,32 @@ RenderProgramFilter::RenderProgramFilter() {
             out vec4 fragColor;//输出到的片元颜色
 
             void main() {
-                vec4 srcColor = texture(sTexture, fragVTexCoord);
-                srcColor.r = clamp(srcColor.r, 0.01, 0.99);
-                srcColor.g = clamp(srcColor.g, 0.01, 0.99);
-                srcColor.b = clamp(srcColor.b, 0.01, 0.99);
-                fragColor = texture(lutTexture, vec3(srcColor.b, srcColor.g, srcColor.r * (pageSize - 1.0)));
+//                vec4 srcColor = texture(sTexture, fragVTexCoord);
+//                srcColor.r = clamp(srcColor.r, 0.01, 0.99);
+//                srcColor.g = clamp(srcColor.g, 0.01, 0.99);
+//                srcColor.b = clamp(srcColor.b, 0.01, 0.99);
+//                fragColor = texture(lutTexture, vec3(srcColor.b, srcColor.g, srcColor.r * (pageSize - 1.0))); //原本的方法，深度val为第三个参数
 
+
+                vec4 srcColor = texture(sTexture, fragVTexCoord);
+//                vec4 outColor = texelFetch(lutTexture, ivec3((int(srcColor.r * 63), int(srcColor.g * 63), int(srcColor.b * 63)), 0);
+//                vec4 outColor = texelFetch(lutTexture, ivec3(63, 63, 63), 0); //这样可以通过编译
+
+
+
+                float r = clamp(srcColor.r, 0.0, 1.0);
+                float g = clamp(srcColor.g, 0.0, 1.0);
+                float b = clamp(srcColor.b, 0.0, 1.0);
+                float pageWidth = pageSize - 1.0;
+                int rIndex = int(r * pageWidth); // 将浮点数转换为整数
+                int gIndex = int(g * pageWidth); // 将浮点数转换为整数
+                int bIndex = int(b * pageWidth); // 将浮点数转换为整数
+                ivec3 texelCoords = ivec3(bIndex, gIndex, rIndex); // 创建ivec3
+                vec4 outColor = texelFetch(lutTexture, texelCoords, 0);
+                fragColor = outColor;  //cjztest
+
+
+//                fragColor = vec4(0.5, 0.0, 0.0, 1.0);  //rgba
             }
     );
 
