@@ -63,16 +63,16 @@ RenderProgramFilter::RenderProgramFilter() {
                 float pageWidth = pageSize - 1.0;
 
                 int rIndex = int(r * pageWidth); // 将浮点数转换为整数基底，去除浮点值，小数点部分用作LUT两个单元之间的游标
-                float rRatioToRight = r * pageWidth - float(rIndex); //当前256级颜色靠最接近的LUT通道单元格的右边有多“右”
-                float rRatioToLeft = 1.0 - rRatioToRight; //当前256级颜色靠最接近的LUT通道单元格的左边有多“做”
+                float rRatioToLeft = r * pageWidth - float(rIndex); //当前256级颜色靠最接近的LUT通道单元格的右边有多“右”
+                float rRatioToRight = 1.0 - rRatioToLeft; //当前256级颜色靠最接近的LUT通道单元格的左边有多“做”
 
-                int gIndex = int(g * pageWidth); // 将浮点数转换为整数，要拿到它的小数点部分作为比例
-                float gRatioToRight = g * pageWidth - float(gIndex); //当前256级颜色靠最接近的LUT通道单元格的右边有多“右”
-                float gRatioToLeft = 1.0 - gRatioToRight; //当前256级颜色靠最接近的LUT通道单元格的左边有多“做”
+                int gIndex = int(g * pageWidth);
+                float gRatioToLeft = g * pageWidth - float(gIndex);
+                float gRatioToRight = 1.0 - gRatioToLeft;
 
-                int bIndex = int(b * pageWidth); // 将浮点数转换为整数，要拿到它的小数点部分作为比例
-                float bRatioToRight = b * pageWidth - float(bIndex); //当前256级颜色靠最接近的LUT通道单元格的右边有多“右”
-                float bRatioToLeft = 1.0 - bRatioToRight; //当前256级颜色靠最接近的LUT通道单元格的左边有多“做”
+                int bIndex = int(b * pageWidth);
+                float bRatioToLeft = b * pageWidth - float(bIndex);
+                float bRatioToRight = 1.0 - bRatioToLeft;
 
 
                 //todo 它一个通道只有64个值，如何线性变换成256个值？例如红色通道，前一个值占比例多少，后一个值占比例多少？
