@@ -63,8 +63,8 @@ RenderProgramFilter::RenderProgramFilter() {
                 float pageWidth = pageSize - 1.0;
 
                 int rIndex = int(r * pageWidth); // 将浮点数转换为整数基底，去除浮点值，小数点部分用作LUT两个单元之间的游标
-                float rRatioToLeft = r * pageWidth - float(rIndex); //当前256级颜色靠最接近的LUT通道单元格的右边有多“右”
-                float rRatioToRight = 1.0 - rRatioToLeft; //当前256级颜色靠最接近的LUT通道单元格的左边有多“做”
+                float rRatioToLeft = r * pageWidth - float(rIndex); //当前256级颜色靠最接近的LUT通道单元格的左边有多“左”，值越小越近
+                float rRatioToRight = 1.0 - rRatioToLeft; //当前256级颜色靠最接近的LUT通道单元格的右边有多“右”
 
                 int gIndex = int(g * pageWidth);
                 float gRatioToLeft = g * pageWidth - float(gIndex);
@@ -77,13 +77,13 @@ RenderProgramFilter::RenderProgramFilter() {
 
                 //todo 它一个通道只有64个值，如何线性变换成256个值？例如红色通道，前一个值占比例多少，后一个值占比例多少？
                 ivec3 texelCoordsLeft = ivec3(bIndex, gIndex, rIndex);
-                ivec3 texelCoordsRight = ivec3(bIndex + 1, gIndex + 1, rIndex + 1);
+                ivec3 texelCoordsRight = ivec3(min(63, bIndex + 1), min(63, gIndex + 1), min(63, rIndex + 1));
                 vec4 outColorLeft = texelFetch(lutTexture, texelCoordsLeft, 0);
                 vec4 outColorRight = texelFetch(lutTexture, texelCoordsRight, 0);
 
-                float outputR =  outColorLeft.r * rRatioToLeft + outColorRight.r * rRatioToRight;
-                float outputG =  outColorLeft.g * gRatioToLeft + outColorRight.g * gRatioToRight;
-                float outputB =  outColorLeft.b * bRatioToLeft + outColorRight.b * bRatioToRight;
+                float outputR =  outColorLeft.r * (1.0 - rRatioToLeft) + outColorRight.r * (1.0 - rRatioToRight);
+                float outputG =  outColorLeft.g * (1.0 - gRatioToLeft) + outColorRight.g * (1.0 - gRatioToRight);
+                float outputB =  outColorLeft.b * (1.0 - bRatioToLeft) + outColorRight.b * (1.0 - bRatioToRight);
 
 
 
