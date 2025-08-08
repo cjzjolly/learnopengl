@@ -57,21 +57,37 @@ RenderProgramFilter::RenderProgramFilter() {
 
 
                 vec4 srcColor = texture(sTexture, fragVTexCoord);
-//                vec4 outColor = texelFetch(lutTexture, ivec3((int(srcColor.r * 63), int(srcColor.g * 63), int(srcColor.b * 63)), 0);
-//                vec4 outColor = texelFetch(lutTexture, ivec3(63, 63, 63), 0); //这样可以通过编译
-
-
-
                 float r = clamp(srcColor.r, 0.0, 1.0);
                 float g = clamp(srcColor.g, 0.0, 1.0);
                 float b = clamp(srcColor.b, 0.0, 1.0);
                 float pageWidth = pageSize - 1.0;
-                int rIndex = int(r * pageWidth); // 将浮点数转换为整数
-                int gIndex = int(g * pageWidth); // 将浮点数转换为整数
-                int bIndex = int(b * pageWidth); // 将浮点数转换为整数
-                ivec3 texelCoords = ivec3(bIndex, gIndex, rIndex); // 创建ivec3
-                vec4 outColor = texelFetch(lutTexture, texelCoords, 0);
-                fragColor = outColor;  //cjztest
+
+                int rIndex = int(r * pageWidth); // 将浮点数转换为整数基底，去除浮点值，小数点部分用作LUT两个单元之间的游标
+                float rRatioToRight = r * pageWidth - float(rIndex); //当前256级颜色靠最接近的LUT通道单元格的右边有多“右”
+                float rRatioToLeft = 1.0 - rRatioToRight; //当前256级颜色靠最接近的LUT通道单元格的左边有多“做”
+
+                int gIndex = int(g * pageWidth); // 将浮点数转换为整数，要拿到它的小数点部分作为比例
+                float gRatioToRight = g * pageWidth - float(gIndex); //当前256级颜色靠最接近的LUT通道单元格的右边有多“右”
+                float gRatioToLeft = 1.0 - gRatioToRight; //当前256级颜色靠最接近的LUT通道单元格的左边有多“做”
+
+                int bIndex = int(b * pageWidth); // 将浮点数转换为整数，要拿到它的小数点部分作为比例
+                float bRatioToRight = b * pageWidth - float(bIndex); //当前256级颜色靠最接近的LUT通道单元格的右边有多“右”
+                float bRatioToLeft = 1.0 - bRatioToRight; //当前256级颜色靠最接近的LUT通道单元格的左边有多“做”
+
+
+                //todo 它一个通道只有64个值，如何线性变换成256个值？例如红色通道，前一个值占比例多少，后一个值占比例多少？
+                ivec3 texelCoordsLeft = ivec3(bIndex, gIndex, rIndex);
+                ivec3 texelCoordsRight = ivec3(bIndex + 1, gIndex + 1, rIndex + 1);
+                vec4 outColorLeft = texelFetch(lutTexture, texelCoordsLeft, 0);
+                vec4 outColorRight = texelFetch(lutTexture, texelCoordsRight, 0);
+
+                float outputR =  outColorLeft.r * rRatioToLeft + outColorRight.r * rRatioToRight;
+                float outputG =  outColorLeft.g * gRatioToLeft + outColorRight.g * gRatioToRight;
+                float outputB =  outColorLeft.b * bRatioToLeft + outColorRight.b * bRatioToRight;
+
+
+
+                fragColor = vec4(outputR, outputG, outputB, 1.0);  //cjztest
 
 
 //                fragColor = vec4(0.5, 0.0, 0.0, 1.0);  //rgba
