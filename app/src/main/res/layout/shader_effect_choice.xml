@@ -28,5 +28,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="海洋纹理测试"/>
+
+        <Button
+            android:id="@+id/btn_two_dimension_wave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2D波浪纹理测试"/>
     </LinearLayout>
 </FrameLayout>

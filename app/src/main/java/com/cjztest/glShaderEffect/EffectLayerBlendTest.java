@@ -25,7 +25,7 @@ public class EffectLayerBlendTest implements GLRenderer.onDrawListener {
         LIGHT_POTS,
         SEA,
         WAVE,
-
+        WAVE_2D
     }
     private GLObject mRenderLight;
     private GLFragEffectSea mRenderSea;
@@ -38,6 +38,7 @@ public class EffectLayerBlendTest implements GLRenderer.onDrawListener {
     private GLFragEffectWave mWave;
     private GLFrameBufferEffect1 mBef1;
     private GLFrameBufferEffectPBODemo mPBODemo;
+    private GLFragCos2DWave mCos2DWave;
     private int mBaseProgramPointer;
     private int mFrameCount = 0;
     /**当前使用的模式**/
@@ -51,6 +52,7 @@ public class EffectLayerBlendTest implements GLRenderer.onDrawListener {
         this.mContext = context;
         mRenderLight = new GLFragEffectLightPot(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, mWidth, mHeight, mContext);
         mRenderSea = new GLFragEffectSea(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, mWidth, mHeight, mContext);
+        mCos2DWave = new GLFragCos2DWave(mBaseProgramPointer, -1, -mRatio, 0, 2, mRatio * 2, mWidth, mHeight, mContext);
     }
 
     /**按图层顺序渲染**/
@@ -77,6 +79,10 @@ public class EffectLayerBlendTest implements GLRenderer.onDrawListener {
             case SEA:
                 mCurrentEffect = RENDERER_EFFECT.SEA;
                 mCurrentRender = mRenderSea;
+                break;
+            case WAVE_2D:
+                mCurrentEffect = RENDERER_EFFECT.WAVE_2D;
+                mCurrentRender = mCos2DWave;
                 break;
         }
     }

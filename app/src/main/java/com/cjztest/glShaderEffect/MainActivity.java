@@ -36,6 +36,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
             case R.id.btn_sea_mode:
                 mEffectLayer.selectMode(EffectLayerBlendTest.RENDERER_EFFECT.SEA);
                 break;
+            case R.id.btn_two_dimension_wave:
+                mEffectLayer.selectMode(EffectLayerBlendTest.RENDERER_EFFECT.WAVE_2D);
+                break;
         }
     }
 }
