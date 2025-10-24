@@ -103,6 +103,7 @@
         <activity android:name="com.cjztest.glOffscreenProcess.MenuActivity"/>
         <activity android:name="com.cjztest.glOffscreenProcess.demo0.OffScreenGLDemoActivity"/>
         <activity android:name="com.cjztest.glOffscreenProcess.demo1.NativeModifySurfaceActivity"/>
+        <activity android:name="com.physicEffect.threeDWave.MainActivity"/>
 
         <activity android:name="com.mainpage.MainPage">
             <intent-filter>

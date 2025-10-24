@@ -107,5 +107,14 @@ public class MainPage extends Activity {
             startActivity(intent);
         });
         linearLayout.addView(button);
+
+        button = new Button(this);
+        button.setText("3D波浪");
+        button.setOnClickListener(v -> {
+            Intent intent = new Intent(this, com.physicEffect.threeDWave.MainActivity.class);
+            startActivity(intent);
+        });
+        linearLayout.addView(button);
+
     }
 }
