@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 
 import androidx.annotation.Nullable;
 
@@ -17,9 +18,11 @@ public class MainPage extends Activity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ScrollView scrollView = new ScrollView(this);
         LinearLayout linearLayout = new LinearLayout(this);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
-        setContentView(linearLayout);
+        scrollView.addView(linearLayout);
+        setContentView(scrollView);
         Button button = new Button(this);
         button.setText("透视投影矩阵Demo");
         button.setOnClickListener(v -> {
