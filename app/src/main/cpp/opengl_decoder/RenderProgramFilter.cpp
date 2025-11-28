@@ -41,21 +41,95 @@ RenderProgramFilter::RenderProgramFilter() {
             precision highp sampler2DArray;
             uniform sampler2D sTexture;//图像纹理输入
             uniform sampler2DArray lutTexture;//滤镜纹理输入
+
             uniform float pageSize;
+            uniform float lutSize;            // 例如 64.0
+
+
             uniform float frame;//第几帧
             uniform vec2 resolution;//分辨率
             in vec4 fragObjectColor;//接收vertShader处理后的颜色值给片元程序
+
             in vec2 fragVTexCoord;//接收vertShader处理后的纹理内坐标给片元程序
             out vec4 fragColor;//输出到的片元颜色
 
-            void main() {
-                vec4 srcColor = texture(sTexture, fragVTexCoord);
-                srcColor.r = clamp(srcColor.r, 0.01, 0.99);
-                srcColor.g = clamp(srcColor.g, 0.01, 0.99);
-                srcColor.b = clamp(srcColor.b, 0.01, 0.99);
-                fragColor = texture(lutTexture, vec3(srcColor.b, srcColor.g, srcColor.r * (pageSize - 1.0)));
+            vec3 sampleLUT(vec3 rgb)
+            {
+                    // rgb 在 0~1，映射到 0~(lutSize-1)
+                    vec3 coord = rgb * (lutSize - 1.0);
+
+                    // 每一维的整数 / 小数部分
+                    vec3 i0 = floor(coord); //下界
+                    vec3 f  = fract(coord); //上下界之间的权值
+                    vec3 i1 = i0 + 1.0;  //上界
+
+                    // 限制索引范围（避免 64 → 65 越界）
+                    i0 = clamp(i0, 0.0, lutSize - 1.0);
+                    i1 = clamp(i1, 0.0, lutSize - 1.0);
+
+                    // 现在映射是：x=B, y=G, layer=R
+                    // 所以 texelFetch( lutTexture , ivec3( B , G , R ) )
+
+                    // z 维（layer）由 R 控制
+                    // y 维由 G 控制
+                    // x 维由 B 控制
+
+                    ivec3 p000 = ivec3(int(i0.z), int(i0.y), int(i0.x));
+                    ivec3 p100 = ivec3(int(i1.z), int(i0.y), int(i0.x));
+                    ivec3 p010 = ivec3(int(i0.z), int(i1.y), int(i0.x));
+                    ivec3 p110 = ivec3(int(i1.z), int(i1.y), int(i0.x));
+
+                    ivec3 p001 = ivec3(int(i0.z), int(i0.y), int(i1.x));
+                    ivec3 p101 = ivec3(int(i1.z), int(i0.y), int(i1.x));
+                    ivec3 p011 = ivec3(int(i0.z), int(i1.y), int(i1.x));
+                    ivec3 p111 = ivec3(int(i1.z), int(i1.y), int(i1.x));
+
+                    vec3 c000 = texelFetch(lutTexture, p000, 0).rgb;
+                    vec3 c100 = texelFetch(lutTexture, p100, 0).rgb;
+                    vec3 c010 = texelFetch(lutTexture, p010, 0).rgb;
+                    vec3 c110 = texelFetch(lutTexture, p110, 0).rgb;
+
+                    vec3 c001 = texelFetch(lutTexture, p001, 0).rgb;
+                    vec3 c101 = texelFetch(lutTexture, p101, 0).rgb;
+                    vec3 c011 = texelFetch(lutTexture, p011, 0).rgb;
+                    vec3 c111 = texelFetch(lutTexture, p111, 0).rgb;
+                    // 三线性插值，加权累加
+                    float a = f.x;
+                    float b = f.y;
+                    float c = f.z;
+
+                    return
+                        c000 * (1.0-a)*(1.0-b)*(1.0-c) +
+                        c100 * a      *(1.0-b)*(1.0-c) +
+                        c010 * (1.0-a)*b      *(1.0-c) +
+                        c110 * a      *b      *(1.0-c) +
+                        c001 * (1.0-a)*(1.0-b)*c       +
+                        c101 * a      *(1.0-b)*c       +
+                        c011 * (1.0-a)*b      *c       +
+                        c111 * a      *b      *c;
+                    // 三线性插值(简化版，效果一样，但不方便和文档的公式一起对照看)
+//                    vec3 c00 = mix(c000, c100, f.r);
+//                    vec3 c10 = mix(c010, c110, f.r);
+//                    vec3 c0  = mix(c00,  c10,  f.g);
+//
+//                    vec3 c01 = mix(c001, c101, f.r);
+//                    vec3 c11 = mix(c011, c111, f.r);
+//                    vec3 c1  = mix(c01,  c11,  f.g);
+//
+//                    return mix(c0, c1, f.b);
 
             }
+
+            void main()
+            {
+                    vec3 rgb = texture(sTexture, fragVTexCoord).rgb;
+
+                    // LUT 三线性插值
+                    vec3 outColor = sampleLUT(rgb);
+
+                    fragColor = vec4(outColor, 1.0);
+            }
+
     );
 
     float tempTexCoord[] =   //纹理内采样坐标,类似于canvas坐标 //这东西有问题，导致两个framebuffer的画面互相取纹理时互为颠倒
@@ -236,6 +310,8 @@ void RenderProgramFilter::drawTo(float *cameraMatrix, float *projMatrix, DrawTyp
             glBindTexture(GL_TEXTURE_2D_ARRAY, mLutTexutresPointers[0]);
             glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "lutTexture"), 1); //映射到渲染脚本，获取纹理属性的指针
             glUniform1f(glGetUniformLocation(mImageProgram.programHandle, "pageSize"), longLen / mLutUnitLen); //映射到渲染脚本，获取纹理属性的指针
+            glUniform1f(glGetUniformLocation(mImageProgram.programHandle, "lutSize"), mLutUnitLen); //映射到渲染脚本，获取纹理属性的指针
+
         }
         glDrawArrays(GL_TRIANGLE_STRIP, 0, /*mPointBufferPos / 3*/ 4); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
         glDisableVertexAttribArray(mObjectPositionPointer);

@@ -19,18 +19,20 @@ GLslHandle createProgram(char *vertexShaderSource,
     GLint linkSuccess;//声明链接是否成功标志变量
     glGetProgramiv(programHandle, GL_LINK_STATUS, &linkSuccess);
     GLslHandle g;
-    __android_log_print(ANDROID_LOG_INFO,  "nativegl_shaderUtil", "vertexShaderSource:%s, linkResult:%d",
+    __android_log_print(ANDROID_LOG_INFO,  "nativegl_shaderUtil", "vertexShaderSource:%s, \nlinkResult:%d",
                         vertexShaderSource, linkSuccess);
     if (linkSuccess == GL_FALSE) {//若连接失败获取获取错误信息
-        int infoLen = 0;
+        GLint infoLen = 0;
         glGetShaderiv(programHandle, GL_INFO_LOG_LENGTH, &infoLen);
-        GLchar messages[infoLen];
-        memset(messages, 0, sizeof(messages));
-        glGetProgramInfoLog(programHandle, infoLen, &infoLen, messages);  //cjzmark todo 这里的length有问题
-//        LOGI("Shader Link Error:%s", messages);
-        __android_log_print(ANDROID_LOG_INFO,  "nativegl_shaderUtil", "shader Link Error:%s", messages);
+        if (infoLen > 0) {
+            char *messages = (char *)malloc(infoLen);
+            glGetProgramInfoLog(programHandle, infoLen, NULL, messages);  //cjzmark todo 这里的length有问题
+            __android_log_print(ANDROID_LOG_INFO,  "nativegl_shaderUtil", "shader Link Error:%s", messages);
+            free(messages);
+        }
         // printf("%s",(char*)messages);
         g.programHandle = -1;
+        // 释放分配的内存
         return g;
     }
     g.vertexShader = vertexShader;
