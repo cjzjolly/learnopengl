@@ -41,57 +41,79 @@ RenderProgramFilter::RenderProgramFilter() {
             precision highp sampler2DArray;
             uniform sampler2D sTexture;//图像纹理输入
             uniform sampler2DArray lutTexture;//滤镜纹理输入
+
             uniform float pageSize;
+            uniform float lutSize;            // 例如 64.0
+
+
             uniform float frame;//第几帧
             uniform vec2 resolution;//分辨率
             in vec4 fragObjectColor;//接收vertShader处理后的颜色值给片元程序
+
             in vec2 fragVTexCoord;//接收vertShader处理后的纹理内坐标给片元程序
             out vec4 fragColor;//输出到的片元颜色
 
-            void main() {
-//                vec4 srcColor = texture(sTexture, fragVTexCoord);
-//                srcColor.r = clamp(srcColor.r, 0.01, 0.99);
-//                srcColor.g = clamp(srcColor.g, 0.01, 0.99);
-//                srcColor.b = clamp(srcColor.b, 0.01, 0.99);
-//                fragColor = texture(lutTexture, vec3(srcColor.b, srcColor.g, srcColor.r * (pageSize - 1.0))); //原本的方法，深度val为第三个参数
+            vec3 sampleLUT(vec3 rgb)
+            {
+                    // rgb 在 0~1，映射到 0~(lutSize-1)
+                    vec3 coord = rgb * (lutSize - 1.0);
 
+                    // 每一维的整数 / 小数部分
+                    vec3 i0 = floor(coord); //下界
+                    vec3 f  = fract(coord); //上下界之间的权值
+                    vec3 i1 = i0 + 1.0;  //上界
 
-                vec4 srcColor = texture(sTexture, fragVTexCoord);
-                float r = clamp(srcColor.r, 0.0, 1.0);
-                float g = clamp(srcColor.g, 0.0, 1.0);
-                float b = clamp(srcColor.b, 0.0, 1.0);
-                float pageWidth = pageSize - 1.0;
+                    // 限制索引范围（避免 64 → 65 越界）
+                    i0 = clamp(i0, 0.0, lutSize - 1.0);
+                    i1 = clamp(i1, 0.0, lutSize - 1.0);
 
-                int rIndex = int(r * pageWidth); // 将浮点数转换为整数基底，去除浮点值，小数点部分用作LUT两个单元之间的游标
-                float rRatioToLeft = r * pageWidth - float(rIndex); //当前256级颜色靠最接近的LUT通道单元格的左边有多“左”，值越小越近
-                float rRatioToRight = 1.0 - rRatioToLeft; //当前256级颜色靠最接近的LUT通道单元格的右边有多“右”
+                    // 每一 slice 是 64×4096
+                    // 展开方式：G 是 x 方向，R 是 y 方向，B 是 array layer
 
-                int gIndex = int(g * pageWidth);
-                float gRatioToLeft = g * pageWidth - float(gIndex);
-                float gRatioToRight = 1.0 - gRatioToLeft;
+                    // (g,r,b) 映射为 texelFetch 坐标
+                    ivec3 p000 = ivec3(int(i0.y),               int(i0.x),               int(i0.z));
+                    ivec3 p100 = ivec3(int(i0.y),               int(i1.x),               int(i0.z));
+                    ivec3 p010 = ivec3(int(i1.y),               int(i0.x),               int(i0.z));
+                    ivec3 p110 = ivec3(int(i1.y),               int(i1.x),               int(i0.z));
 
-                int bIndex = int(b * pageWidth);
-                float bRatioToLeft = b * pageWidth - float(bIndex);
-                float bRatioToRight = 1.0 - bRatioToLeft;
+                    ivec3 p001 = ivec3(int(i0.y),               int(i0.x),               int(i1.z));
+                    ivec3 p101 = ivec3(int(i0.y),               int(i1.x),               int(i1.z));
+                    ivec3 p011 = ivec3(int(i1.y),               int(i0.x),               int(i1.z));
+                    ivec3 p111 = ivec3(int(i1.y),               int(i1.x),               int(i1.z));
 
+                    // 读取 8 个点
+                    vec3 c000 = texelFetch(lutTexture, p000, 0).rgb;
+                    vec3 c100 = texelFetch(lutTexture, p100, 0).rgb;
+                    vec3 c010 = texelFetch(lutTexture, p010, 0).rgb;
+                    vec3 c110 = texelFetch(lutTexture, p110, 0).rgb;
 
-                //todo 它一个通道只有64个值，如何线性变换成256个值？例如红色通道，前一个值占比例多少，后一个值占比例多少？
-                ivec3 texelCoordsLeft = ivec3(bIndex, gIndex, rIndex);
-                ivec3 texelCoordsRight = ivec3(min(63, bIndex + 1), min(63, gIndex + 1), min(63, rIndex + 1));
-                vec4 outColorLeft = texelFetch(lutTexture, texelCoordsLeft, 0);
-                vec4 outColorRight = texelFetch(lutTexture, texelCoordsRight, 0);
+                    vec3 c001 = texelFetch(lutTexture, p001, 0).rgb;
+                    vec3 c101 = texelFetch(lutTexture, p101, 0).rgb;
+                    vec3 c011 = texelFetch(lutTexture, p011, 0).rgb;
+                    vec3 c111 = texelFetch(lutTexture, p111, 0).rgb;
 
-                float outputR =  outColorLeft.r * (1.0 - rRatioToLeft) + outColorRight.r * (1.0 - rRatioToRight);
-                float outputG =  outColorLeft.g * (1.0 - gRatioToLeft) + outColorRight.g * (1.0 - gRatioToRight);
-                float outputB =  outColorLeft.b * (1.0 - bRatioToLeft) + outColorRight.b * (1.0 - bRatioToRight);
+                    // 三线性插值
+                    vec3 c00 = mix(c000, c100, f.x);
+                    vec3 c10 = mix(c010, c110, f.x);
+                    vec3 c0  = mix(c00,  c10,  f.y);
 
+                    vec3 c01 = mix(c001, c101, f.x);
+                    vec3 c11 = mix(c011, c111, f.x);
+                    vec3 c1  = mix(c01,  c11,  f.y);
 
-
-                fragColor = vec4(outputR, outputG, outputB, 1.0);  //cjztest
-
-
-//                fragColor = vec4(0.5, 0.0, 0.0, 1.0);  //rgba
+                    return mix(c0, c1, f.z);
             }
+
+            void main()
+            {
+                    vec3 rgb = texture(sTexture, fragVTexCoord).rgb;
+
+                    // LUT 三线性插值
+                    vec3 outColor = sampleLUT(rgb);
+
+                    fragColor = vec4(outColor, 1.0);
+            }
+
     );
 
     float tempTexCoord[] =   //纹理内采样坐标,类似于canvas坐标 //这东西有问题，导致两个framebuffer的画面互相取纹理时互为颠倒
@@ -272,6 +294,8 @@ void RenderProgramFilter::drawTo(float *cameraMatrix, float *projMatrix, DrawTyp
             glBindTexture(GL_TEXTURE_2D_ARRAY, mLutTexutresPointers[0]);
             glUniform1i(glGetUniformLocation(mImageProgram.programHandle, "lutTexture"), 1); //映射到渲染脚本，获取纹理属性的指针
             glUniform1f(glGetUniformLocation(mImageProgram.programHandle, "pageSize"), longLen / mLutUnitLen); //映射到渲染脚本，获取纹理属性的指针
+            glUniform1f(glGetUniformLocation(mImageProgram.programHandle, "lutSize"), mLutUnitLen); //映射到渲染脚本，获取纹理属性的指针
+
         }
         glDrawArrays(GL_TRIANGLE_STRIP, 0, /*mPointBufferPos / 3*/ 4); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
         glDisableVertexAttribArray(mObjectPositionPointer);
