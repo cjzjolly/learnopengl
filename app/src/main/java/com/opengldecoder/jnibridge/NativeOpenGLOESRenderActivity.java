@@ -3,6 +3,8 @@ package com.opengldecoder.jnibridge;
 import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,6 +18,9 @@ import android.widget.ListView;
 import android.widget.SeekBar;
 
 import com.example.learnopengl.R;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 public class NativeOpenGLOESRenderActivity extends Activity implements View.OnClickListener {
 
@@ -154,22 +159,40 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
         mLutList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                switch (position) {
-                    case 0:
-                        mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_hei_se));
-                        break;
-                    case 1:
-                        mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_fan_cha_nuan));
-                        break;
-                    case 2:
-                        mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_menglongf));
-                        break;
-                    case 3:
-                        mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_nuanse));
-                        break;
-                    case 4:
-                        mNativeGLSurfaceView.setLut(BitmapFactory.decodeResource(getResources(), R.mipmap.lut_xianming));
-                        break;
+                AssetManager assetManager = getBaseContext().getAssets();
+                InputStream inputStream = null;
+                try {
+                    Bitmap bitmap = null;
+                    switch (position) {
+                        case 0:
+                            inputStream = assetManager.open("lut/lut_hei_se.png");
+                            bitmap = BitmapFactory.decodeStream(inputStream);
+                            break;
+                        case 1:
+                            inputStream = assetManager.open("lut/lut_fan_cha_nuan.png");
+                            bitmap = BitmapFactory.decodeStream(inputStream);
+                            break;
+                        case 2:
+                            inputStream = assetManager.open("lut/lut_menglongf.png");
+                            bitmap = BitmapFactory.decodeStream(inputStream);
+                            break;
+                        case 3:
+                            inputStream = assetManager.open("lut/lut_nuanse.png");
+                            bitmap = BitmapFactory.decodeStream(inputStream);
+                            break;
+                        case 4:
+                            inputStream = assetManager.open("lut/lut_xianming.png");
+                            bitmap = BitmapFactory.decodeStream(inputStream);
+                            break;
+                    }
+                    if (inputStream != null) {
+                        inputStream.close();
+                    }
+                    if (bitmap != null) {
+                        mNativeGLSurfaceView.setLut(bitmap);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
         });

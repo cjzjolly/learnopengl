@@ -67,21 +67,23 @@ RenderProgramFilter::RenderProgramFilter() {
                     i0 = clamp(i0, 0.0, lutSize - 1.0);
                     i1 = clamp(i1, 0.0, lutSize - 1.0);
 
-                    // 每一 slice 是 64×4096
-                    // 展开方式：G 是 x 方向，R 是 y 方向，B 是 array layer
+                    // 现在映射是：x=B, y=G, layer=R
+                    // 所以 texelFetch( lutTexture , ivec3( B , G , R ) )
 
-                    // (g,r,b) 映射为 texelFetch 坐标
-                    ivec3 p000 = ivec3(int(i0.y),               int(i0.x),               int(i0.z));
-                    ivec3 p100 = ivec3(int(i0.y),               int(i1.x),               int(i0.z));
-                    ivec3 p010 = ivec3(int(i1.y),               int(i0.x),               int(i0.z));
-                    ivec3 p110 = ivec3(int(i1.y),               int(i1.x),               int(i0.z));
+                    // z 维（layer）由 R 控制
+                    // y 维由 G 控制
+                    // x 维由 B 控制
 
-                    ivec3 p001 = ivec3(int(i0.y),               int(i0.x),               int(i1.z));
-                    ivec3 p101 = ivec3(int(i0.y),               int(i1.x),               int(i1.z));
-                    ivec3 p011 = ivec3(int(i1.y),               int(i0.x),               int(i1.z));
-                    ivec3 p111 = ivec3(int(i1.y),               int(i1.x),               int(i1.z));
+                    ivec3 p000 = ivec3(int(i0.z), int(i0.y), int(i0.x));
+                    ivec3 p100 = ivec3(int(i1.z), int(i0.y), int(i0.x));
+                    ivec3 p010 = ivec3(int(i0.z), int(i1.y), int(i0.x));
+                    ivec3 p110 = ivec3(int(i1.z), int(i1.y), int(i0.x));
 
-                    // 读取 8 个点
+                    ivec3 p001 = ivec3(int(i0.z), int(i0.y), int(i1.x));
+                    ivec3 p101 = ivec3(int(i1.z), int(i0.y), int(i1.x));
+                    ivec3 p011 = ivec3(int(i0.z), int(i1.y), int(i1.x));
+                    ivec3 p111 = ivec3(int(i1.z), int(i1.y), int(i1.x));
+
                     vec3 c000 = texelFetch(lutTexture, p000, 0).rgb;
                     vec3 c100 = texelFetch(lutTexture, p100, 0).rgb;
                     vec3 c010 = texelFetch(lutTexture, p010, 0).rgb;
@@ -91,17 +93,31 @@ RenderProgramFilter::RenderProgramFilter() {
                     vec3 c101 = texelFetch(lutTexture, p101, 0).rgb;
                     vec3 c011 = texelFetch(lutTexture, p011, 0).rgb;
                     vec3 c111 = texelFetch(lutTexture, p111, 0).rgb;
+                    // 三线性插值，加权累加
+                    float a = f.x;
+                    float b = f.y;
+                    float c = f.z;
 
-                    // 三线性插值
-                    vec3 c00 = mix(c000, c100, f.x);
-                    vec3 c10 = mix(c010, c110, f.x);
-                    vec3 c0  = mix(c00,  c10,  f.y);
+                    return
+                        c000 * (1.0-a)*(1.0-b)*(1.0-c) +
+                        c100 * a      *(1.0-b)*(1.0-c) +
+                        c010 * (1.0-a)*b      *(1.0-c) +
+                        c110 * a      *b      *(1.0-c) +
+                        c001 * (1.0-a)*(1.0-b)*c       +
+                        c101 * a      *(1.0-b)*c       +
+                        c011 * (1.0-a)*b      *c       +
+                        c111 * a      *b      *c;
+                    // 三线性插值(简化版，效果一样，但不方便和文档的公式一起对照看)
+//                    vec3 c00 = mix(c000, c100, f.r);
+//                    vec3 c10 = mix(c010, c110, f.r);
+//                    vec3 c0  = mix(c00,  c10,  f.g);
+//
+//                    vec3 c01 = mix(c001, c101, f.r);
+//                    vec3 c11 = mix(c011, c111, f.r);
+//                    vec3 c1  = mix(c01,  c11,  f.g);
+//
+//                    return mix(c0, c1, f.b);
 
-                    vec3 c01 = mix(c001, c101, f.x);
-                    vec3 c11 = mix(c011, c111, f.x);
-                    vec3 c1  = mix(c01,  c11,  f.y);
-
-                    return mix(c0, c1, f.z);
             }
 
             void main()

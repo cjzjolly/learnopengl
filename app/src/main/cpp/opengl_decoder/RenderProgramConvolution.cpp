@@ -50,18 +50,17 @@ RenderProgramConvolution::RenderProgramConvolution(float conKernel[]) {
 
             void kernalEffect(vec2 TexCoords)
             {
-                    float offsetX = 1.0 / resolution.x;
-                    float offsetY = 1.0 / resolution.y;
+                    float offset = 1.0 / resolution.x;
                     vec2 offsets[9] = vec2[](
-                            vec2(-offsetX, offsetY), // 左上
-                            vec2(0.0, offsetX), // 正上
-                            vec2(offsetX, offsetX), // 右上
-                            vec2(-offsetX, 0.0), // 左
+                            vec2(-offset, offset), // 左上
+                            vec2(0.0, offset), // 正上
+                            vec2(offset, offset), // 右上
+                            vec2(-offset, 0.0), // 左
                             vec2(0.0, 0.0), // 中
-                            vec2(offsetX, 0.0), // 右
-                            vec2(-offsetX, -offsetX), // 左下
-                            vec2(0.0, -offsetX), // 正下
-                            vec2(offsetX, -offsetX)// 右下
+                            vec2(offset, 0.0), // 右
+                            vec2(-offset, -offset), // 左下
+                            vec2(0.0, -offset), // 正下
+                            vec2(offset, -offset)// 右下
                     );
                     float kernel[9] = float[](
                         conKernel[0][0], conKernel[0][1], conKernel[0][2],
