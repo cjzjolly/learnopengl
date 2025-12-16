@@ -104,6 +104,7 @@
         <activity android:name="com.cjztest.glOffscreenProcess.demo0.OffScreenGLDemoActivity"/>
         <activity android:name="com.cjztest.glOffscreenProcess.demo1.NativeModifySurfaceActivity"/>
         <activity android:name="com.physicEffect.threeDWave.MainActivity"/>
+        <activity android:name="com.physicEffect.touchWater.MainActivity"/>
 
         <activity android:name="com.mainpage.MainPage">
             <intent-filter>

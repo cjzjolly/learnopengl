@@ -119,5 +119,13 @@ public class MainPage extends Activity {
         });
         linearLayout.addView(button);
 
+        button = new Button(this);
+        button.setText("交互波浪");
+        button.setOnClickListener(v -> {
+            Intent intent = new Intent(this, com.physicEffect.touchWater.MainActivity.class);
+            startActivity(intent);
+        });
+        linearLayout.addView(button);
+
     }
 }
