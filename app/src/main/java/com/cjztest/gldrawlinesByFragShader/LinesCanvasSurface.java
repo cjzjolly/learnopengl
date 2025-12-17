@@ -10,6 +10,9 @@ import com.cjztest.gldrawlinesByMultiVectors.Constant;
 import com.cjztest.gldrawlinesByMultiVectors.GLLineWithBezier;
 import com.cjztest.gldrawlinesByMultiVectors.MatrixState;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,17 +29,20 @@ public class LinesCanvasSurface extends GLSurfaceView {
     private final SceneRenderer mRenderer;
     private int mWidth;
     private int mHeight;
-    /**线条列表**/
-    private List<GLLineWithBezier> mLines = new ArrayList<>();
-    private GLLineWithBezier mCurrentLine;
     private int mProgram;
     private int maPositionPointer;
     private int maColorPointer;
     private int muMVPMatrixPointer;
     private int mColor = 0xFFFFAA00;
-    private GLLineWithBezier.PenStyle mPenStyle = GLLineWithBezier.PenStyle.NORMAL;
-    private GLLineWithBezier.DisplayStyle mDisPlayStyle = GLLineWithBezier.DisplayStyle.TRIANGLE_STRIPS;
 
+    // 顶点数据：两个三角形组成矩形（NDC坐标，-1 ~ +1）
+     private final float[] DRAWING_RAGE = {
+            -1.0f, -1.0f,   // 0: 左下
+            1.0f, -1.0f,   // 1: 右下
+            -1.0f,  1.0f,   // 2: 左上
+            1.0f,  1.0f    // 3: 右上
+    };
+    private FloatBuffer vertexBuffer;
 
     public LinesCanvasSurface(Context context) {
         super(context);
@@ -45,6 +51,15 @@ public class LinesCanvasSurface extends GLSurfaceView {
         mRenderer = new SceneRenderer();	//创建场景渲染器
         setRenderer(mRenderer);				//设置渲染器
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);//设置渲染模式为主动渲染
+        init();
+    }
+
+    private void init() {
+        ByteBuffer bb = ByteBuffer.allocateDirect(DRAWING_RAGE.length * 4);
+        bb.order(ByteOrder.nativeOrder());
+        vertexBuffer = bb.asFloatBuffer();
+        vertexBuffer.put(DRAWING_RAGE);
+        vertexBuffer.position(0);
     }
 
     private int loadShader(int type, String shaderCode) {
@@ -160,37 +175,19 @@ public class LinesCanvasSurface extends GLSurfaceView {
         muMVPMatrixPointer = GLES30.glGetUniformLocation(mProgram, "uMVPMatrix");
     }
 
-    public void setPenStyle(GLLineWithBezier.PenStyle penStyle) {
-        this.mPenStyle = penStyle;
-    }
-
-    public void setDisplayStyle(GLLineWithBezier.DisplayStyle displayStyle) {
-        this.mDisPlayStyle = displayStyle;
-    }
-
     @Override
     public boolean onTouchEvent(MotionEvent e) {
         switch (e.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                mCurrentLine = new GLLineWithBezier();
-                mCurrentLine.setPenStyle(mPenStyle);
-                mCurrentLine.setDisplayStyle(mDisPlayStyle);
-                mCurrentLine.setLineWidth((float) (0.05f));
                 break;
             case MotionEvent.ACTION_MOVE:
-                if (null == mCurrentLine) {
-                    break;
-                }
                 if (mWidth <= 0 || mHeight <= 0) {
                     break;
                 }
                 //使用随机变化颜色
                 Log.i("cjztest", "pressure:" + e.getPressure());
-                mCurrentLine.addPoint((e.getX() / mWidth - 0.5f) * 3f * Constant.ratio,  (0.5f - e.getY() / mHeight) * 3f, mColor, e.getPressure(), 1f);
                 break;
             case MotionEvent.ACTION_UP:
-                mLines.add(mCurrentLine);
-                mCurrentLine = null;
                 break;
         }
         requestRender();
@@ -241,20 +238,23 @@ public class LinesCanvasSurface extends GLSurfaceView {
             GLES30.glUseProgram(mProgram);
             GLES30.glUniformMatrix4fv(muMVPMatrixPointer, 1, false, MatrixState.getFinalMatrix(), 0);         //给shader脚本的位置指针送上位置矩阵
 
-            //遍历所有线条并绘制
-            for (int i = 0; i < mLines.size(); i++) {
-                GLLineWithBezier line = mLines.get(i);
-                if (null == line) {
-                    continue;
-                }
-                GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA);
-                line.draw(maPositionPointer, maColorPointer);
-            }
 
-            if (null != mCurrentLine) {
-                GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA);
-                mCurrentLine.draw(maPositionPointer, maColorPointer);
-            }
+            GLES30.glEnableVertexAttribArray(maPositionPointer);
+            vertexBuffer.position(0);
+            GLES30.glVertexAttribPointer(
+                    maPositionPointer,      // attribute 位置索引
+                    2,                    // 每个顶点2个float (x, y)
+                    GLES30.GL_FLOAT,     // 类型
+                    false,               // 是否归一化
+                    0,                   // stride = 0（紧密排列）
+                    vertexBuffer         // 数据
+            );
+
+            //用 GL_TRIANGLE_STRIP 只需 4 个顶点画矩形
+            GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4);
+
+            GLES30.glDisableVertexAttribArray(maPositionPointer);
+        
         }
     }
 
