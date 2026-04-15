@@ -51,10 +51,11 @@ public class GLLineWithBezier {
     private float mLineWidth = 0.05f;
     /**标准向量，用来确认端点的旋转量**/
     private float mStandardVec[] = new float[] {0, 1, 0};
-    /**上一次做旋转计算用过的坐标**/
+    /**上一次做旋转计算时，当时输入的线段中心点（也是触摸点）**/
     private float mPrevInputVec[] = null;
 
-    private float mPrevRotatedVec[] = null;
+    /**上一次计算出来的线段两端点**/
+    private float mPrevRotatedPoints[] = null;
 
     /**上上次传入的坐标**/
     private float mBezierKeyPoint0[] = null;
@@ -265,10 +266,7 @@ public class GLLineWithBezier {
                 mBezierKeyPoint1 = new float[] {x, y, 0};
                 return;
             }
-//            double distance = distance(new float[] {x, y}, mBezierKeyPoint1);
-//            if (distance < 0.02f) { //太小的移动这次就不纳入顶点了
-//                return;
-//            }
+
 
             if (mPointBuf == null) {
                 mPointByteBuffer = ByteBuffer.allocateDirect(mInitVertexCount * 4);    //顶点数 * sizeof(float)
@@ -360,38 +358,45 @@ public class GLLineWithBezier {
         //添加线段
         float dirVec[] = new float[] {x - mPrevInputVec[0], y - mPrevInputVec[1], 0 - mPrevInputVec[2]}; //把这次输入的向量-上次输入的向量，得到绘制移动方向的向量
         double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, dirVec); //旋转角度
-        //todo 如果旋转角度产生投影
+
         float vert[] = new float[6];
         try {
-            float rotatedVec[] = rotate2d(new float[] {initVert[0], initVert[1]}, angle, 0);
+            float rotatedVec[] = rotate2d(new float[] {initVert[0], initVert[1]}, angle, 0);  //旋转左端点
             vert[0] = rotatedVec[0];
             vert[1] = rotatedVec[1];
-            rotatedVec = rotate2d(new float[] {initVert[3], initVert[4]}, angle, 0);
+            rotatedVec = rotate2d(new float[] {initVert[3], initVert[4]}, angle, 0);  //旋转右端点
             vert[3] = rotatedVec[0];
             vert[4] = rotatedVec[1];
         } catch (Exception e) {
             e.printStackTrace();
         }
-        vert[0] += mPrevInputVec[0];
-        vert[1] += mPrevInputVec[1];
-        vert[3] += mPrevInputVec[0];
-        vert[4] += mPrevInputVec[1];
+        vert[0] += x;
+        vert[1] += y;
+        vert[3] += x;
+        vert[4] += y;
 
 
 
-
-        /*todo 上一次端点和这次端点是否重叠**/
-        if (mPrevRotatedVec != null) {
-
+        //todo 检查这次构成的线段和上次构成的线段是否相交，是的话终止过程   单纯判断最近两次线段是否相交并不能有效防止线条出现重叠区域
+        if (vert != null && mPrevRotatedPoints != null) {
+            Log.e("cjztest", String.format(
+                    "seg0.point0.x=%f, seg0.point0.y=%f,      seg0.point1.x=%f, seg0.point1.y=%f\n" +
+                            "seg1.point0.x=%f, seg1.point0.y=%f,      seg1.point1.x=%f, seg1.point1.y=%f\n",
+                    vert[0], vert[1], vert[3], vert[4],
+                    mPrevRotatedPoints[0],mPrevRotatedPoints[1],mPrevRotatedPoints[3],mPrevRotatedPoints[4]));
         }
-        mPrevRotatedVec = vert;
+        if (mPrevRotatedPoints != null && intersectCheck(
+                new float[] {vert[0], vert[1], vert[3], vert[4]},
+                new float[] {mPrevRotatedPoints[0],mPrevRotatedPoints[1],mPrevRotatedPoints[3],mPrevRotatedPoints[4]})) {
+            return;
+        }
 
 
 
         //消除上一次的线头
         if (mIsLineCapEndDrew) {
             mPointBufferPos -= endCapPointCount;
-            mColorBufferPos -= endCapPointCount / 3 * 4;
+            mColorBufferPos -= endCapPointCount / 3 * 4;  //x,y,z坐标为一组，每个坐标值为4个字节
         }
 
 
@@ -424,12 +429,20 @@ public class GLLineWithBezier {
         checkCapacity();
 
         mPrevInputVec = new float[] {x, y, 0};
+        mPrevRotatedPoints = vert.clone();
     }
 
 
-    /**todo 通过斜率判断两个线段是否相交**/
-    private void intersectCheck(float line0X, float line0Y, float line1X, float line1Y) {
-//        float k0 =
+    /**
+     * todo 判断两个线段是否相交
+     *
+     * @return
+     **/
+    private boolean intersectCheck(float[] line0RotatedVector, float[] line1RotatedVector) {
+        if (line0RotatedVector == null || line1RotatedVector == null) {
+            return false;
+        }
+        return LineIntersection.doIntersect(line0RotatedVector, line1RotatedVector);
     }
 
     private void checkCapacity() {

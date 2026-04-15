@@ -32,12 +32,13 @@ public class LinesCanvasSurface extends GLSurfaceView {
     private int mColor = 0xFFFFAA00;
     private GLLineWithBezier.PenStyle mPenStyle = GLLineWithBezier.PenStyle.NORMAL;
     private GLLineWithBezier.DisplayStyle mDisPlayStyle = GLLineWithBezier.DisplayStyle.TRIANGLE_STRIPS;
+    private float mLineWidth = 0.3f;
 
 
     public LinesCanvasSurface(Context context) {
         super(context);
         this.setEGLContextClientVersion(3); //设置使用OPENGL ES3.0
-//        setEGLConfigChooser(new MSAAConfigChooser()); //fixme:部分设备不支持，暂时取消
+        setEGLConfigChooser(new MSAAConfigChooser());
         mRenderer = new SceneRenderer();	//创建场景渲染器
         setRenderer(mRenderer);				//设置渲染器
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);//设置渲染模式为主动渲染
@@ -171,7 +172,7 @@ public class LinesCanvasSurface extends GLSurfaceView {
                 mCurrentLine = new GLLineWithBezier();
                 mCurrentLine.setPenStyle(mPenStyle);
                 mCurrentLine.setDisplayStyle(mDisPlayStyle);
-                mCurrentLine.setLineWidth((float) (0.05f));
+                mCurrentLine.setLineWidth(mLineWidth);
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (null == mCurrentLine) {
@@ -180,8 +181,8 @@ public class LinesCanvasSurface extends GLSurfaceView {
                 if (mWidth <= 0 || mHeight <= 0) {
                     break;
                 }
-                //使用随机变化颜色
                 Log.i("cjztest", "pressure:" + e.getPressure());
+                //-0.5f的作用是将安卓触摸事件的坐标系（左上角为0点），转换为中心点为0点
                 mCurrentLine.addPoint((e.getX() / mWidth - 0.5f) * 3f * Constant.ratio,  (0.5f - e.getY() / mHeight) * 3f, mColor, e.getPressure(), 1f);
                 break;
             case MotionEvent.ACTION_UP:
