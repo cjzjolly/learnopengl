@@ -50,17 +50,16 @@ public class GLLineWithBezier {
     /**线条宽度**/
     private float mLineWidth = 0.05f;
     /**标准向量，用来确认端点的旋转量**/
-    private float mStandardVec[] = new float[] {0, 1, 0};
-    /**上一次做旋转计算用过的坐标**/
-    private float mPrevInputVec[] = null;
-
-    private float mPrevRotatedVec[] = null;
+    private PointF mStandardVec = new PointF(0, 1);
+    /**上一次做旋转计算时，当时输入的线段中心点（也是触摸点）**/
+    private PointF mPrevInputVec = null;
 
     /**上上次传入的坐标**/
-    private float mBezierKeyPoint0[] = null;
-    private float mBezierKeyPoint1[] = null;
+    private PointF mBezierKeyPoint0 = null;
+    private PointF mBezierKeyPoint1 = null;
     private boolean mIsLineCapHeadDrew = false;
     private boolean mIsLineCapEndDrew = false;
+    private PointF mPrevVec = null;
     private float mPrevPressure = Float.MIN_VALUE;
     private double mPrevDistance = Float.MIN_VALUE;
 
@@ -96,8 +95,8 @@ public class GLLineWithBezier {
     }
 
     /**距离计算**/
-    private double distance(float point0[], float point1[]) {
-        return Math.sqrt(Math.pow(point0[0] - point1[0], 2) + Math.pow(point0[1] - point1[1], 2));
+    private double distance(PointF point0, PointF point1) {
+        return Math.sqrt(Math.pow(point0.x - point1.y, 2) + Math.pow(point0.x - point1.y, 2));
     }
 
     /**二次贝塞尔**/
@@ -121,13 +120,10 @@ public class GLLineWithBezier {
 
 
     private int mPrevAngle = -1;
-    /**对向量继续进行旋转 todo 要防止角度特别太厉害**/
-    private float[] rotate2d(float vec[], double angle, double moveDistance) throws Exception {
+    /**对向量继续进行旋转**/
+    private PointF rotate2d(PointF vec, double angle, double moveDistance) throws Exception {
         if (null == vec) {
             return null;
-        }
-        if (vec.length > 2) {
-            throw new Exception("不接受超过2D的坐标");
         }
         int intAngle = (int) angle % 360;
         if (mPrevAngle != -1) {
@@ -136,31 +132,30 @@ public class GLLineWithBezier {
         mPrevAngle = intAngle;
         Log.i("cjztest", "andgle:" + intAngle + ", moveDistance:" + moveDistance);
         double angleRad = Math.toRadians(intAngle);
-        float rotatedVec[] = new float[2];
-        rotatedVec[0] = (float) (Math.cos(angleRad) * vec[0] - Math.sin(angleRad) * vec[1]);
-        rotatedVec[1] = (float) (Math.sin(angleRad) * vec[0] + Math.cos(angleRad) * vec[1]);
+        PointF rotatedVec = new PointF();
+        rotatedVec.x = (float) (Math.cos(angleRad) * vec.x - Math.sin(angleRad) * vec.y);
+        rotatedVec.y = (float) (Math.sin(angleRad) * vec.x + Math.cos(angleRad) * vec.y);
         return rotatedVec;
     }
 
 
-    private float mPrevVec[] = null;
     /**给线头添加符合线宽的边界，便于和纤体本身链接**/
-    private void lineCapAddBorder(double angle, float firstVec[], List<float[]> newVecs, float width) {
+    private void lineCapAddBorder(double angle, PointF firstVec, List<float[]> newVecs, float width) {
         try {
             if (mPrevVec == null) {
                 mPrevVec = firstVec;
             }
-            float rotatedVec0[] = rotate2d(new float[] {-width / 2f, 0}, angle + 180, distance(mPrevVec, firstVec));
-            float rotatedVec1[] = rotate2d(new float[] {width / 2f, 0}, angle + 180, distance(mPrevVec, firstVec));
+            PointF rotatedVec0 = rotate2d(new PointF(-width / 2f, 0), angle + 180, distance(mPrevVec, firstVec));
+            PointF rotatedVec1 = rotate2d(new PointF(width / 2f, 0), angle + 180, distance(mPrevVec, firstVec));
             float newVec[] = new float[6];
             if (rotatedVec0 == null || rotatedVec1 == null) {
                 return;
             }
             //偏移到对应位置
-            newVec[0] = rotatedVec0[0] + firstVec[0];
-            newVec[1] = rotatedVec0[1] + firstVec[1];
-            newVec[3] = rotatedVec1[0] + firstVec[0];
-            newVec[4] = rotatedVec1[1] + firstVec[1];
+            newVec[0] = rotatedVec0.x + firstVec.x;
+            newVec[1] = rotatedVec0.y + firstVec.y;
+            newVec[3] = rotatedVec1.x + firstVec.x;
+            newVec[4] = rotatedVec1.y + firstVec.y;
             newVecs.add(newVec);
         } catch (Exception e) {
             e.printStackTrace();
@@ -169,10 +164,7 @@ public class GLLineWithBezier {
 
     /**绘制线头
      * @param isHead 是否曲线头部添加线帽，否则视为曲线尾部添加线帽**/
-    private int lineCap(boolean isHead, @NonNull float firstVec[], @NonNull float secVec[], int color, float width) {
-        if (null == firstVec) {
-            return -1;
-        }
+    private int lineCap(boolean isHead, @NonNull PointF firstVec, @NonNull PointF secVec, int color, float width) {
         if (mHeadPointBuf == null) {
             mHeadCapPointByteBuffer = ByteBuffer.allocateDirect(mHeadInitVertexCount * 4);    //顶点数 * sizeof(float)
             mHeadCapPointByteBuffer.order(ByteOrder.nativeOrder());
@@ -190,13 +182,14 @@ public class GLLineWithBezier {
         }
         /**1、了解线条开始的方向，将半径线条绕旋转该方向与标准测量用向量的夹角的角度量
          * 2、旋转180度时按照一定步进产生多个顶点，todo 但怎么确定旋转的方向是顺时针还是逆时针？以什么为依据判断？以传入向量方向为参考，但具体怎么做？*/
-        float initVert[] = new float[] { //初始时左端点的坐标，初始时在原点两侧，然后以传入的顶点作为偏移量
+        PointF initVert = new PointF( //初始时左端点的坐标，初始时在原点两侧，然后以传入的顶点作为偏移量
                 -width / 2f, 0
-        };
+        );
         //旋转并在过程中产生顶点
-        float actualVec[] = new float[3];
-        actualVec[0] = secVec[0] - firstVec[0];
-        actualVec[1] = secVec[1] - firstVec[1];
+        PointF actualVec = new PointF(
+            secVec.x - firstVec.x,
+            secVec.y - firstVec.y
+        );
 //        if (Math.abs(actualVec[0]) < 0.0001f && Math.abs(actualVec[1]) < 0.0001f) {        //todo 如果相减之后遇到(0,0)向量怎么办呢？只能出现这种状况的向量不让它传入了
 //            Log.e("cjztest", "fuck");
 //        }
@@ -213,13 +206,13 @@ public class GLLineWithBezier {
 //        for (double degreeBias = 180 + angle; degreeBias >= 0 + angle; degreeBias -= step) {
         for (double degreeBias = angle; degreeBias <= 180 + angle; degreeBias += step) {
                 try {
-                float rotatedVec[] = rotate2d(initVert, degreeBias, 0);
+                PointF rotatedVec = rotate2d(initVert, degreeBias, 0);
                 float newVec[] = new float[6];
                 //偏移到对应位置
-                newVec[0] = rotatedVec[0] + firstVec[0];
-                newVec[1] = rotatedVec[1] + firstVec[1];
-                newVec[3] += firstVec[0];
-                newVec[4] += firstVec[1];
+                newVec[0] = rotatedVec.x + firstVec.x;
+                newVec[1] = rotatedVec.y + firstVec.y;
+                newVec[3] += firstVec.x;
+                newVec[4] += firstVec.y;
                 newVecs.add(newVec);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -258,17 +251,14 @@ public class GLLineWithBezier {
         //按初始化大小初始化顶点字节数组和顶点数组
         synchronized (mLock) {
             if (null == mBezierKeyPoint0) {
-                mBezierKeyPoint0 = new float[] {x, y, 0};
+                mBezierKeyPoint0 = new PointF(x, y);
                 return;
             }
             if (null == mBezierKeyPoint1) {
-                mBezierKeyPoint1 = new float[] {x, y, 0};
+                mBezierKeyPoint1 = new PointF(x, y);
                 return;
             }
-//            double distance = distance(new float[] {x, y}, mBezierKeyPoint1);
-//            if (distance < 0.02f) { //太小的移动这次就不纳入顶点了
-//                return;
-//            }
+
 
             if (mPointBuf == null) {
                 mPointByteBuffer = ByteBuffer.allocateDirect(mInitVertexCount * 4);    //顶点数 * sizeof(float)
@@ -287,12 +277,12 @@ public class GLLineWithBezier {
             }
 
             //通过贝塞尔曲线细化顶点
-            PointF keyPoint0 = new PointF((mBezierKeyPoint0[0] + mBezierKeyPoint1[0]) / 2f, (mBezierKeyPoint0[1] + mBezierKeyPoint1[1]) / 2f);
-            PointF keyPoint1 = new PointF(mBezierKeyPoint1[0], mBezierKeyPoint1[1]);
-            PointF keyPoint2 = new PointF((x + mBezierKeyPoint1[0]) / 2f, (y + mBezierKeyPoint1[1]) / 2f);
+            PointF keyPoint0 = new PointF((mBezierKeyPoint0.x + mBezierKeyPoint1.x) / 2f, (mBezierKeyPoint0.y + mBezierKeyPoint1.y) / 2f);
+            PointF keyPoint1 = new PointF(mBezierKeyPoint1.x, mBezierKeyPoint1.y);
+            PointF keyPoint2 = new PointF((x + mBezierKeyPoint1.x) / 2f, (y + mBezierKeyPoint1.y) / 2f);
             List<PointF> points = bezierCalc(new PointF[] {keyPoint0, keyPoint1, keyPoint2});
 
-            double distance = distance(new float[] {x, y}, mBezierKeyPoint1);
+            double distance = distance(new PointF(x, y), mBezierKeyPoint1);
             for (int i = 0; i < points.size(); i++) {
                 PointF pointF = points.get(i);
                 switch (mPenStyle) {
@@ -331,8 +321,8 @@ public class GLLineWithBezier {
             }
             mPrevDistance = distance; //记录上一次的距离值
             mPrevPressure = pressure; //记录上一次的压力值
-            mBezierKeyPoint0 = new float[] {mBezierKeyPoint1[0], mBezierKeyPoint1[1]};
-            mBezierKeyPoint1 = new float[] {x, y};
+            mBezierKeyPoint0 = new PointF(mBezierKeyPoint1.x, mBezierKeyPoint1.y);
+            mBezierKeyPoint1 = new PointF(x, y);
         }
     }
 
@@ -348,45 +338,34 @@ public class GLLineWithBezier {
 //        initVert[3] = (float) (initVert[3] * ratio);
 
         if (null == mPrevInputVec) {
-            mPrevInputVec = new float[] {x, y, 0};
+            mPrevInputVec = new PointF(x, y);
             return;
         }
 
         //添加线头，只执行一次
         if (!mIsLineCapHeadDrew) {
-            lineCap(true, mPrevInputVec, new float[] {x, y, 0}, colorARGB, width);
+            lineCap(true, mPrevInputVec, new PointF(x, y), colorARGB, width);
             mIsLineCapHeadDrew = true;
         }
         //添加线段
-        float dirVec[] = new float[] {x - mPrevInputVec[0], y - mPrevInputVec[1], 0 - mPrevInputVec[2]}; //把这次输入的向量-上次输入的向量，得到绘制移动方向的向量
+        PointF dirVec = new PointF(x - mPrevInputVec.x, y - mPrevInputVec.y); //把这次输入的向量-上次输入的向量，得到绘制移动方向的向量
         double angle = calcAngleOfVectorsOnXYPanel(mStandardVec, dirVec); //旋转角度
-        //todo 如果旋转角度产生投影
-        float vert[] = new float[6];
+        PointF lineSegPoint[] = new PointF[] {new PointF(), new PointF()};
+
         try {
-            float rotatedVec[] = rotate2d(new float[] {initVert[0], initVert[1]}, angle, 0);
-            vert[0] = rotatedVec[0];
-            vert[1] = rotatedVec[1];
-            rotatedVec = rotate2d(new float[] {initVert[3], initVert[4]}, angle, 0);
-            vert[3] = rotatedVec[0];
-            vert[4] = rotatedVec[1];
+            PointF rotatedVec = rotate2d(new PointF(initVert[0], initVert[1]), angle, 0);  //旋转左端点
+            lineSegPoint[0].x = rotatedVec.x;
+            lineSegPoint[0].y = rotatedVec.y;
+            rotatedVec = rotate2d(new PointF(initVert[3], initVert[4]), angle, 0);  //旋转右端点
+            lineSegPoint[1].x = rotatedVec.x;
+            lineSegPoint[1].y = rotatedVec.y;
         } catch (Exception e) {
             e.printStackTrace();
         }
-        vert[0] += mPrevInputVec[0];
-        vert[1] += mPrevInputVec[1];
-        vert[3] += mPrevInputVec[0];
-        vert[4] += mPrevInputVec[1];
-
-
-
-
-        /*todo 上一次端点和这次端点是否重叠**/
-        if (mPrevRotatedVec != null) {
-
-        }
-        mPrevRotatedVec = vert;
-
-
+        lineSegPoint[0].x += x;
+        lineSegPoint[0].y += y;
+        lineSegPoint[1].x += x;
+        lineSegPoint[1].y += y;
 
         //消除上一次的线头
         if (mIsLineCapEndDrew) {
@@ -397,17 +376,17 @@ public class GLLineWithBezier {
 
 
         //写入坐标值
-        for (int i = 0; i < vert.length; i++) {
+        for (PointF pointF : lineSegPoint) {
             checkCapacity();
-            mPointBuf.put(mPointBufferPos++, vert[i]);
+            mPointBuf.put(mPointBufferPos++, pointF.x);
+            mPointBuf.put(mPointBufferPos++, pointF.y);
+            mPointBuf.put(mPointBufferPos++, 0);
         }
-        for (int i = 0; i < vert.length / 3; i++) {
+
+
+        for (int i = 0; i < lineSegPoint.length; i++) {
             //写入颜色值r,g,b,a
             int color = colorARGB;  //argb to abgr
-//            int color = Color.GREEN;  //cjztest
-//            if (i == 1) {
-//                color = Color.YELLOW; //cjztest
-//            }
             float alpha = (float) (((color & 0xFF000000) >> 24) & 0x000000FF) / 255f;
             float blue = (float) ((color & 0x000000FF)) / 255f;
             float green = (float) ((color & 0x0000FF00) >> 8) / 255f;
@@ -419,17 +398,11 @@ public class GLLineWithBezier {
         }
         checkCapacity();
         //添加线尾，每次清除上一次的线尾，然后增加一次新的
-        endCapPointCount = lineCap(false, new float[] {x, y, 0}, mPrevInputVec, colorARGB, width);
+        endCapPointCount = lineCap(false, new PointF(x, y), mPrevInputVec, colorARGB, width);
         mIsLineCapEndDrew = true;
         checkCapacity();
 
-        mPrevInputVec = new float[] {x, y, 0};
-    }
-
-
-    /**todo 通过斜率判断两个线段是否相交**/
-    private void intersectCheck(float line0X, float line0Y, float line1X, float line1Y) {
-//        float k0 =
+        mPrevInputVec = new PointF(x, y);
     }
 
     private void checkCapacity() {
@@ -456,12 +429,12 @@ public class GLLineWithBezier {
     }
 
     //XY平面上的的旋转量
-    private double calcAngleOfVectorsOnXYPanel(float vec0[], float vec1[]) {
-        double distanceOfVec0 = Math.sqrt(Math.pow(vec0[0], 2) + Math.pow(vec0[1], 2));
-        double distanceOfVec1 = Math.sqrt(Math.pow(vec1[0], 2) + Math.pow(vec1[1], 2));
-        double dotProduct = vec0[0] * vec1[0] + vec0[1] * vec1[1];
+    private double calcAngleOfVectorsOnXYPanel(PointF vec0, PointF vec1) {
+        double distanceOfVec0 = Math.sqrt(Math.pow(vec0.x, 2) + Math.pow(vec0.y, 2));
+        double distanceOfVec1 = Math.sqrt(Math.pow(vec1.x, 2) + Math.pow(vec1.y, 2));
+        double dotProduct = vec0.x * vec1.x + vec0.y * vec1.y;
         double angle = Math.toDegrees(Math.acos(dotProduct / (distanceOfVec0 * distanceOfVec1)));
-        if (vec1[0] > 0) {
+        if (vec1.x > 0) {
             angle = 360f - angle;
         }
         return angle;
@@ -516,11 +489,11 @@ public class GLLineWithBezier {
             GLES30.glEnableVertexAttribArray(vertPointer); //启用顶点属性
             GLES30.glEnableVertexAttribArray(colorPointer);  //启用颜色属性
 
-//            GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ZERO); //可以解决线条自身重叠问题
+            GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ZERO); //可以解决线条自身重叠问题， 但透明度会无法叠加起来
 
             switch (mDisplayStyle) {
                 case TRIANGLE_STRIPS:
-                    GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, getPointBufferPos() / 3); //cjztest
+                    GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, getPointBufferPos() / 3);
                     break;
                 case LINE:
                     GLES30.glDrawArrays(GLES30.GL_LINES, 0, getPointBufferPos() / 3); //绘制线条，添加的point浮点数/3才是坐标数（因为一个坐标由x,y,z3个float构成，不能直接用）
