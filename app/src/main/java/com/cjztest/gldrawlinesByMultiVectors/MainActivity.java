@@ -19,28 +19,23 @@ public class MainActivity extends Activity {
         container.addView(linesCanvasSurface);
         RadioGroup radioGroup = findViewById(R.id.draw_lines_style_choice);
         RadioGroup radioGroupDisplay = findViewById(R.id.display_lines_style_choice);
-        radioGroup.setOnCheckedChangeListener(((group, checkedId) -> {
-            switch (checkedId) {
-                case R.id.draw_lines_style_normal:
-                    linesCanvasSurface.setPenStyle(GLLineWithBezier.PenStyle.NORMAL);
-                    break;
-                case R.id.draw_lines_style_pen:
-                    linesCanvasSurface.setPenStyle(GLLineWithBezier.PenStyle.BY_ACC);
-                    break;
-                case R.id.draw_lines_style_pen_of_device:
-                    linesCanvasSurface.setPenStyle(GLLineWithBezier.PenStyle.BY_DEV_PRESSURE);
-                    break;
+        radioGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.draw_lines_style_normal) {
+                linesCanvasSurface.setPenStyle(GLLineWithBezier.PenStyle.NORMAL);
+            } else if (checkedId == R.id.draw_lines_style_pen) {
+                linesCanvasSurface.setPenStyle(GLLineWithBezier.PenStyle.BY_ACC);
+            } else if (checkedId == R.id.draw_lines_style_pen_of_device) {
+                linesCanvasSurface.setPenStyle(GLLineWithBezier.PenStyle.BY_DEV_PRESSURE);
             }
-        }));
-        radioGroupDisplay.setOnCheckedChangeListener(((group, checkedId) -> {
-            switch (checkedId) {
-                case R.id.display_style_tri:
-                    linesCanvasSurface.setDisplayStyle(GLLineWithBezier.DisplayStyle.TRIANGLE_STRIPS);
-                    break;
-                case R.id.display_style_line:
-                    linesCanvasSurface.setDisplayStyle(GLLineWithBezier.DisplayStyle.LINE);
-                    break;
+        });
+
+        radioGroupDisplay.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.display_style_tri) {
+                linesCanvasSurface.setDisplayStyle(GLLineWithBezier.DisplayStyle.TRIANGLE_STRIPS);
+            } else if (checkedId == R.id.display_style_line) {
+                linesCanvasSurface.setDisplayStyle(GLLineWithBezier.DisplayStyle.LINE);
             }
-        }));
+        });
+
     }
 }

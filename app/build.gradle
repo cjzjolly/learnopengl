@@ -4,13 +4,15 @@ plugins {
 }
 
 android {
-    compileSdkVersion 34
+    namespace 'com.example.learnopengl'
+//    ndkVersion "27.0.12077973"
+    compileSdkVersion 36
     buildToolsVersion "30.0.3"
 
     defaultConfig {
         applicationId "com.example.learnopengl"
         minSdkVersion 24
-        targetSdkVersion 30
+        targetSdkVersion 34
         versionCode 1
         versionName "1.0"
 
@@ -47,7 +49,7 @@ android {
             jni.srcDirs = []
         }
     }
-    ndkVersion '20.1.5948944'
+//    ndkVersion '20.1.5948944'
     kotlinOptions {
         jvmTarget = '1.8'
     }

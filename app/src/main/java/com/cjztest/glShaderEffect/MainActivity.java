@@ -29,16 +29,15 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.btn_light_mode:
-                mEffectLayer.selectMode(EffectLayerBlendTest.RENDERER_EFFECT.LIGHT_POTS);
-                break;
-            case R.id.btn_sea_mode:
-                mEffectLayer.selectMode(EffectLayerBlendTest.RENDERER_EFFECT.SEA);
-                break;
-            case R.id.btn_two_dimension_wave:
-                mEffectLayer.selectMode(EffectLayerBlendTest.RENDERER_EFFECT.WAVE_2D);
-                break;
+        int id = v.getId();
+
+        if (id == R.id.btn_light_mode) {
+            mEffectLayer.selectMode(EffectLayerBlendTest.RENDERER_EFFECT.LIGHT_POTS);
+        } else if (id == R.id.btn_sea_mode) {
+            mEffectLayer.selectMode(EffectLayerBlendTest.RENDERER_EFFECT.SEA);
+        } else if (id == R.id.btn_two_dimension_wave) {
+            mEffectLayer.selectMode(EffectLayerBlendTest.RENDERER_EFFECT.WAVE_2D);
         }
     }
+
 }

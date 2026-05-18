@@ -43,39 +43,32 @@ public class NativeOpenGLOESRenderActivity extends Activity implements View.OnCl
 
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean b) {
-            switch (seekBar.getId()) {
-                case R.id.seekBar_brightness:
-                    mNativeGLSurfaceView.setRenderBrightness((float) progress / 100f - 1f);
-                    break;
+            int id = seekBar.getId();
 
-                case R.id.seekBar_channel_red:
-                    rgb[0] = (float) progress / 100f;
-                    mNativeGLSurfaceView.setRenderWhiteBalance(rgb[0], rgb[1], rgb[2]);
-                    break;
-                case R.id.seekBar_channel_green:
-                    rgb[1] = (float) progress / 100f;
-                    mNativeGLSurfaceView.setRenderWhiteBalance(rgb[0], rgb[1], rgb[2]);
-                    break;
-                case R.id.seekBar_channel_blue:
-                    rgb[2] = (float) progress / 100f;
-                    mNativeGLSurfaceView.setRenderWhiteBalance(rgb[0], rgb[1], rgb[2]);
-                    break;
-                case R.id.seekBar_contrast:
-                    mNativeGLSurfaceView.setRenderContrast((float) progress / 100f);
-                    break;
-                case R.id.seekBar_scale_x:
-                    scaleX = (float) progress / 100f;
-                    mNativeGLSurfaceView.setScale(scaleX, scaleY);
-                    break;
-                case R.id.seekBar_scale_y:
-                    scaleY = (float) progress / 100f;
-                    mNativeGLSurfaceView.setScale(scaleX, scaleY);
-                    break;
-                case R.id.seekBar_rotate:
-                    mNativeGLSurfaceView.setRotate(progress);
-                    break;
+            if (id == R.id.seekBar_brightness) {
+                mNativeGLSurfaceView.setRenderBrightness((float) progress / 100f - 1f);
+            } else if (id == R.id.seekBar_channel_red) {
+                rgb[0] = (float) progress / 100f;
+                mNativeGLSurfaceView.setRenderWhiteBalance(rgb[0], rgb[1], rgb[2]);
+            } else if (id == R.id.seekBar_channel_green) {
+                rgb[1] = (float) progress / 100f;
+                mNativeGLSurfaceView.setRenderWhiteBalance(rgb[0], rgb[1], rgb[2]);
+            } else if (id == R.id.seekBar_channel_blue) {
+                rgb[2] = (float) progress / 100f;
+                mNativeGLSurfaceView.setRenderWhiteBalance(rgb[0], rgb[1], rgb[2]);
+            } else if (id == R.id.seekBar_contrast) {
+                mNativeGLSurfaceView.setRenderContrast((float) progress / 100f);
+            } else if (id == R.id.seekBar_scale_x) {
+                scaleX = (float) progress / 100f;
+                mNativeGLSurfaceView.setScale(scaleX, scaleY);
+            } else if (id == R.id.seekBar_scale_y) {
+                scaleY = (float) progress / 100f;
+                mNativeGLSurfaceView.setScale(scaleX, scaleY);
+            } else if (id == R.id.seekBar_rotate) {
+                mNativeGLSurfaceView.setRotate(progress);
             }
         }
+
 
         @Override
         public void onStartTrackingTouch(SeekBar seekBar) {

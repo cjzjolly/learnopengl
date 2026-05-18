@@ -31,30 +31,30 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.btn_scale:
-                mPSEffectLayer.setPSFunciton(GLFrameBufferEffectPingPongSave.PSFunciton.PS_BE_BIGGER);
-                break;
-            case R.id.btn_scale_small:
-                mPSEffectLayer.setPSFunciton(GLFrameBufferEffectPingPongSave.PSFunciton.PS_BE_SMALLER);
-                break;
-            case R.id.btn_twirl:
-                mPSEffectLayer.setPSFunciton(GLFrameBufferEffectPingPongSave.PSFunciton.PS_TWIRL_CW);
-                break;
-            case R.id.btn_twirl_ccw:
-                mPSEffectLayer.setPSFunciton(GLFrameBufferEffectPingPongSave.PSFunciton.PS_TWIRL_CCW);
-                break;
-            case R.id.btn_squash:
-                mPSEffectLayer.setPSFunciton(GLFrameBufferEffectPingPongSave.PSFunciton.PS_SQUASH);
-                break;
-            case R.id.btn_save:
-                mPSEffectLayer.setPSFunciton(GLFrameBufferEffectPingPongSave.PSFunciton.SAVE);
-                v.postDelayed(() -> {
-                    ((ImageView) findViewById(R.id.iv_save_bmp)).setRotation(180);
-                    ((ImageView) findViewById(R.id.iv_save_bmp)).setRotationY(180);
-                    ((ImageView) findViewById(R.id.iv_save_bmp)).setImageBitmap(mPSEffectLayer.getFBEDC().getSaveBmp());
-                }, 100);
-                break;
+        int id = v.getId();
+
+        if (id == R.id.btn_scale) {
+            mPSEffectLayer.setPSFunciton(GLFrameBufferEffectPingPongSave.PSFunciton.PS_BE_BIGGER);
+        } else if (id == R.id.btn_scale_small) {
+            mPSEffectLayer.setPSFunciton(GLFrameBufferEffectPingPongSave.PSFunciton.PS_BE_SMALLER);
+        } else if (id == R.id.btn_twirl) {
+            mPSEffectLayer.setPSFunciton(GLFrameBufferEffectPingPongSave.PSFunciton.PS_TWIRL_CW);
+        } else if (id == R.id.btn_twirl_ccw) {
+            mPSEffectLayer.setPSFunciton(GLFrameBufferEffectPingPongSave.PSFunciton.PS_TWIRL_CCW);
+        } else if (id == R.id.btn_squash) {
+            mPSEffectLayer.setPSFunciton(GLFrameBufferEffectPingPongSave.PSFunciton.PS_SQUASH);
+        } else if (id == R.id.btn_save) {
+            mPSEffectLayer.setPSFunciton(GLFrameBufferEffectPingPongSave.PSFunciton.SAVE);
+
+            //注意：这里保留了原本的 postDelayed 逻辑
+            v.postDelayed(() -> {
+                ImageView ivSave = findViewById(R.id.iv_save_bmp);
+                if (ivSave != null) {
+                    ivSave.setRotation(180);
+                    ivSave.setRotationY(180);
+                    ivSave.setImageBitmap(mPSEffectLayer.getFBEDC().getSaveBmp());
+                }
+            }, 100);
         }
     }
 }
