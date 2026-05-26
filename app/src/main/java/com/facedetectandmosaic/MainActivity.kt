@@ -76,13 +76,17 @@ class MainActivity : AppCompatActivity() {
     private fun checkPermissions() = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 
+    // 在 MainActivity 类中定义两个变量，用于记录真实分辨率
+    private var mRealVideoWidth = 1280
+    private var mRealVideoHeight = 720
+
     private fun startCameraX(surfaceTexture: android.graphics.SurfaceTexture) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
 
-            // 设定贴近录制分辨率的策略以优化性能
-            val strategy = ResolutionStrategy(Size(videoWidth, videoHeight), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)
+            // 允许相机寻找最接近 720p 的分辨率
+            val strategy = ResolutionStrategy(Size(1280, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)
             val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(strategy).build()
 
             val preview = Preview.Builder()
@@ -90,7 +94,13 @@ class MainActivity : AppCompatActivity() {
                 .build()
 
             preview.setSurfaceProvider { surfaceRequest ->
-                surfaceTexture.setDefaultBufferSize(surfaceRequest.resolution.width, surfaceRequest.resolution.height)
+                // 【核心安全举措】直接获取 CameraX 根据硬件算出来的、绝对合法的真实分辨率
+                mRealVideoWidth = surfaceRequest.resolution.width
+                mRealVideoHeight = surfaceRequest.resolution.height
+
+                // 让外部纹理的缓存尺寸与相机严格 1:1 对齐
+                surfaceTexture.setDefaultBufferSize(mRealVideoWidth, mRealVideoHeight)
+
                 val surface = android.view.Surface(surfaceTexture)
                 surfaceRequest.provideSurface(surface, ContextCompat.getMainExecutor(this)) {
                     surface.release()
@@ -114,48 +124,66 @@ class MainActivity : AppCompatActivity() {
         } else {
             @Suppress("DEPRECATION") MediaRecorder()
         }.apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)        // 引入环境音
-            setVideoSource(MediaRecorder.VideoSource.SURFACE)    // 关键点：接受来自 OpenGL 的 Surface 投递
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setVideoSource(MediaRecorder.VideoSource.SURFACE) // 必须声明使用 Surface 录制
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             setOutputFile(outputFile.absolutePath)
-            setVideoEncoder(MediaRecorder.VideoEncoder.H264)     // H264 硬件硬编，功耗极低
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)      // 音频 AAC 编码
-            setVideoSize(videoWidth, videoHeight)
+            setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            setVideoSize(mRealVideoWidth, mRealVideoHeight)
             setVideoFrameRate(30)
-            setVideoEncodingBitRate(3 * 1024 * 1024)             // 3Mbps 码率均衡功耗与画质
+            setVideoEncodingBitRate(4 * 1024 * 1024)
             prepare()
         }
 
-        // 必须在 prepare 之后，start 之前获取录制 Surface
         val inputSurface = mediaRecorder!!.surface
 
-        // 向 GL 渲染线程排队插入异步任务：创建录制表面
-        glSurfaceView.queueEvent {
-            renderer.startRecording(inputSurface, videoWidth, videoHeight)
-        }
-
+        // 1. 启动录制器
         mediaRecorder?.start()
         isRecording = true
-        Toast.makeText(this, "录制保存至: ${outputFile.name}", Toast.LENGTH_SHORT).show()
+
+        // 2. 硬件缓冲沉淀：给 Stagefright 底层框架 100 毫秒初始化队列，杜绝 -22
+        try { Thread.sleep(100) } catch (e: Exception) {}
+
+        // 3. 异步送入 OpenGL 初始化专属渲染管线
+        glSurfaceView.queueEvent {
+            renderer.startRecording(inputSurface, mRealVideoWidth, mRealVideoHeight)
+        }
+
+        Toast.makeText(this, "正在录制录像...", Toast.LENGTH_SHORT).show()
     }
 
     private fun stopRecordingInternal() {
         if (!isRecording) return
+        isRecording = false
 
-        // 渲染线程先断开并销毁录制表面，防止 MediaRecorder 停止后还有帧挤入导致 crash
-        glSurfaceView.queueEvent {
-            renderer.stopRecording()
+        val signalLock = java.lang.Object()
+
+        // 1. 先让 GL 线程切断画面分发并销毁本地录制 EGLSurface
+        synchronized(signalLock) {
+            glSurfaceView.queueEvent {
+                synchronized(signalLock) {
+                    renderer.stopRecording()
+                    signalLock.notifyAll() // 唤醒主线程
+                }
+            }
+            try {
+                signalLock.wait(1000) // 主线程最多等一秒，让 GL 线程先退场
+            } catch (e: InterruptedException) {
+                e.printStackTrace()
+            }
         }
 
+        // 2. 这时候 GL 线程绝对不会再往里面画画了，MediaRecorder 可以安全功成身退
         try {
             mediaRecorder?.stop()
         } catch (e: Exception) {
-            e.printStackTrace() // 规避用户极快点击导致的未收到帧异常
+            e.printStackTrace()
+        } finally {
+            mediaRecorder?.reset()
+            mediaRecorder?.release()
+            mediaRecorder = null
         }
-        mediaRecorder?.reset()
-        mediaRecorder?.release()
-        mediaRecorder = null
-        isRecording = false
-        Toast.makeText(this, "录制完成并成功保存", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "视频已录制并成功封装！", Toast.LENGTH_SHORT).show()
     }
 }

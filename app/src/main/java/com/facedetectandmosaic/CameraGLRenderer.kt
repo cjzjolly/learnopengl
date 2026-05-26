@@ -1,14 +1,13 @@
 package com.facedetectandmosaic
-
 import android.graphics.SurfaceTexture
 import android.opengl.EGL14
 import android.opengl.EGLConfig
+import android.opengl.EGLContext
+import android.opengl.EGLDisplay
 import android.opengl.EGLSurface
 import android.opengl.GLES11Ext
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
-import android.os.Handler
-import android.os.Looper
 import android.view.Surface
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -19,28 +18,32 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
 
     var surfaceTexture: SurfaceTexture? = null
         private set
-
     var onSurfaceTextureReady: ((SurfaceTexture) -> Unit)? = null
 
-    private var textureId = -1
+    private var oesTextureId = -1
+    private var fboId = -1
+    private var fboTextureId = -1
+
+    private var oesProgram = 0
+    private var shader2DProgram = 0
+
     private val transformMatrix = FloatArray(16)
-
-    private var program = 0
-    private var maPositionHandle = 0
-    private var maTextureHandle = 0
-    private var muSTMatrixHandle = 0
-
     private lateinit var vertexBuffer: FloatBuffer
     private lateinit var textureBuffer: FloatBuffer
 
-    // 录制相关控制量
+    // 录制相关独立 EGL 环境
     @Volatile private var isRecording = false
-    private var recordEGLSurface: EGLSurface = EGL14.EGL_NO_SURFACE
+    private var recordSurface: Surface? = null
+    private var recordEglDisplay: EGLDisplay = EGL14.EGL_NO_DISPLAY
+    private var recordEglContext: EGLContext = EGL14.EGL_NO_CONTEXT
+    private var recordEglSurface: EGLSurface = EGL14.EGL_NO_SURFACE
+
     private var videoWidth = 1280
     private var videoHeight = 720
     private var screenWidth = 0
     private var screenHeight = 0
 
+    // OES 顶点着色器（带矩阵转换）
     private val vertexShaderCode = """
         uniform mat4 uSTMatrix;
         attribute vec4 aPosition;
@@ -52,8 +55,8 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
         }
     """.trimIndent()
 
-    // 关键点：Fragment Shader 中只保留绿色通道 (color.g)
-    private val fragmentShaderCode = """
+    // 滤镜片元着色器：留绿
+    private val fragmentOesShaderCode = """
         #extension GL_OES_EGL_image_external : require
         precision mediump float;
         varying vec2 vTextureCoord;
@@ -64,59 +67,83 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
         }
     """.trimIndent()
 
-    init {
-        val cubeCoords = floatArrayOf(
-            -1.0f, -1.0f, 0.0f,
-            1.0f, -1.0f, 0.0f,
-            -1.0f,  1.0f, 0.0f,
-            1.0f,  1.0f, 0.0f
-        )
-        vertexBuffer = ByteBuffer.allocateDirect(cubeCoords.size * 4)
-            .order(ByteOrder.nativeOrder()).asFloatBuffer().apply { put(cubeCoords).position(0) }
+    // 2D 顶点着色器（无矩阵转换，因为 FBO 出来的已经是标准正向正方形纹理）
+    private val vertex2DShaderCode = """
+        attribute vec4 aPosition;
+        attribute vec4 aTextureCoord;
+        varying vec2 vTextureCoord;
+        void main() {
+            gl_Position = aPosition;
+            vTextureCoord = aTextureCoord.xy;
+        }
+    """.trimIndent()
 
-        val textureCoords = floatArrayOf(
-            0.0f, 0.0f,
-            1.0f, 0.0f,
-            0.0f, 1.0f,
-            1.0f, 1.0f
-        )
-        textureBuffer = ByteBuffer.allocateDirect(textureCoords.size * 4)
-            .order(ByteOrder.nativeOrder()).asFloatBuffer().apply { put(textureCoords).position(0) }
+    private val fragment2DShaderCode = """
+        precision mediump float;
+        varying vec2 vTextureCoord;
+        uniform sampler2D sTexture;
+        void main() {
+            gl_FragColor = texture2D(sTexture, vTextureCoord);
+        }
+    """.trimIndent()
+
+    init {
+        val cubeCoords = floatArrayOf(-1f, -1f, 0f, 1f, -1f, 0f, -1f, 1f, 0f, 1f, 1f, 0f)
+        vertexBuffer = ByteBuffer.allocateDirect(cubeCoords.size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().apply { put(cubeCoords).position(0) }
+
+        // 渲染到 FBO 时需要上下翻转纹理坐标，校正相机镜像
+        val textureCoords = floatArrayOf(0f, 0f, 1f, 0f, 0f, 1f, 1f, 1f)
+        textureBuffer = ByteBuffer.allocateDirect(textureCoords.size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().apply { put(textureCoords).position(0) }
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: javax.microedition.khronos.egl.EGLConfig?) {
-        val vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode)
-        val fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode)
-        program = GLES20.glCreateProgram().apply {
-            GLES20.glAttachShader(this, vertexShader)
-            GLES20.glAttachShader(this, fragmentShader)
-            GLES20.glLinkProgram(this)
-        }
+        // 编译两套 Program
+        oesProgram = createProgram(vertexShaderCode, fragmentOesShaderCode)
+        shader2DProgram = createProgram(vertex2DShaderCode, fragment2DShaderCode)
 
-        maPositionHandle = GLES20.glGetAttribLocation(program, "aPosition")
-        maTextureHandle = GLES20.glGetAttribLocation(program, "aTextureCoord")
-        muSTMatrixHandle = GLES20.glGetUniformLocation(program, "uSTMatrix")
-
-        // 生成外部 OES 纹理绑定到 Camera
+        // 创建 OES 纹理
         val textures = IntArray(1)
         GLES20.glGenTextures(1, textures, 0)
-        textureId = textures[0]
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId)
+        oesTextureId = textures[0]
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oesTextureId)
         GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR.toFloat())
         GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR.toFloat())
 
-        surfaceTexture = SurfaceTexture(textureId).apply {
-            setOnFrameAvailableListener(this@CameraGLRenderer)
-        }
-
-        Handler(Looper.getMainLooper()).post {
-            onSurfaceTextureReady?.invoke(surfaceTexture!!)
-        }
+        surfaceTexture = SurfaceTexture(oesTextureId).apply { setOnFrameAvailableListener(this@CameraGLRenderer) }
+        glSurfaceView.post { onSurfaceTextureReady?.invoke(surfaceTexture!!) }
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         screenWidth = width
         screenHeight = height
+        // 动态根据屏幕/相机尺寸初始化 FBO 缓冲区
+        initFBO(width, height)
+    }
+
+    private fun initFBO(w: Int, h: Int) {
+        if (fboId != -1) {
+            GLES20.glDeleteFramebuffers(1, intArrayOf(fboId), 0)
+            GLES20.glDeleteTextures(1, intArrayOf(fboTextureId), 0)
+        }
+
+        val fbos = IntArray(1)
+        GLES20.glGenFramebuffers(1, fbos, 0)
+        fboId = fbos[0]
+
+        val texs = IntArray(1)
+        GLES20.glGenTextures(1, texs, 0)
+        fboTextureId = texs[0]
+
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fboTextureId)
+        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, w, h, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null)
+        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR.toFloat())
+        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR.toFloat())
+
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fboId)
+        GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, fboTextureId, 0)
+
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -126,85 +153,140 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
             surfaceTex.getTransformMatrix(transformMatrix)
         }
 
-        // 拦截 GLSurfaceView 自动创建的当前 EGL 环境与显示表面
-        val display = EGL14.eglGetCurrentDisplay()
-        val context = EGL14.eglGetCurrentContext()
-        val screenSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW)
+        if (fboId == -1) return
 
-        // 1. 渲染到预览屏幕
+        // 步骤 1：全硬件留绿滤镜处理 -> 先渲染到离屏 FBO 中
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fboId)
         GLES20.glViewport(0, 0, screenWidth, screenHeight)
-        drawScene()
+        drawOesToFbo()
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
 
-        // 2. 低功耗双输出：如果开启录制，直接无缝切换 EGL 表面画第二遍，直接塞入编码器
-        if (isRecording && recordEGLSurface != EGL14.EGL_NO_SURFACE) {
-            EGL14.eglMakeCurrent(display, recordEGLSurface, recordEGLSurface, context)
+        // 步骤 2：将 FBO 处理好的绿色画面投递到普通手机屏幕
+        GLES20.glViewport(0, 0, screenWidth, screenHeight)
+        drawFboToScreen()
+
+        // 步骤 3：如果正在录制，利用专属独立 EGL 纯离屏渲染投递至 MediaRecorder 录制表面
+        if (isRecording && recordEglSurface != EGL14.EGL_NO_SURFACE) {
+            // 保存当前屏幕环境
+            val oldDisplay = EGL14.eglGetCurrentDisplay()
+            val oldDrawSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW)
+            val oldReadSurface = EGL14.eglGetCurrentSurface(EGL14.EGL_READ)
+            val oldContext = EGL14.eglGetCurrentContext()
+
+            // 切换到录制环境
+            EGL14.eglMakeCurrent(recordEglDisplay, recordEglSurface, recordEglSurface, recordEglContext)
             GLES20.glViewport(0, 0, videoWidth, videoHeight)
-            drawScene()
-            EGL14.eglSwapBuffers(display, recordEGLSurface)
+            drawFboToScreen() // 将绿色画面复刻一份塞入编码器
+            EGL14.eglSwapBuffers(recordEglDisplay, recordEglSurface)
 
-            // 必须切换回原来的屏幕表面，让 GLSurfaceView 内部自己去做主屏的 SwapBuffers
-            EGL14.eglMakeCurrent(display, screenSurface, screenSurface, context)
+            // 还原主屏环境，防止 GLSurfaceView 崩溃
+            EGL14.eglMakeCurrent(oldDisplay, oldDrawSurface, oldReadSurface, oldContext)
         }
     }
 
-    private fun drawScene() {
-        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f)
+    private fun drawOesToFbo() {
+        GLES20.glClearColor(0f, 0f, 0f, 1f)
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
-        GLES20.glUseProgram(program)
+        GLES20.glUseProgram(oesProgram)
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId)
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oesTextureId)
 
+        val posHandle = GLES20.glGetAttribLocation(oesProgram, "aPosition")
         vertexBuffer.position(0)
-        GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, 12, vertexBuffer)
-        GLES20.glEnableVertexAttribArray(maPositionHandle)
+        GLES20.glVertexAttribPointer(posHandle, 3, GLES20.GL_FLOAT, false, 12, vertexBuffer)
+        GLES20.glEnableVertexAttribArray(posHandle)
 
+        val texHandle = GLES20.glGetAttribLocation(oesProgram, "aTextureCoord")
         textureBuffer.position(0)
-        GLES20.glVertexAttribPointer(maTextureHandle, 2, GLES20.GL_FLOAT, false, 8, textureBuffer)
-        GLES20.glEnableVertexAttribArray(maTextureHandle)
+        GLES20.glVertexAttribPointer(texHandle, 2, GLES20.GL_FLOAT, false, 8, textureBuffer)
+        GLES20.glEnableVertexAttribArray(texHandle)
 
-        GLES20.glUniformMatrix4fv(muSTMatrixHandle, 1, false, transformMatrix, 0)
+        val matrixHandle = GLES20.glGetUniformLocation(oesProgram, "uSTMatrix")
+        GLES20.glUniformMatrix4fv(matrixHandle, 1, false, transformMatrix, 0)
+
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
+    }
+
+    private fun drawFboToScreen() {
+        GLES20.glClearColor(0f, 0f, 0f, 1f)
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
+        GLES20.glUseProgram(shader2DProgram)
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fboTextureId)
+
+        val posHandle = GLES20.glGetAttribLocation(shader2DProgram, "aPosition")
+        vertexBuffer.position(0)
+        GLES20.glVertexAttribPointer(posHandle, 3, GLES20.GL_FLOAT, false, 12, vertexBuffer)
+        GLES20.glEnableVertexAttribArray(posHandle)
+
+        val texHandle = GLES20.glGetAttribLocation(shader2DProgram, "aTextureCoord")
+        textureBuffer.position(0)
+        GLES20.glVertexAttribPointer(texHandle, 2, GLES20.GL_FLOAT, false, 8, textureBuffer)
+        GLES20.glEnableVertexAttribArray(texHandle)
+
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
     }
 
     override fun onFrameAvailable(surfaceTexture: SurfaceTexture?) {
-        glSurfaceView.requestRender() // 仅在有新硬件帧时刷新，保证低功耗
+        glSurfaceView.requestRender()
     }
 
+    // 核心重构：为录制 Surface 创建独立隔离的全新 WindowSurface 环境
     fun startRecording(surface: Surface, width: Int, height: Int) {
         videoWidth = width
         videoHeight = height
+        recordSurface = surface
 
-        val display = EGL14.eglGetCurrentDisplay()
-        val context = EGL14.eglGetCurrentContext()
+        val sharedContext = EGL14.eglGetCurrentContext()
+        recordEglDisplay = EGL14.eglGetCurrentDisplay()
 
-        // 绝招：动态查询当前 GLSurfaceView 的 Config 保证完美匹配，防止部分机型 EGL_BAD_MATCH 闪退
-        val configId = intArrayOf(0)
-        EGL14.eglQueryContext(display, context, EGL14.EGL_CONFIG_ID, configId, 0)
+        // 强行指定独立标志位，允许录制专用的 Buffer 标记
+        val attribList = intArrayOf(
+            EGL14.EGL_RED_SIZE, 8,
+            EGL14.EGL_GREEN_SIZE, 8,
+            EGL14.EGL_BLUE_SIZE, 8,
+            EGL14.EGL_ALPHA_SIZE, 8,
+            EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
+            0x3142, 1, // 核心：显式通知系统这个底层是拿来录像的
+            EGL14.EGL_NONE
+        )
 
-        val attribList = intArrayOf(EGL14.EGL_CONFIG_ID, configId[0], EGL14.EGL_NONE)
         val configs = arrayOfNulls<EGLConfig>(1)
         val numConfigs = intArrayOf(0)
-        EGL14.eglChooseConfig(display, attribList, 0, configs, 0, 1, numConfigs, 0)
+        EGL14.eglChooseConfig(recordEglDisplay, attribList, 0, configs, 0, 1, numConfigs, 0)
+
+        val ctxAttribs = intArrayOf(EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE)
+        // 与主线程共享 Context，实现免内存拷贝复用 FBO 纹理
+        recordEglContext = EGL14.eglCreateContext(recordEglDisplay, configs[0], sharedContext, ctxAttribs, 0)
 
         val surfaceAttribs = intArrayOf(EGL14.EGL_NONE)
-        recordEGLSurface = EGL14.eglCreateWindowSurface(display, configs[0], surface, surfaceAttribs, 0)
+        recordEglSurface = EGL14.eglCreateWindowSurface(recordEglDisplay, configs[0], recordSurface, surfaceAttribs, 0)
+
         isRecording = true
     }
 
     fun stopRecording() {
         isRecording = false
-        if (recordEGLSurface != EGL14.EGL_NO_SURFACE) {
-            val display = EGL14.eglGetCurrentDisplay()
-            EGL14.eglDestroySurface(display, recordEGLSurface)
-            recordEGLSurface = EGL14.EGL_NO_SURFACE
+        if (recordEglSurface != EGL14.EGL_NO_SURFACE) {
+            GLES20.glFinish()
+            EGL14.eglDestroySurface(recordEglDisplay, recordEglSurface)
+            EGL14.eglDestroyContext(recordEglDisplay, recordEglContext)
+            recordEglSurface = EGL14.EGL_NO_SURFACE
+            recordEglContext = EGL14.EGL_NO_CONTEXT
+            recordEglDisplay = EGL14.EGL_NO_DISPLAY
         }
+        recordSurface = null
     }
 
-    private fun loadShader(type: Int, shaderCode: String): Int {
-        return GLES20.glCreateShader(type).also { shader ->
-            GLES20.glShaderSource(shader, shaderCode)
-            GLES20.glCompileShader(shader)
+    private fun createProgram(vertex: String, fragment: String): Int {
+        val vShader = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER).also { GLES20.glShaderSource(it, vertex); GLES20.glCompileShader(it) }
+        val fShader = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER).also { GLES20.glShaderSource(it, fragment); GLES20.glCompileShader(it) }
+        return GLES20.glCreateProgram().apply {
+            GLES20.glAttachShader(this, vShader)
+            GLES20.glAttachShader(this, fShader)
+            GLES20.glLinkProgram(this)
         }
     }
 }
