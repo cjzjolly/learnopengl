@@ -12,6 +12,7 @@
     <uses-feature android:name="android.hardware.camera.autofocus" />
     <uses-feature android:name="android.opengl.GLES30" />
     <uses-feature android:glEsVersion="0x00030000" android:required="true" />
+    <uses-feature android:name="android.opengl" android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -103,6 +104,7 @@
         <activity android:name="com.cjztest.glOffscreenProcess.demo0.OffScreenGLDemoActivity"/>
         <activity android:name="com.cjztest.glOffscreenProcess.demo1.NativeModifySurfaceActivity"/>
         <activity android:name="com.physicEffect.threeDWave.MainActivity"/>
+        <activity android:name="com.facedetectandmosaic.MainActivity"/>
 
         <activity android:name="com.mainpage.MainPage" android:exported="true">
             <intent-filter>

@@ -119,5 +119,13 @@ public class MainPage extends Activity {
         });
         linearLayout.addView(button);
 
+        button = new Button(this);
+        button.setText("人脸识别+马赛克+录像");
+        button.setOnClickListener(v -> {
+            Intent intent = new Intent(this, com.facedetectandmosaic.MainActivity.class);
+            startActivity(intent);
+        });
+        linearLayout.addView(button);
+
     }
 }
