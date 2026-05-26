@@ -9,11 +9,13 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.MediaRecorder;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
+import android.util.Range;
 import android.util.Size;
 import android.view.Surface;
 
@@ -58,8 +60,8 @@ public class CameraPreviewRenderer implements GLSurfaceView.Renderer, SurfaceTex
 
     private SurfaceTexture surfaceTexture;
     private int textureId;
-    private int previewWidth = 640;
-    private int previewHeight = 480;
+    private int previewWidth = 1080;
+    private int previewHeight = 1920;
 
     // Camera相关
     private CameraDevice cameraDevice;
@@ -215,6 +217,9 @@ public class CameraPreviewRenderer implements GLSurfaceView.Renderer, SurfaceTex
 
     private void createCameraPreviewSession() {
         try {
+            surfaceTexture.setDefaultBufferSize(previewWidth, previewHeight);
+
+
             Surface surface = new Surface(surfaceTexture);
 
             final CaptureRequest.Builder previewBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
@@ -229,6 +234,8 @@ public class CameraPreviewRenderer implements GLSurfaceView.Renderer, SurfaceTex
                     captureSession = session;
                     try {
                         previewBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+                        // 限制帧率为 30fps 以降低功耗
+                        previewBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, new Range<>(30, 30));
                         captureSession.setRepeatingRequest(previewBuilder.build(), null, null);
                     } catch (CameraAccessException e) {
                         Log.e(TAG, "设置预览请求失败", e);
