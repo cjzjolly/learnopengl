@@ -6,13 +6,17 @@ import android.media.MediaRecorder
 import android.opengl.GLSurfaceView
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import android.util.Range
 import android.util.Size
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.camera2.interop.Camera2Interop
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
+import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -29,8 +33,11 @@ class MainActivity : AppCompatActivity() {
     private var mediaRecorder: MediaRecorder? = null
     private var isRecording = false
 
-    private val videoWidth = 1280
-    private val videoHeight = 720
+    // 在 MainActivity 类中定义两个变量，用于记录真实分辨率
+    private var mRealVideoWidth = 1280
+    private var mRealVideoHeight = 720
+
+    private val mFrameRate = 10
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,29 +83,39 @@ class MainActivity : AppCompatActivity() {
     private fun checkPermissions() = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 
-    // 在 MainActivity 类中定义两个变量，用于记录真实分辨率
-    private var mRealVideoWidth = 1280
-    private var mRealVideoHeight = 720
+
 
     private fun startCameraX(surfaceTexture: android.graphics.SurfaceTexture) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
 
-            // 允许相机寻找最接近 720p 的分辨率
-            val strategy = ResolutionStrategy(Size(1280, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)
+            val strategy = ResolutionStrategy(Size(960, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)
             val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(strategy).build()
 
-            val preview = Preview.Builder()
+//            val resolutionSelector = ResolutionSelector.Builder()
+////                .setAllowedResolutionModes(ResolutionSelector.ALLOWED_RESOLUTION_MODES_SPECIFIC)
+//                .setAspectRatioStrategy(AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY)
+//                .build()
+
+            // 1. 创建 Preview.Builder
+            val previewBuilder = Preview.Builder()
                 .setResolutionSelector(resolutionSelector)
-                .build()
+
+            // 2. 使用 Camera2Interop 强制注入底层帧率限制 [30, 30]
+            // 这样可以逼迫硬件无论是亮光还是暗光，都死死锁在 30 帧
+            val ext = Camera2Interop.Extender(previewBuilder)
+            ext.setCaptureRequestOption(
+                android.hardware.camera2.CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
+                Range(mFrameRate, mFrameRate) // 最小值 30，最大值 30
+            )
+
+            val preview = previewBuilder.build()
 
             preview.setSurfaceProvider { surfaceRequest ->
-                // 【核心安全举措】直接获取 CameraX 根据硬件算出来的、绝对合法的真实分辨率
                 mRealVideoWidth = surfaceRequest.resolution.width
                 mRealVideoHeight = surfaceRequest.resolution.height
-
-                // 让外部纹理的缓存尺寸与相机严格 1:1 对齐
+                Log.e("cjztest", "surfaceRequest: mRealVideoWidth: $mRealVideoWidth, mRealVideoHeight: $mRealVideoHeight")
                 surfaceTexture.setDefaultBufferSize(mRealVideoWidth, mRealVideoHeight)
 
                 val surface = android.view.Surface(surfaceTexture)
@@ -131,7 +148,7 @@ class MainActivity : AppCompatActivity() {
             setVideoEncoder(MediaRecorder.VideoEncoder.H264)
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             setVideoSize(mRealVideoWidth, mRealVideoHeight)
-            setVideoFrameRate(30)
+            setVideoFrameRate(mFrameRate)
             setVideoEncodingBitRate(4 * 1024 * 1024)
             prepare()
         }

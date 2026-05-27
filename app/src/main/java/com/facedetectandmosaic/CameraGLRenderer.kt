@@ -63,7 +63,8 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
         uniform samplerExternalOES sTexture;
         void main() {
             vec4 color = texture2D(sTexture, vTextureCoord);
-            gl_FragColor = vec4(0.0, color.g, 0.0, color.a);
+            gl_FragColor = color;
+//            gl_FragColor = vec4(0.0, color.g, 0.0, color.a);
         }
     """.trimIndent()
 
