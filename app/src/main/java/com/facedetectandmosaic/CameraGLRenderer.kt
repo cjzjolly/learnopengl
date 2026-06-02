@@ -8,6 +8,7 @@ import android.opengl.EGLSurface
 import android.opengl.GLES11Ext
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
+import android.util.Log
 import android.view.Surface
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -115,6 +116,7 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
+        Log.e("cjztest", "CameraGLRenderer, onSurfaceChanged, width:$width, height:$height")
         screenWidth = width
         screenHeight = height
         // 动态根据屏幕/相机尺寸初始化 FBO 缓冲区

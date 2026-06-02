@@ -16,7 +16,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.camera2.interop.Camera2Interop
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
-import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -37,7 +36,7 @@ class MainActivity : AppCompatActivity() {
     private var mRealVideoWidth = 1280
     private var mRealVideoHeight = 720
 
-    private val mFrameRate = 10
+    private val mFrameRate = Range(3, 30)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,7 +89,7 @@ class MainActivity : AppCompatActivity() {
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
 
-            val strategy = ResolutionStrategy(Size(960, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)
+            val strategy = ResolutionStrategy(Size(720, 1280), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)
             val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(strategy).build()
 
 //            val resolutionSelector = ResolutionSelector.Builder()
@@ -101,20 +100,27 @@ class MainActivity : AppCompatActivity() {
             // 1. 创建 Preview.Builder
             val previewBuilder = Preview.Builder()
                 .setResolutionSelector(resolutionSelector)
+//                .setTargetRotation(android.view.Surface.ROTATION_90)
 
-            // 2. 使用 Camera2Interop 强制注入底层帧率限制 [30, 30]
-            // 这样可以逼迫硬件无论是亮光还是暗光，都死死锁在 30 帧
+            // 2. 使用 Camera2Interop 强制注入底层帧率限制
             val ext = Camera2Interop.Extender(previewBuilder)
             ext.setCaptureRequestOption(
                 android.hardware.camera2.CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
-                Range(mFrameRate, mFrameRate) // 最小值 30，最大值 30
+                mFrameRate
             )
 
             val preview = previewBuilder.build()
 
             preview.setSurfaceProvider { surfaceRequest ->
                 mRealVideoWidth = surfaceRequest.resolution.width
-                mRealVideoHeight = surfaceRequest.resolution.height
+//                mRealVideoHeight = surfaceRequest.resolution.height
+                mRealVideoHeight = (surfaceRequest.resolution.height  * 16f / 9f).toInt()  //cjztest  这个比例看起来才正确
+
+                // 3. 根据 CameraX 实际分辨率，调整 GLSurfaceView 的布局参数和 SurfaceTexture 的缓冲区大小
+                val fixedParams = LinearLayout.LayoutParams(mRealVideoWidth, mRealVideoHeight) // 这里假设 GLSurfaceView 的宽高比固定为 4:3，实际项目中可能需要更灵活的适配方案
+                glSurfaceView.layoutParams = fixedParams
+
+
                 Log.e("cjztest", "surfaceRequest: mRealVideoWidth: $mRealVideoWidth, mRealVideoHeight: $mRealVideoHeight")
                 surfaceTexture.setDefaultBufferSize(mRealVideoWidth, mRealVideoHeight)
 
@@ -134,8 +140,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startRecordingInternal() {
-        val outputFile = File(getExternalFilesDir(null), "green_clip_${System.currentTimeMillis()}.mp4")
-
+        val storageDir = getExternalFilesDir("video")
+        if (storageDir != null && !storageDir.exists()) {
+            storageDir.mkdirs()
+        }
+        val outputFile = File(storageDir, "green_clip_${System.currentTimeMillis()}.mp4")
+        if (!outputFile.exists()) {
+            outputFile.createNewFile()
+        }
         mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             MediaRecorder(this)
         } else {
@@ -148,7 +160,7 @@ class MainActivity : AppCompatActivity() {
             setVideoEncoder(MediaRecorder.VideoEncoder.H264)
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             setVideoSize(mRealVideoWidth, mRealVideoHeight)
-            setVideoFrameRate(mFrameRate)
+            setVideoFrameRate(mFrameRate.upper)
             setVideoEncodingBitRate(4 * 1024 * 1024)
             prepare()
         }
