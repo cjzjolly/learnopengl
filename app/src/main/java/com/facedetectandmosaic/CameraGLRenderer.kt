@@ -177,10 +177,11 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
         for (i in 0 until MAX_FACES) {
             if (i < currentFaceCount) {
                 val rect = uvRects[i] // [minU, minV, maxU, maxV]
-                faceRectsArray[i * 4 + 0] = rect.top / screenWidth.toFloat()
-                faceRectsArray[i * 4 + 1] = rect.left / screenWidth.toFloat()
-                faceRectsArray[i * 4 + 2] = rect.bottom / screenWidth.toFloat()
-                faceRectsArray[i * 4 + 3] = rect.right / screenWidth.toFloat()
+                //旋转过90度，还左右镜像过
+                faceRectsArray[i * 4 + 0] = rect.top / screenHeight.toFloat()
+                faceRectsArray[i * 4 + 1] = 1f - rect.right / screenWidth.toFloat()
+                faceRectsArray[i * 4 + 2] = rect.bottom / screenHeight.toFloat()
+                faceRectsArray[i * 4 + 3] = 1f - rect.left / screenWidth.toFloat()
             } else {
                 // 填充无效数据，防止脏数据干扰
                 faceRectsArray[i * 4 + 0] = -1.0f
