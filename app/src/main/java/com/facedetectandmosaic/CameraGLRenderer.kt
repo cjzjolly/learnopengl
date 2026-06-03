@@ -1,4 +1,5 @@
 package com.facedetectandmosaic
+import android.graphics.RectF
 import android.graphics.SurfaceTexture
 import android.opengl.EGL14
 import android.opengl.EGLConfig
@@ -44,6 +45,17 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
     private var screenWidth = 0
     private var screenHeight = 0
 
+    /**马赛克人脸相关**/
+    private var uFaceRectsHandle = 0
+    private var uFaceCountHandle = 0
+    private var uMosaicBlockSizeHandle = 0
+
+    private val MAX_FACES = 5
+
+    // 用于存储传递给 Shader 的 FloatArray (长度必须是 MAX_FACES * 4)
+    private val faceRectsArray = FloatArray(MAX_FACES * 4)
+    private var currentFaceCount = 0
+
     // OES 顶点着色器（带矩阵转换）
     private val vertexShaderCode = """
         uniform mat4 uSTMatrix;
@@ -60,12 +72,46 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
     private val fragmentOesShaderCode = """
         #extension GL_OES_EGL_image_external : require
         precision mediump float;
+        
         varying vec2 vTextureCoord;
         uniform samplerExternalOES sTexture;
+        
+        // 1. 定义最大支持的人脸数量 (可根据需求调整，通常 5-10 足够)
+        #define MAX_FACES 5 
+        
+        // 2. 外部传入的归一化矩形数组 (x=minU, y=minV, z=maxU, w=maxV)
+        uniform vec4 uFaceRects[MAX_FACES]; 
+        uniform int uFaceCount; // 实际检测到的人脸数量
+        
+        // 3. 归一化的马赛克块大小 (例如 vec2(0.02, 0.03))
+        uniform vec2 uMosaicBlockSize; 
+        
         void main() {
-            vec4 color = texture2D(sTexture, vTextureCoord);
-            gl_FragColor = color;
-//            gl_FragColor = vec4(0.0, color.g, 0.0, color.a);
+            vec2 uv = vTextureCoord;
+            bool applyMosaic = false;
+        
+            // 4. 遍历所有人脸矩形，判断当前像素是否在其中
+            // 注意：GLSL ES 2.0 要求 for 循环的边界必须是常量，所以必须循环 MAX_FACES 次
+            for (int i = 0; i < MAX_FACES; i++) {
+                if (i < uFaceCount) {
+                    vec4 rect = uFaceRects[i];
+                    // 判断 UV 坐标是否在矩形内
+                    if (uv.x >= rect.x && uv.x <= rect.z && uv.y >= rect.y && uv.y <= rect.w) {
+                        applyMosaic = true;
+                        break; // 只要在任意一个矩形内，就标记并跳出循环
+                    }
+                }
+            }
+        
+            // 5. 核心：高性能马赛克算法 (坐标离散化)
+            if (applyMosaic) {
+                // 将连续坐标除以块大小 -> 向下取整对齐到网格 -> 加 0.5 采样网格中心 -> 乘回块大小
+                vec2 grid = floor(uv / uMosaicBlockSize);
+                uv = (grid + 0.5) * uMosaicBlockSize;
+            }
+        
+            // 6. 最终采样 (无论是否马赛克，都只采样 1 次，性能拉满)
+            gl_FragColor = texture2D(sTexture, uv);
         }
     """.trimIndent()
 
@@ -121,6 +167,28 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
         screenHeight = height
         // 动态根据屏幕/相机尺寸初始化 FBO 缓冲区
         initFBO(width, height)
+    }
+
+    // 外部调用：更新人脸数据 (传入的是基于原始图像的归一化 UV 坐标)
+    fun updateFaceRects(uvRects: List<RectF>) {
+        currentFaceCount = minOf(uvRects.size, MAX_FACES)
+
+        // 将 List<FloatArray> 展平为一维 FloatArray
+        for (i in 0 until MAX_FACES) {
+            if (i < currentFaceCount) {
+                val rect = uvRects[i] // [minU, minV, maxU, maxV]
+                faceRectsArray[i * 4 + 0] = rect.top / screenWidth.toFloat()
+                faceRectsArray[i * 4 + 1] = rect.left / screenWidth.toFloat()
+                faceRectsArray[i * 4 + 2] = rect.bottom / screenWidth.toFloat()
+                faceRectsArray[i * 4 + 3] = rect.right / screenWidth.toFloat()
+            } else {
+                // 填充无效数据，防止脏数据干扰
+                faceRectsArray[i * 4 + 0] = -1.0f
+                faceRectsArray[i * 4 + 1] = -1.0f
+                faceRectsArray[i * 4 + 2] = -1.0f
+                faceRectsArray[i * 4 + 3] = -1.0f
+            }
+        }
     }
 
     private fun initFBO(w: Int, h: Int) {
@@ -207,6 +275,21 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
 
         val matrixHandle = GLES20.glGetUniformLocation(oesProgram, "uSTMatrix")
         GLES20.glUniformMatrix4fv(matrixHandle, 1, false, transformMatrix, 0)
+
+        // 获取 打马赛克相关的Uniform 句柄
+        uFaceRectsHandle = GLES20.glGetUniformLocation(oesProgram, "uFaceRects")
+        uFaceCountHandle = GLES20.glGetUniformLocation(oesProgram, "uFaceCount")
+        uMosaicBlockSizeHandle = GLES20.glGetUniformLocation(oesProgram, "uMosaicBlockSize")
+
+        // 传递人脸矩形数组
+        GLES20.glUniform4fv(uFaceRectsHandle, MAX_FACES, faceRectsArray, 0)
+        GLES20.glUniform1i(uFaceCountHandle, currentFaceCount)
+
+        // 传递马赛克块大小 (假设想要 20x20 像素的马赛克，图像是 1280x720)
+        // 归一化大小 = 像素大小 / 图像宽高
+        val blockW = 20.0f / screenWidth.toFloat()
+        val blockH = 20.0f / screenHeight.toFloat()
+        GLES20.glUniform2f(uMosaicBlockSizeHandle, blockW, blockH)
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
     }

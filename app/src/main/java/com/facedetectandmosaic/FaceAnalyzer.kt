@@ -17,6 +17,19 @@ class FaceAnalyzer(
     private val isFrontCamera: Boolean = false // 是否前置摄像头
 ) : ImageAnalysis.Analyzer {
 
+    interface OnFacesDetectedListener {
+        fun onFacesDetected(screenRects: List<RectF>)
+    }
+
+    private var onFacesDetectedListener: OnFacesDetectedListener? = null
+    
+    // 设置人脸检测回调监听器（可为 null 以移除监听）
+    fun setOnFacesDetectedListener(listener: OnFacesDetectedListener?) {
+        this.onFacesDetectedListener = listener
+    }
+
+    
+    
     private val options = FaceDetectorOptions.Builder()
         .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST) // 优先速度
         .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_NONE)
@@ -49,6 +62,7 @@ class FaceAnalyzer(
                 }
                 //todo 在这里将 screenRects 传递给 GLSurfaceView 的 Renderer，进行绘制
                 Log.e("cjztest", "Detected ${faces.size} faces, screen rects: $screenRects")
+                onFacesDetectedListener?.onFacesDetected(screenRects)
             }
             .addOnFailureListener { e ->
                 Log.e("FaceAnalyzer", "Detection failed", e)
@@ -70,6 +84,8 @@ class FaceAnalyzer(
 
         // 计算缩放比例 (Center Crop 逻辑：取较大的缩放比以填满屏幕)
         val scale = max(viewW / imgW, viewH / imgH)
+
+        Log.e("cjztest", "transformRect: viewW: $viewW, viewH: $viewH, imgW: $imgW, imgH: $imgH, scale: $scale")
 
         // 计算裁剪导致的偏移量
         val offsetX = (viewW - imgW * scale) / 2f

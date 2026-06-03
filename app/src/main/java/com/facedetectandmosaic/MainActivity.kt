@@ -121,12 +121,20 @@ class MainActivity : AppCompatActivity() {
 
             // 绑定分析器 (假设 overlayView 是你在 onCreate 中初始化的 FaceOverlayView 实例)
             val isFront = false // 根据你用的 CameraSelector 判断
+            val faceAnalyzer = FaceAnalyzer( Size(mRealVideoWidth, mRealVideoHeight), isFront)
+            faceAnalyzer.setOnFacesDetectedListener(object : FaceAnalyzer.OnFacesDetectedListener {
+                override fun onFacesDetected(screenRects: List<android.graphics.RectF>) {
+                    // 这里拿到的 screenRects 是已经转换成屏幕坐标系的矩形列表，可以直接用来更新 UI
+                    // 例如，你可以调用 overlayView.setFaceRects(screenRects) 来刷新人脸框显示
+//                    Log.d("FaceAnalyzer", "检测到 ${screenRects.size} 张人脸")
+                    renderer.updateFaceRects(screenRects) // 将检测到的人脸坐标传递给 Renderer 进行绘制
+                }
+            })
             imageAnalysis
                 .setAnalyzer(
-                ContextCompat.getMainExecutor(this),
-                FaceAnalyzer( Size(mRealVideoWidth, mRealVideoHeight),isFront)
-            )
-
+                    ContextCompat.getMainExecutor(this),
+                    faceAnalyzer
+                )
 
 
             preview.setSurfaceProvider { surfaceRequest ->
