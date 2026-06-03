@@ -189,13 +189,13 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
 
         if (fboId == -1) return
 
-        // 步骤 1：全硬件留绿滤镜处理 -> 先渲染到离屏 FBO 中
+        // 步骤 1：滤镜处理 -> 先渲染到离屏 FBO 中
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fboId)
         GLES20.glViewport(0, 0, screenWidth, screenHeight)
         drawOesToFbo()
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
 
-        // 步骤 2：将 FBO 处理好的绿色画面投递到普通手机屏幕
+        // 步骤 2：将 FBO 处理好的画面投递到手机屏幕
         GLES20.glViewport(0, 0, screenWidth, screenHeight)
         drawFboToScreen()
 
@@ -210,7 +210,7 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
             // 切换到录制环境
             EGL14.eglMakeCurrent(recordEglDisplay, recordEglSurface, recordEglSurface, recordEglContext)
             GLES20.glViewport(0, 0, videoWidth, videoHeight)
-            drawFboToScreen() // 将绿色画面复刻一份塞入编码器
+            drawFboToScreen() // 将画面复刻一份塞入编码器
             EGL14.eglSwapBuffers(recordEglDisplay, recordEglSurface)
 
             // 还原主屏环境，防止 GLSurfaceView 崩溃
