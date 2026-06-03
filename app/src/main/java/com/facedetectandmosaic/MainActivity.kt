@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.camera2.interop.Camera2Interop
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
@@ -89,7 +90,7 @@ class MainActivity : AppCompatActivity() {
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
 
-            val strategy = ResolutionStrategy(Size(720, 1280), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)
+            val strategy = ResolutionStrategy(Size(960, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)
             val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(strategy).build()
 
 //            val resolutionSelector = ResolutionSelector.Builder()
@@ -111,10 +112,29 @@ class MainActivity : AppCompatActivity() {
 
             val preview = previewBuilder.build()
 
+            val imageAnalysis = ImageAnalysis.Builder()
+                .setTargetRotation(android.view.Surface.ROTATION_0) // 与 Preview 保持一致
+                // 关键：只保留最新帧，丢弃处理不过来的旧帧，防止内存积压和延迟
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .setTargetResolution(Size(mRealVideoWidth, mRealVideoHeight))
+                .build()
+
+            // 绑定分析器 (假设 overlayView 是你在 onCreate 中初始化的 FaceOverlayView 实例)
+            val isFront = false // 根据你用的 CameraSelector 判断
+            imageAnalysis
+                .setAnalyzer(
+                ContextCompat.getMainExecutor(this),
+                FaceAnalyzer( Size(mRealVideoWidth, mRealVideoHeight),isFront)
+            )
+
+
+
             preview.setSurfaceProvider { surfaceRequest ->
                 mRealVideoWidth = surfaceRequest.resolution.width
 //                mRealVideoHeight = surfaceRequest.resolution.height
-                mRealVideoHeight = (surfaceRequest.resolution.height  * 16f / 9f).toInt()  //cjztest  这个比例看起来才正确
+//                if () { //todo 这里可以根据实际情况调整宽高的计算方式，确保它们符合你的预期和设备的能力。比如有些设备可能不支持某些特定的分辨率，或者你想要强制使用某个宽高比。
+                    mRealVideoHeight = (surfaceRequest.resolution.height * 4f / 3f).toInt()  //cjztest  这个比例看起来才正确
+//                }
 
                 // 3. 根据 CameraX 实际分辨率，调整 GLSurfaceView 的布局参数和 SurfaceTexture 的缓冲区大小
                 val fixedParams = LinearLayout.LayoutParams(mRealVideoWidth, mRealVideoHeight) // 这里假设 GLSurfaceView 的宽高比固定为 4:3，实际项目中可能需要更灵活的适配方案
@@ -132,7 +152,12 @@ class MainActivity : AppCompatActivity() {
 
             try {
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview)
+                cameraProvider.bindToLifecycle(
+                    this,
+                    CameraSelector.DEFAULT_BACK_CAMERA,
+                    preview,
+                    imageAnalysis
+                )
             } catch (e: Exception) {
                 e.printStackTrace()
             }
