@@ -34,8 +34,10 @@ class MainActivity : AppCompatActivity() {
     private var isRecording = false
 
     // 在 MainActivity 类中定义两个变量，用于记录真实分辨率
-    private var mRealVideoWidth = 1280
-    private var mRealVideoHeight = 720
+    private var mRealVideoWidth = 0
+    private var mRealVideoHeight = 0
+
+    private var targetResolution = Size(960, 720) // 目标分辨率，后续会根据 CameraX 实际分辨率调整
 
     private val mFrameRate = Range(3, 30)
 
@@ -90,7 +92,7 @@ class MainActivity : AppCompatActivity() {
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
 
-            val strategy = ResolutionStrategy(Size(960, 720), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)
+            val strategy = ResolutionStrategy(targetResolution, ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER)
             val resolutionSelector = ResolutionSelector.Builder().setResolutionStrategy(strategy).build()
 
 //            val resolutionSelector = ResolutionSelector.Builder()
@@ -116,7 +118,7 @@ class MainActivity : AppCompatActivity() {
 //                .setTargetRotation(android.view.Surface.ROTATION_0) // 与 Preview 保持一致
                 // 关键：只保留最新帧，丢弃处理不过来的旧帧，防止内存积压和延迟
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .setTargetResolution(Size(720, 960))
+                .setTargetResolution(Size(targetResolution.height, targetResolution.width))
                 .build()
 
 
