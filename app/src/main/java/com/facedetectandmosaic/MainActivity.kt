@@ -116,7 +116,7 @@ class MainActivity : AppCompatActivity() {
 
             val imageAnalysis = ImageAnalysis.Builder()
 //                .setTargetRotation(android.view.Surface.ROTATION_0) // 与 Preview 保持一致
-                // 关键：只保留最新帧，丢弃处理不过来的旧帧，防止内存积压和延迟
+                //只保留最新帧，丢弃处理不过来的旧帧，防止内存积压和延迟
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .setTargetResolution(Size(targetResolution.height, targetResolution.width))
                 .build()
@@ -129,13 +129,17 @@ class MainActivity : AppCompatActivity() {
                     mRealVideoHeight = (surfaceRequest.resolution.height * 4f / 3f).toInt()  //cjztest  这个比例看起来才正确
 //                }
 
+                // 根据 CameraX 实际分辨率，调整 GLSurfaceView 的布局参数和 SurfaceTexture 的缓冲区大小
+                val fixedParams = LinearLayout.LayoutParams(mRealVideoWidth, mRealVideoHeight) // 这里假设 GLSurfaceView 的宽高比固定为 4:3，实际项目中可能需要更灵活的适配方案
+                glSurfaceView.layoutParams = fixedParams
+
                 // 绑定分析器
                 val isFront = false // 根据你用的 CameraSelector 判断
                 val faceAnalyzer = FaceAnalyzer( Size(mRealVideoWidth, mRealVideoHeight), isFront)
                 faceAnalyzer.setOnFacesDetectedListener(object : FaceAnalyzer.OnFacesDetectedListener {
                     override fun onFacesDetected(screenRects: List<android.graphics.RectF>) {
                         // 这里拿到的 screenRects 是已经转换成屏幕坐标系的矩形列表，可以直接用来更新 UI
-//                    Log.d("FaceAnalyzer", "检测到 ${screenRects.size} 张人脸")
+//                      Log.d("FaceAnalyzer", "检测到 ${screenRects.size} 张人脸")
                         renderer.updateFaceRects(screenRects) // 将检测到的人脸坐标传递给 Renderer 进行绘制
                     }
                 })
@@ -144,11 +148,6 @@ class MainActivity : AppCompatActivity() {
                         ContextCompat.getMainExecutor(this),
                         faceAnalyzer
                     )
-
-
-                // 3. 根据 CameraX 实际分辨率，调整 GLSurfaceView 的布局参数和 SurfaceTexture 的缓冲区大小
-                val fixedParams = LinearLayout.LayoutParams(mRealVideoWidth, mRealVideoHeight) // 这里假设 GLSurfaceView 的宽高比固定为 4:3，实际项目中可能需要更灵活的适配方案
-                glSurfaceView.layoutParams = fixedParams
 
 
                 Log.e("cjztest", "surfaceRequest: mRealVideoWidth: $mRealVideoWidth, mRealVideoHeight: $mRealVideoHeight")
