@@ -51,6 +51,9 @@ class FaceAnalyzer(
 
         // 获取图像旋转后的逻辑宽高 (用于后续坐标转换)
         val rotation = imageProxy.imageInfo.rotationDegrees
+
+        Log.e("cjztest", "analyze: imageProxy width: ${imageProxy.width}, height: ${imageProxy.height}, rotation: $rotation")
+
         val imgW = if (rotation == 90 || rotation == 270) imageProxy.height else imageProxy.width
         val imgH = if (rotation == 90 || rotation == 270) imageProxy.width else imageProxy.height
 
@@ -60,8 +63,7 @@ class FaceAnalyzer(
                     // 2. 核心：坐标系转换 (图像坐标 -> 屏幕坐标)
                     transformRect(face.boundingBox, previewSize, imgW, imgH, isFrontCamera)
                 }
-                //todo 在这里将 screenRects 传递给 GLSurfaceView 的 Renderer，进行绘制
-                Log.e("cjztest", "Detected ${faces.size} faces, screen rects: $screenRects")
+                //在这里将 screenRects 传递给 GLSurfaceView 的 Renderer，进行绘制
                 onFacesDetectedListener?.onFacesDetected(screenRects)
             }
             .addOnFailureListener { e ->
@@ -85,8 +87,6 @@ class FaceAnalyzer(
         // 计算缩放比例 (Center Crop 逻辑：取较大的缩放比以填满屏幕)
         val scale = max(viewW / imgW, viewH / imgH)
 
-        Log.e("cjztest", "transformRect: viewW: $viewW, viewH: $viewH, imgW: $imgW, imgH: $imgH, scale: $scale")
-
         // 计算裁剪导致的偏移量
         val offsetX = (viewW - imgW * scale) / 2f
         val offsetY = (viewH - imgH * scale) / 2f
@@ -105,5 +105,15 @@ class FaceAnalyzer(
         }
 
         return RectF(left, top, right, bottom)
+
+        //cjztest：
+//        val left = rect.top.toFloat() / imgH.toFloat() * viewW
+//        val top = (1f - rect.right.toFloat() / imgW.toFloat()) * viewH
+//        val right = rect.bottom.toFloat() / imgH.toFloat() * viewW
+//        val bottom = (1f - rect.left.toFloat() / imgW.toFloat()) * viewH
+//        return RectF(left, top, right, bottom)
+
+
+//        return RectF(0f, 0f, viewW / 2, viewH / 2)  //用来做控制变量法测试
     }
 }

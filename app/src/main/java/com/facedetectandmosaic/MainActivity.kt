@@ -113,28 +113,11 @@ class MainActivity : AppCompatActivity() {
             val preview = previewBuilder.build()
 
             val imageAnalysis = ImageAnalysis.Builder()
-                .setTargetRotation(android.view.Surface.ROTATION_0) // 与 Preview 保持一致
+//                .setTargetRotation(android.view.Surface.ROTATION_0) // 与 Preview 保持一致
                 // 关键：只保留最新帧，丢弃处理不过来的旧帧，防止内存积压和延迟
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .setTargetResolution(Size(mRealVideoWidth, mRealVideoHeight))
+                .setTargetResolution(Size(720, 960))
                 .build()
-
-            // 绑定分析器 (假设 overlayView 是你在 onCreate 中初始化的 FaceOverlayView 实例)
-            val isFront = false // 根据你用的 CameraSelector 判断
-            val faceAnalyzer = FaceAnalyzer( Size(mRealVideoWidth, mRealVideoHeight), isFront)
-            faceAnalyzer.setOnFacesDetectedListener(object : FaceAnalyzer.OnFacesDetectedListener {
-                override fun onFacesDetected(screenRects: List<android.graphics.RectF>) {
-                    // 这里拿到的 screenRects 是已经转换成屏幕坐标系的矩形列表，可以直接用来更新 UI
-                    // 例如，你可以调用 overlayView.setFaceRects(screenRects) 来刷新人脸框显示
-//                    Log.d("FaceAnalyzer", "检测到 ${screenRects.size} 张人脸")
-                    renderer.updateFaceRects(screenRects) // 将检测到的人脸坐标传递给 Renderer 进行绘制
-                }
-            })
-            imageAnalysis
-                .setAnalyzer(
-                    ContextCompat.getMainExecutor(this),
-                    faceAnalyzer
-                )
 
 
             preview.setSurfaceProvider { surfaceRequest ->
@@ -143,6 +126,23 @@ class MainActivity : AppCompatActivity() {
 //                if () { //todo 这里可以根据实际情况调整宽高的计算方式，确保它们符合你的预期和设备的能力。比如有些设备可能不支持某些特定的分辨率，或者你想要强制使用某个宽高比。
                     mRealVideoHeight = (surfaceRequest.resolution.height * 4f / 3f).toInt()  //cjztest  这个比例看起来才正确
 //                }
+
+                // 绑定分析器
+                val isFront = false // 根据你用的 CameraSelector 判断
+                val faceAnalyzer = FaceAnalyzer( Size(mRealVideoWidth, mRealVideoHeight), isFront)
+                faceAnalyzer.setOnFacesDetectedListener(object : FaceAnalyzer.OnFacesDetectedListener {
+                    override fun onFacesDetected(screenRects: List<android.graphics.RectF>) {
+                        // 这里拿到的 screenRects 是已经转换成屏幕坐标系的矩形列表，可以直接用来更新 UI
+//                    Log.d("FaceAnalyzer", "检测到 ${screenRects.size} 张人脸")
+                        renderer.updateFaceRects(screenRects) // 将检测到的人脸坐标传递给 Renderer 进行绘制
+                    }
+                })
+                imageAnalysis
+                    .setAnalyzer(
+                        ContextCompat.getMainExecutor(this),
+                        faceAnalyzer
+                    )
+
 
                 // 3. 根据 CameraX 实际分辨率，调整 GLSurfaceView 的布局参数和 SurfaceTexture 的缓冲区大小
                 val fixedParams = LinearLayout.LayoutParams(mRealVideoWidth, mRealVideoHeight) // 这里假设 GLSurfaceView 的宽高比固定为 4:3，实际项目中可能需要更灵活的适配方案

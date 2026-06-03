@@ -89,6 +89,7 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
         void main() {
             vec2 uv = vTextureCoord;
             bool applyMosaic = false;
+            float alpha = 1.0; // 颜色强度 (0.0-1.0)
         
             // 4. 遍历所有人脸矩形，判断当前像素是否在其中
             // 注意：GLSL ES 2.0 要求 for 循环的边界必须是常量，所以必须循环 MAX_FACES 次
@@ -108,10 +109,10 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
                 // 将连续坐标除以块大小 -> 向下取整对齐到网格 -> 加 0.5 采样网格中心 -> 乘回块大小
                 vec2 grid = floor(uv / uMosaicBlockSize);
                 uv = (grid + 0.5) * uMosaicBlockSize;
+                alpha = 0.5; // 可选：降低颜色强度，增强马赛克效果
             }
-        
             // 6. 最终采样 (无论是否马赛克，都只采样 1 次，性能拉满)
-            gl_FragColor = texture2D(sTexture, uv);
+            gl_FragColor = vec4(texture2D(sTexture, uv).rgb * alpha, 1.0);
         }
     """.trimIndent()
 
@@ -177,7 +178,7 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
         for (i in 0 until MAX_FACES) {
             if (i < currentFaceCount) {
                 val rect = uvRects[i] // [minU, minV, maxU, maxV]
-                //旋转过90度，还左右镜像过
+                //旋转过90度，还左右镜像过，所有right和left颠倒，top和bottom不变
                 faceRectsArray[i * 4 + 0] = rect.top / screenHeight.toFloat()
                 faceRectsArray[i * 4 + 1] = 1f - rect.right / screenWidth.toFloat()
                 faceRectsArray[i * 4 + 2] = rect.bottom / screenHeight.toFloat()
@@ -288,8 +289,8 @@ class CameraGLRenderer(private val glSurfaceView: GLSurfaceView) : GLSurfaceView
 
         // 传递马赛克块大小 (假设想要 20x20 像素的马赛克，图像是 1280x720)
         // 归一化大小 = 像素大小 / 图像宽高
-        val blockW = 20.0f / screenWidth.toFloat()
-        val blockH = 20.0f / screenHeight.toFloat()
+        val blockW = 40.0f / screenWidth.toFloat()
+        val blockH = 40.0f / screenHeight.toFloat()
         GLES20.glUniform2f(uMosaicBlockSizeHandle, blockW, blockH)
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
